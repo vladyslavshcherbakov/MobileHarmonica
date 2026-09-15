@@ -1,0 +1,43 @@
+name: MobileHarmonica
+
+options:
+  bundleIdPrefix: com.vladyslavshcherbakov
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    TARGETED_DEVICE_FAMILY: "1"
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: ""
+
+targets:
+  MobileHarmonica:
+    type: application
+    platform: iOS
+    sources:
+      - path: Apps/MobileHarmonica
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.vladyslavshcherbakov.mobileharmonica
+        PRODUCT_NAME: MobileHarmonica
+        GENERATE_INFOPLIST_FILE: NO
+    info:
+      path: Apps/MobileHarmonica/Info.plist
+      properties:
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+
+schemes:
+  MobileHarmonica:
+    build:
+      targets:
+        MobileHarmonica: all
+    run:
+      config: Debug
+    archive:
+      config: Release
