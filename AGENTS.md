@@ -135,9 +135,21 @@ Lifting the finger silences the note.
 A finger that leaves the strip horizontally silences the note. Returning to the strip
 sounds the hole again.
 
-A second finger is ignored. The first finger stays in control.
+There is no dedicated zone for the second hand yet, so every finger on the screen plays a
+hole. The zone the GDD gives Phase 6, where a finger bends pitch and shapes the tone instead
+of sounding a reed, is what the Phase 1 note about ignoring a second finger was reaching for.
+Until it exists, no finger is ignored.
 
-The screen shows ten numbered plates on a dark background and highlights the sounding one.
+The screen shows ten numbered plates on a dark background and highlights the sounding ones.
+
+A hollow circle follows each finger, drawn where the finger actually is rather than snapped
+to the hole it plays, so the distance to a hole boundary and to the centre line stays
+visible. The finger deciding the breath is drawn in white and the rest in grey. A finger
+that has left the strip sideways makes no sound and gets no circle.
+
+The circles live in the view's own state. They mark where a touch is, which is the view's
+own geometry, so nothing about them reaches the presenter and a finger moving inside one
+hole still publishes no view state.
 
 The app sounds through the silent switch (`AVAudioSession` category `.playback`).
 
@@ -163,6 +175,12 @@ app out of `.active`, so the note stops, but nothing observes
 is not handled at all.
 
 UI strings are not localized. `HarmonicaPresenter` holds English literals.
+
+A finger that has left the strip sideways still decides the breath for the fingers that
+remain, because the breath is taken from the topmost of all touches while only the touches
+on the strip sound a hole. It then has no circle, so nothing on screen says which finger
+decided. Deciding the breath among the sounding fingers only would fix both, and is a change
+to behaviour the user has not asked for.
 
 Contact radius is not used. `UITouch.majorRadius` exists and `TouchTrackingView` is already
 the place that could read it, but nobody has measured whether it varies usefully on an
