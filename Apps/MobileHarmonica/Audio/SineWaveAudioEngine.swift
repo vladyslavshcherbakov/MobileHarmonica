@@ -29,6 +29,10 @@ final class SineWaveAudioEngine: AudioEngineProtocol {
         oscillator.sound(atHertz: pitches.map { $0.converted(to: .hertz).value })
     }
 
+    func changeIntensity(to intensity: BreathIntensity) {
+        oscillator.changeBreathGain(to: intensity.gain)
+    }
+
     func silence() {
         oscillator.silence()
     }

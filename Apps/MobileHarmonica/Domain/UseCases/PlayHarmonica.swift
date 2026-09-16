@@ -2,6 +2,7 @@ final class PlayHarmonica {
     private let tuning: RichterTuning
     private let audioEngine: AudioEngineProtocol
     private var soundingReeds: [Reed] = []
+    private var soundingIntensity: BreathIntensity?
 
     private(set) var key: HarmonicaKey = .c
 
@@ -18,10 +19,12 @@ final class PlayHarmonica {
 
     func play(at positions: [PositionOnHarmonica]) -> Set<Hole> {
         let reeds = reedsUnder(positions)
-        guard !reeds.isEmpty else {
+        guard !reeds.isEmpty, let intensity = intensityOf(positions) else {
             stopPlaying()
             return []
         }
+
+        applyBreathIntensity(intensity)
         guard reeds != soundingReeds else { return soundingHoles }
 
         sound(reeds)
@@ -41,12 +44,24 @@ final class PlayHarmonica {
 
         audioEngine.silence()
         soundingReeds = []
+        soundingIntensity = nil
     }
 
     // MARK: - Private
 
     private var soundingHoles: Set<Hole> {
         Set(soundingReeds.map(\.hole))
+    }
+
+    private func intensityOf(_ positions: [PositionOnHarmonica]) -> BreathIntensity? {
+        PositionOnHarmonica.topmost(of: positions).map(BreathIntensity.init(at:))
+    }
+
+    private func applyBreathIntensity(_ intensity: BreathIntensity) {
+        guard intensity != soundingIntensity else { return }
+
+        audioEngine.changeIntensity(to: intensity)
+        soundingIntensity = intensity
     }
 
     private func reedsUnder(_ positions: [PositionOnHarmonica]) -> [Reed] {

@@ -117,6 +117,24 @@ centre line or above it, every sounding hole blows; below it, every one draws. N
 blow and draw at once, so one finger has to win and the highest one does. The boundary
 belongs to blow.
 
+The vertical distance from the centre line sets how hard the harmonica is blown, taken from
+the same finger that decides the breath, because one mouth gives one airflow to every hole
+at once. On the line the gain is 0.2 rather than 0, by the user's decision, so the
+instrument is always audible; at the top or bottom edge it is 1.
+
+The curve is compressive: it rises fast near the line and flattens towards the edge, which
+is the half of a real reed's response a sine can carry. The other half it cannot. A real
+reed reaches its excursion limit and turns extra pressure into harmonics, so it gets dirtier
+rather than louder, and a sine has no harmonics to add. That waits for the sample layers of
+Phase 5, which ride on this curve rather than replace it.
+
+Intensity changes on every touch move, while the set of sounding pitches changes rarely, so
+they travel by separate methods. `soundTones(at:)` replaces the voices and bumps
+`changeCount`; `changeIntensity(to:)` writes one number to its own lock, which the render
+thread reads fresh each buffer and ramps towards over the same 20 ms. Routing intensity
+through the voice bank instead would invalidate the render's write-back on nearly every
+buffer and the note would stutter.
+
 Nothing caps how many holes sound at once. A mouth reaches about four; ten fingers reach
 ten. The mix is divided by the total gain of the sounding voices, so ten notes cannot clip,
 and one note is as loud as it was before.

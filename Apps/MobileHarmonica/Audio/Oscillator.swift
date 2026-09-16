@@ -5,11 +5,16 @@ final class Oscillator {
     private static let crossfadeSeconds = 0.02
 
     private let bank = OSAllocatedUnfairLock(initialState: VoiceBank())
+    private let requestedBreathGain = OSAllocatedUnfairLock(initialState: 0.0)
 
     // MARK: - Public
 
     func sound(atHertz hertzValues: [Double]) {
         bank.withLock { $0.sound(atHertz: hertzValues) }
+    }
+
+    func changeBreathGain(to gain: Double) {
+        requestedBreathGain.withLock { $0 = gain }
     }
 
     func silence() {
@@ -28,7 +33,14 @@ final class Oscillator {
             return
         }
 
-        fill(frameCount: frameCount, sampleRate: sampleRate, amplitude: amplitude, into: buffers, from: &rendering)
+        fill(
+            frameCount: frameCount,
+            sampleRate: sampleRate,
+            amplitude: amplitude,
+            breathGain: requestedBreathGain.withLock { $0 },
+            into: buffers,
+            from: &rendering
+        )
         rendering.dropSilentVoices()
         keep(rendering)
     }
@@ -49,12 +61,17 @@ final class Oscillator {
         frameCount: Int,
         sampleRate: Double,
         amplitude: Float,
+        breathGain: Double,
         into buffers: UnsafeMutableAudioBufferListPointer,
         from rendering: inout VoiceBank
     ) {
         let gainStep = Self.gainStep(sampleRate: sampleRate)
         for frame in 0..<frameCount {
-            let value = rendering.nextSample(sampleRate: sampleRate, gainStep: gainStep)
+            let value = rendering.nextSample(
+                sampleRate: sampleRate,
+                gainStep: gainStep,
+                targetBreathGain: breathGain
+            )
             write(Float(value) * amplitude, atFrame: frame, into: buffers)
         }
     }
@@ -78,6 +95,7 @@ final class Oscillator {
 
 private struct VoiceBank {
     var voices: [Voice] = []
+    var breathGain = 0.0
     var changeCount = 0
 
     var isSilent: Bool {
@@ -101,8 +119,9 @@ private struct VoiceBank {
         changeCount += 1
     }
 
-    mutating func nextSample(sampleRate: Double, gainStep: Double) -> Double {
-        let scale = 1 / max(1, soundingGain)
+    mutating func nextSample(sampleRate: Double, gainStep: Double, targetBreathGain: Double) -> Double {
+        breathGain = ramp(breathGain, toward: targetBreathGain, by: gainStep)
+        let scale = breathGain / max(1, soundingGain)
         var mixed = 0.0
         for index in voices.indices {
             mixed += voices[index].nextSample(sampleRate: sampleRate, gainStep: gainStep)
@@ -150,6 +169,12 @@ private struct Voice {
     }
 
     private func nextGain(step: Double) -> Double {
-        gain < targetGain ? min(targetGain, gain + step) : max(targetGain, gain - step)
+        ramp(gain, toward: targetGain, by: step)
     }
+}
+
+// MARK: - Ramping
+
+private func ramp(_ gain: Double, toward target: Double, by step: Double) -> Double {
+    gain < target ? min(target, gain + step) : max(target, gain - step)
 }
