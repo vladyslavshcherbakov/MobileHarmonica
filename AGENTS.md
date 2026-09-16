@@ -125,6 +125,11 @@ shrill. Transposing preserves intervals, so bend ranges are unchanged in every k
 **One breath for the whole instrument.** One mouth gives one airflow, so the topmost finger
 decides direction and intensity for every sounding hole. The boundary belongs to blow.
 
+Only fingers on the strip take part. A finger that has slid off the side neither sounds a
+hole nor decides anything, and the arbitration passes to the topmost of those left, so the
+white circle always marks a finger that is actually playing. `PlayHarmonica` and the screen
+both filter on `PositionOnHarmonica.isOnTheHarmonica`, which is one rule in one place.
+
 **Chords are the point.** Two fingers on adjacent holes are the chord a mouth makes; two
 apart are a tongue block split. Two on one hole sound one note. Nothing caps the count.
 
@@ -253,11 +258,6 @@ heard before the samples of phase 5.
 is not handled.
 
 **UI strings are not localized.** `HarmonicaPresenter` holds English literals.
-
-**A finger off the strip still decides the breath.** Breath comes from the topmost of all
-touches while only touches on the strip sound a hole, so a finger that has slid off the side
-controls the others and has no circle to show it. Deciding among sounding fingers only would
-fix both; it is a behaviour change nobody has asked for.
 
 **`AppRoute.harmonica`** names the only screen and nothing pushes it. The scene root renders
 the harmonica directly and installs no `navigationDestination`, because mapping `.harmonica`

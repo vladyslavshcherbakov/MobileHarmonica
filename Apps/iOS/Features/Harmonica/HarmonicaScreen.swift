@@ -45,7 +45,7 @@ struct HarmonicaScreen: View {
 
     private static func fingerMarks(at locations: [CGPoint], across size: CGSize) -> [FingerMark] {
         let positions = locations.map { position(of: $0, across: size) }
-        let deciding = PositionOnHarmonica.topmost(of: positions)
+        let deciding = PositionOnHarmonica.topmost(of: positions.filter(\.isOnTheHarmonica))
 
         return positions.indices.compactMap { index in
             mark(index: index, at: locations[index], on: positions[index], deciding: deciding)
@@ -58,7 +58,7 @@ struct HarmonicaScreen: View {
         on position: PositionOnHarmonica,
         deciding: PositionOnHarmonica?
     ) -> FingerMark? {
-        guard Hole(at: position) != nil else { return nil }
+        guard position.isOnTheHarmonica else { return nil }
 
         return FingerMark(id: index, location: location, decidesBreath: position == deciding)
     }

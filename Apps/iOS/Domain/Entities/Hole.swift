@@ -26,3 +26,11 @@ extension Hole {
         self = Hole.allCases[index]
     }
 }
+
+// MARK: - PositionOnHarmonica + Hole
+
+extension PositionOnHarmonica {
+    var isOnTheHarmonica: Bool {
+        Hole(at: self) != nil
+    }
+}

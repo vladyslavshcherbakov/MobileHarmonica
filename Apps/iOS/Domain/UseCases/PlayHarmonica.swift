@@ -25,8 +25,9 @@ final class PlayHarmonica {
     }
 
     func play(at positions: [PositionOnHarmonica]) -> Set<Hole> {
-        let reeds = reedsUnder(positions)
-        guard !reeds.isEmpty, let intensity = intensityOf(positions) else {
+        let sounding = positions.filter(\.isOnTheHarmonica)
+        let reeds = reedsUnder(sounding)
+        guard !reeds.isEmpty, let intensity = intensityOf(sounding) else {
             stopPlaying()
             return []
         }
