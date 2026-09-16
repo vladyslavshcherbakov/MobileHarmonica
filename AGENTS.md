@@ -150,7 +150,13 @@ axis still works.
 
 **Safe area.** Only the leading edge is ignored, and only the square sits there. The strip
 keeps its trailing and bottom insets, so no plate goes under the notch or under the home
-indicator, and the draw half of every hole stays reachable. The key bar keeps every inset.
+indicator, and the draw half of every hole stays reachable.
+
+The ignore belongs on the screen's outermost view, above the
+`frame(maxWidth: .infinity)`. Put it on a view nested below that frame and the width is
+already fixed to the safe area by the time the ignore is read, so nothing expands and the
+square stops short of the glass. The key bar takes the inset back with
+`safeAreaPadding(.leading)` rather than keeping its own safe area.
 
 **Touches** arrive through `TouchArea`, a `UIViewRepresentable` over a `UIView` with
 `isMultipleTouchEnabled`, because `DragGesture` reports one finger and no contact radius.

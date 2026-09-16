@@ -26,6 +26,7 @@ struct HarmonicaScreen: View {
     var body: some View {
         content
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .ignoresSafeArea(edges: .leading)
             .background(Color.black.ignoresSafeArea())
             .task(id: scenePhase) {
                 await prepareOrSilence(for: scenePhase)
@@ -105,7 +106,6 @@ struct HarmonicaScreen: View {
                     holes(playable.holes)
                 }
             }
-            .ignoresSafeArea(edges: .leading)
         }
     }
 
@@ -127,6 +127,7 @@ struct HarmonicaScreen: View {
             .accessibilityLabel(key.label)
         }
         .padding(.horizontal)
+        .safeAreaPadding(.leading)
         .frame(height: Self.keyBarHeight)
     }
 
