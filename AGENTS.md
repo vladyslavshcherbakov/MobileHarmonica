@@ -11,7 +11,10 @@ user supplies them.
 Platforms and minimum OS: iOS 17.0. iPhone only (`TARGETED_DEVICE_FAMILY = 1`).
 Landscape only, both orientations, enforced in the generated Info.plist.
 
-Targets: `MobileHarmonica` (app). No test target yet.
+Targets: `MobileHarmonica` (app) and `MobileHarmonicaTests`, a unit test bundle hosted by it.
+The app target excludes `Tests` from its sources. The test bundle generates its own
+Info.plist through `GENERATE_INFOPLIST_FILE`, because without one Xcode refuses to sign it,
+while the app keeps the generated plist `project.yml` writes for it.
 
 What shares storage, and what runs on another device: nothing. One app, no persistence,
 no paired device, no extension.

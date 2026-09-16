@@ -41,6 +41,9 @@ targets:
       - path: Apps/MobileHarmonica/Tests
     dependencies:
       - target: MobileHarmonica
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
 
 schemes:
   MobileHarmonica:
