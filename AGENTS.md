@@ -1,8 +1,9 @@
 # MobileHarmonica
 
 An expressive two-handed harmonica simulator for iPhone. The product plan is the GDD and
-runs in six phases. Phase 1 is the current state: single touch, blow only, horizontal axis
-only, sine wave synthesised at runtime.
+runs in six phases. Phase 2 is the current state: single touch, both breath directions off
+the vertical axis, sine wave synthesised at runtime. Real samples arrive in Phase 5 and the
+user supplies them.
 
 ## Constraints
 
@@ -41,11 +42,15 @@ timestamp to the millisecond so that lines can be ordered without depending on t
 locale. The composition root owns the subsystem and passes it in, so no layer reads
 `Bundle.main` itself.
 
-In Phase 1 only the audio layer logs: it is where the story lives, and where a failure
-reaches the user as silence. `BlowIntoHarmonica` deliberately logs nothing. Its early exits
+Only the audio layer logs: it is where the story lives, and where a failure
+reaches the user as silence. `PlayHarmonica` deliberately logs nothing. Its early exits
 fire once per touch event, which makes them raw samples rather than story, and the domain
 has no log dependency to carry them. Give it one the first time a note-level question cannot
 be answered from the audio log.
+
+`AVAudioSession` is configured inside a detached task, never on the main thread. Calling
+`setCategory` or `setActive` from the main thread raises the Hang Risk warnings that Xcode
+reported after Phase 1, because either call can block while the session is active.
 
 `Oscillator` is reached from the audio render thread and from the main thread. All of its
 state sits behind an `OSAllocatedUnfairLock`, taken twice per buffer rather than once per
@@ -55,11 +60,19 @@ Generated files are not committed: `MobileHarmonica.xcodeproj` and
 `Apps/MobileHarmonica/Info.plist` both come from `project.yml`. Run `xcodegen generate`
 after changing it.
 
-## Phase 1 behaviour, as settled with the user
+## Behaviour, as settled with the user
 
-The harmonica is a ten hole diatonic in the key of C, Richter tuning. Phase 1 plays the
-blow row only: C4 E4 G4 C5 E5 G5 C6 E6 G6 C7. Ten holes give three pitch classes, so
-Phase 1 plays a C major arpeggio and no melody. The draw row arrives in Phase 2.
+The harmonica is a ten hole diatonic in the key of C, Richter tuning.
+
+    hole  1   2   3   4   5   6   7   8   9  10
+    blow  C4  E4  G4  C5  E5  G5  C6  E6  G6  C7
+    draw  D4  G4  B4  D5  F5  A5  B5  D6  F6  A6
+
+From hole 7 upwards the draw reed is lower than the blow reed. That is the real Richter
+layout, not a mistake.
+
+The horizontal centre line splits blow from draw. A finger on the line or above it blows,
+a finger below it draws. The boundary belongs to blow, by the user's decision.
 
 Hole 1 is on the left. The ten segments divide the full width of the safe area equally.
 
@@ -92,14 +105,6 @@ Add the destination together with the second screen.
 
 ## Open questions
 
-Who owns the breath direction. GDD section 1 gives inhale and exhale to the right hand,
-while Phase 2 gives them to the sign of the left finger's Y. The phases win unless the user
-says otherwise. Decide before Phase 2.
-
-Which way Y points. SwiftUI's y grows downward and the GDD writes "above the centerline
-(Y > 0)", measuring upward from the centre. The GDD's convention will be an explicitly
-named value in code, never a raw `location.y`. Decide before Phase 2.
-
 Audio interruptions are handled only through `scenePhase`. A phone call normally takes the
 app out of `.active`, so the note stops, but nothing observes
 `AVAudioSession.interruptionNotification`, and a route change such as unplugging headphones
@@ -107,6 +112,8 @@ is not handled at all.
 
 UI strings are not localized. `HarmonicaPresenter` holds English literals.
 
-Phase 1 clicks at every hole boundary. That follows from the GDD's "immediate cut of the
-old note and instant playback of the next note" on a sine wave with non-zero amplitude.
-Phase 3 removes it with crossfades. It is not a defect.
+Mouth width is not modelled. On a real harmonica the mouth covers one to four adjacent
+holes and every covered reed sounds at full volume; position decides which holes are
+covered, width decides how many. There is no position-based blend between neighbours.
+Modelling width needs a polyphonic `AudioEngineProtocol`, which is why it is not in
+Phases 1 to 4. The user raised it and it is theirs to place.

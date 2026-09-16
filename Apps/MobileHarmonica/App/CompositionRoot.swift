@@ -7,7 +7,7 @@ struct CompositionRoot {
 
     private func harmonicaViewModel() -> HarmonicaViewModel {
         HarmonicaViewModel(
-            blowIntoHarmonica: BlowIntoHarmonica(tuning: RichterTuning(), audioEngine: audioEngine()),
+            playHarmonica: PlayHarmonica(tuning: RichterTuning(), audioEngine: audioEngine()),
             presenter: HarmonicaPresenter(locale: .current)
         )
     }

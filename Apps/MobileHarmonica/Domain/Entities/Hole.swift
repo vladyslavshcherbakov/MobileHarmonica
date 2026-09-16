@@ -15,14 +15,14 @@ enum Hole: Int, CaseIterable {
     }
 }
 
-// MARK: - Hole + PositionAlongHarmonica
+// MARK: - Hole + PositionOnHarmonica
 
 extension Hole {
-    init?(at position: PositionAlongHarmonica) {
-        guard (0...1).contains(position.fraction) else { return nil }
+    init?(at position: PositionOnHarmonica) {
+        guard (0...1).contains(position.fractionFromLeftEdge) else { return nil }
 
         let holeCount = Hole.allCases.count
-        let index = min(holeCount - 1, Int(position.fraction * Double(holeCount)))
+        let index = min(holeCount - 1, Int(position.fractionFromLeftEdge * Double(holeCount)))
         self = Hole.allCases[index]
     }
 }

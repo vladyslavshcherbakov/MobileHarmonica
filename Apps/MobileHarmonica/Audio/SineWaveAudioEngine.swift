@@ -14,9 +14,9 @@ final class SineWaveAudioEngine: AudioEngineProtocol {
         self.log = log
     }
 
-    func prepare() throws {
+    func prepare() async throws {
         do {
-            try activateAudioSession()
+            try await configureAudioSession()
             try connectOscillatorIfNeeded()
             try startEngineIfNeeded()
         } catch {
@@ -35,10 +35,12 @@ final class SineWaveAudioEngine: AudioEngineProtocol {
 
     // MARK: - Private
 
-    private func activateAudioSession() throws {
-        let session = AVAudioSession.sharedInstance()
-        try session.setCategory(.playback, mode: .default)
-        try session.setActive(true)
+    private func configureAudioSession() async throws {
+        try await Task.detached(priority: .userInitiated) {
+            let session = AVAudioSession.sharedInstance()
+            try session.setCategory(.playback, mode: .default)
+            try session.setActive(true)
+        }.value
     }
 
     private func connectOscillatorIfNeeded() throws {

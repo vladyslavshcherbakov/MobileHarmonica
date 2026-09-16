@@ -3,33 +3,33 @@ import Combine
 final class HarmonicaViewModel: ObservableObject {
     @Published private(set) var state: HarmonicaViewState = .preparingSound
 
-    private let blowIntoHarmonica: BlowIntoHarmonica
+    private let playHarmonica: PlayHarmonica
     private let presenter: HarmonicaPresenter
 
     // MARK: - Public
 
-    init(blowIntoHarmonica: BlowIntoHarmonica, presenter: HarmonicaPresenter) {
-        self.blowIntoHarmonica = blowIntoHarmonica
+    init(playHarmonica: PlayHarmonica, presenter: HarmonicaPresenter) {
+        self.playHarmonica = playHarmonica
         self.presenter = presenter
     }
 
-    func prepareSound() {
+    func prepareSound() async {
         do {
-            try blowIntoHarmonica.prepare()
+            try await playHarmonica.prepare()
             show(presenter.present(soundingHole: nil))
         } catch {
             show(presenter.presentSoundUnavailable())
         }
     }
 
-    func blow(at position: PositionAlongHarmonica) {
+    func play(at position: PositionOnHarmonica) {
         guard case .ready = state else { return }
 
-        show(presenter.present(soundingHole: blowIntoHarmonica.blow(at: position)))
+        show(presenter.present(soundingHole: playHarmonica.play(at: position)))
     }
 
-    func stopBlowing() {
-        blowIntoHarmonica.stopBlowing()
+    func stopPlaying() {
+        playHarmonica.stopPlaying()
         guard case .ready = state else { return }
 
         show(presenter.present(soundingHole: nil))
