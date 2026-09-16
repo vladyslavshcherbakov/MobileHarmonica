@@ -3,6 +3,8 @@ final class PlayHarmonica {
     private let audioEngine: AudioEngineProtocol
     private var soundingReeds: [Reed] = []
     private var soundingIntensity: BreathIntensity?
+    private var bend: BendDepth = .unbent
+    private var vibrato: VibratoDepth = .off
 
     private(set) var key: HarmonicaKey = .c
 
@@ -37,6 +39,15 @@ final class PlayHarmonica {
 
         sound(soundingReeds)
         return soundingHoles
+    }
+
+    func shapeTone(bend: BendDepth, vibrato: VibratoDepth) {
+        guard bend != self.bend || vibrato != self.vibrato else { return }
+
+        self.bend = bend
+        self.vibrato = vibrato
+        audioEngine.changeBend(to: bend)
+        audioEngine.changeVibrato(to: vibrato)
     }
 
     func stopPlaying() {
@@ -75,7 +86,7 @@ final class PlayHarmonica {
     }
 
     private func sound(_ reeds: [Reed]) {
-        audioEngine.soundTones(at: reeds.map { tuning.pitch(for: $0, in: key) })
+        audioEngine.soundTones(reeds.map { tuning.tone(for: $0, in: key) })
         soundingReeds = reeds
     }
 }

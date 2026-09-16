@@ -1,6 +1,13 @@
 enum Breath {
     case blow
     case draw
+
+    var reversed: Breath {
+        switch self {
+        case .blow: .draw
+        case .draw: .blow
+        }
+    }
 }
 
 // MARK: - Breath + PositionOnHarmonica

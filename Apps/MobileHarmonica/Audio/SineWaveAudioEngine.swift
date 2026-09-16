@@ -25,12 +25,20 @@ final class SineWaveAudioEngine: AudioEngineProtocol {
         }
     }
 
-    func soundTones(at pitches: [Measurement<UnitFrequency>]) {
-        oscillator.sound(atHertz: pitches.map { $0.converted(to: .hertz).value })
+    func soundTones(_ tones: [Tone]) {
+        oscillator.sound(tones.map(Self.sounding))
     }
 
     func changeIntensity(to intensity: BreathIntensity) {
         oscillator.changeBreathGain(to: intensity.gain)
+    }
+
+    func changeBend(to depth: BendDepth) {
+        oscillator.changeBend(to: depth.fraction)
+    }
+
+    func changeVibrato(to depth: VibratoDepth) {
+        oscillator.changeVibrato(to: depth.fraction)
     }
 
     func silence() {

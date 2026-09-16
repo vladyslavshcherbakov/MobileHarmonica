@@ -36,6 +36,14 @@ final class HarmonicaViewModel: ObservableObject {
         show(presenter.present(soundingHoles: playHarmonica.changeKey(to: key), key: key))
     }
 
+    func shapeTone(bend: Double, vibrato: Double) {
+        playHarmonica.shapeTone(bend: BendDepth(clamping: bend), vibrato: VibratoDepth(clamping: vibrato))
+    }
+
+    func stopShapingTone() {
+        playHarmonica.shapeTone(bend: .unbent, vibrato: .off)
+    }
+
     func stopPlaying() {
         playHarmonica.stopPlaying()
         guard case .ready = state else { return }

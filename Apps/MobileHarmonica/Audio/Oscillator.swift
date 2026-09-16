@@ -6,15 +6,25 @@ final class Oscillator {
 
     private let bank = OSAllocatedUnfairLock(initialState: VoiceBank())
     private let requestedBreathGain = OSAllocatedUnfairLock(initialState: 0.0)
+    private let requestedBend = OSAllocatedUnfairLock(initialState: 0.0)
+    private let requestedVibrato = OSAllocatedUnfairLock(initialState: 0.0)
 
     // MARK: - Public
 
-    func sound(atHertz hertzValues: [Double]) {
-        bank.withLock { $0.sound(atHertz: hertzValues) }
+    func sound(_ tones: [SoundingTone]) {
+        bank.withLock { $0.sound(tones) }
     }
 
     func changeBreathGain(to gain: Double) {
         requestedBreathGain.withLock { $0 = gain }
+    }
+
+    func changeBend(to fraction: Double) {
+        requestedBend.withLock { $0 = fraction }
+    }
+
+    func changeVibrato(to fraction: Double) {
+        requestedVibrato.withLock { $0 = fraction }
     }
 
     func silence() {
@@ -33,11 +43,13 @@ final class Oscillator {
             return
         }
 
+        rendering.bend(by: requestedBend.withLock { $0 })
         fill(
             frameCount: frameCount,
             sampleRate: sampleRate,
             amplitude: amplitude,
             breathGain: requestedBreathGain.withLock { $0 },
+            vibrato: requestedVibrato.withLock { $0 },
             into: buffers,
             from: &rendering
         )
@@ -62,6 +74,7 @@ final class Oscillator {
         sampleRate: Double,
         amplitude: Float,
         breathGain: Double,
+        vibrato: Double,
         into buffers: UnsafeMutableAudioBufferListPointer,
         from rendering: inout VoiceBank
     ) {
@@ -70,7 +83,8 @@ final class Oscillator {
             let value = rendering.nextSample(
                 sampleRate: sampleRate,
                 gainStep: gainStep,
-                targetBreathGain: breathGain
+                targetBreathGain: breathGain,
+                vibrato: vibrato
             )
             write(Float(value) * amplitude, atFrame: frame, into: buffers)
         }
@@ -91,23 +105,34 @@ final class Oscillator {
     }
 }
 
+// MARK: - SoundingTone
+
+struct SoundingTone: Equatable {
+    let hertz: Double
+    let bendableSemitones: Double
+}
+
 // MARK: - VoiceBank
 
 private struct VoiceBank {
+    static let vibratoHertz = 5.5
+    static let vibratoRatioAtFullDepth = 0.03
+
     var voices: [Voice] = []
     var breathGain = 0.0
+    var lfoPhase = 0.0
     var changeCount = 0
 
     var isSilent: Bool {
         voices.isEmpty
     }
 
-    mutating func sound(atHertz hertzValues: [Double]) {
+    mutating func sound(_ tones: [SoundingTone]) {
         for index in voices.indices {
-            voices[index].targetGain = hertzValues.contains(voices[index].hertz) ? 1 : 0
+            voices[index].targetGain = tones.contains { $0.hertz == voices[index].hertz } ? 1 : 0
         }
-        for hertz in hertzValues where !isRising(atHertz: hertz) {
-            voices.append(Voice(hertz: hertz, phase: 0, gain: 0, targetGain: 1))
+        for tone in tones where !isRising(atHertz: tone.hertz) {
+            voices.append(Voice(tone))
         }
         changeCount += 1
     }
@@ -119,12 +144,29 @@ private struct VoiceBank {
         changeCount += 1
     }
 
-    mutating func nextSample(sampleRate: Double, gainStep: Double, targetBreathGain: Double) -> Double {
+    mutating func bend(by fraction: Double) {
+        for index in voices.indices {
+            voices[index].bend(by: fraction)
+        }
+    }
+
+    mutating func nextSample(
+        sampleRate: Double,
+        gainStep: Double,
+        targetBreathGain: Double,
+        vibrato: Double
+    ) -> Double {
         breathGain = ramp(breathGain, toward: targetBreathGain, by: gainStep)
         let scale = breathGain / max(1, soundingGain)
+        let vibratoRatio = nextVibratoRatio(sampleRate: sampleRate, depth: vibrato)
+
         var mixed = 0.0
         for index in voices.indices {
-            mixed += voices[index].nextSample(sampleRate: sampleRate, gainStep: gainStep)
+            mixed += voices[index].nextSample(
+                sampleRate: sampleRate,
+                gainStep: gainStep,
+                vibratoRatio: vibratoRatio
+            )
         }
         return mixed * scale
     }
@@ -137,6 +179,12 @@ private struct VoiceBank {
         voices.reduce(0) { $0 + $1.gain }
     }
 
+    private mutating func nextVibratoRatio(sampleRate: Double, depth: Double) -> Double {
+        lfoPhase = (lfoPhase + radiansPerCycle * Self.vibratoHertz / sampleRate)
+            .truncatingRemainder(dividingBy: radiansPerCycle)
+        return 1 + depth * Self.vibratoRatioAtFullDepth * sin(lfoPhase)
+    }
+
     private func isRising(atHertz hertz: Double) -> Bool {
         voices.contains { $0.hertz == hertz && $0.targetGain > 0 }
     }
@@ -145,35 +193,43 @@ private struct VoiceBank {
 // MARK: - Voice
 
 private struct Voice {
-    private static let radiansPerCycle = 2 * Double.pi
+    let hertz: Double
+    let bendableSemitones: Double
 
-    var hertz: Double
-    var phase: Double
-    var gain: Double
-    var targetGain: Double
+    var phase = 0.0
+    var gain = 0.0
+    var targetGain = 1.0
+    var bendRatio = 1.0
+
+    init(_ tone: SoundingTone) {
+        hertz = tone.hertz
+        bendableSemitones = tone.bendableSemitones
+    }
 
     var isSilent: Bool {
         gain <= 0 && targetGain <= 0
     }
 
-    mutating func nextSample(sampleRate: Double, gainStep: Double) -> Double {
+    mutating func bend(by fraction: Double) {
+        bendRatio = pow(2, -bendableSemitones * fraction / 12)
+    }
+
+    mutating func nextSample(sampleRate: Double, gainStep: Double, vibratoRatio: Double) -> Double {
         let value = sin(phase) * gain
-        phase = (phase + phaseIncrement(sampleRate: sampleRate))
-            .truncatingRemainder(dividingBy: Self.radiansPerCycle)
-        gain = nextGain(step: gainStep)
+        phase = (phase + phaseIncrement(sampleRate: sampleRate, vibratoRatio: vibratoRatio))
+            .truncatingRemainder(dividingBy: radiansPerCycle)
+        gain = ramp(gain, toward: targetGain, by: gainStep)
         return value
     }
 
-    private func phaseIncrement(sampleRate: Double) -> Double {
-        Self.radiansPerCycle * hertz / sampleRate
-    }
-
-    private func nextGain(step: Double) -> Double {
-        ramp(gain, toward: targetGain, by: step)
+    private func phaseIncrement(sampleRate: Double, vibratoRatio: Double) -> Double {
+        radiansPerCycle * hertz * bendRatio * vibratoRatio / sampleRate
     }
 }
 
 // MARK: - Ramping
+
+private let radiansPerCycle = 2 * Double.pi
 
 private func ramp(_ gain: Double, toward target: Double, by step: Double) -> Double {
     gain < target ? min(target, gain + step) : max(target, gain - step)

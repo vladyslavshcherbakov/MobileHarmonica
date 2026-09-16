@@ -104,8 +104,8 @@ slider and no key is shrill. The GDD asks for D and E flat to play along with th
 Bebop tracks; both are on the slider. Moving the slider while a note sounds re-sounds it in
 the new key, through the same crossfade.
 
-The key slider sits in a 44 point bar above the harmonica, so the harmonica no longer fills
-the entire screen. The gesture reads its fractions from the harmonica's own area, not the
+The key slider sits in a 44 point bar above the harmonica and the tone shaping zone, so the
+harmonica no longer fills the entire screen. The gesture reads its fractions from the harmonica's own area, not the
 window, so the centre line stays at the middle of the playable strip.
 
 Every finger on the harmonica sounds its own hole. Two fingers on adjacent holes are the
@@ -153,10 +153,29 @@ Lifting the finger silences the note.
 A finger that leaves the strip horizontally silences the note. Returning to the strip
 sounds the hole again.
 
-There is no dedicated zone for the second hand yet, so every finger on the screen plays a
-hole. The zone the GDD gives Phase 6, where a finger bends pitch and shapes the tone instead
-of sounding a reed, is what the Phase 1 note about ignoring a second finger was reaching for.
-Until it exists, no finger is ignored.
+The tone shaping zone takes the right 28 per cent of the strip. A finger there shapes the
+sound instead of sounding a reed: down bends the pitch, right deepens the vibrato. The
+topmost finger in the zone drives it, the same rule the harmonica uses, because
+`UIEvent.allTouches` is a set and has no order to take a first finger from. Lifting every
+finger out of the zone returns the pitch and the vibrato to rest.
+
+A bend is not a note of its own. It is the sounding reed pulled down towards the other reed
+of the same hole, and it stops a semitone short of reaching it, so each reed has its own
+range: three semitones on hole 3 draw, two on hole 2 draw and hole 10 blow, one on most of
+the rest, and none at all on holes 5 and 7 where the two reeds are already a semitone apart.
+`RichterTuning` derives that range from the two reeds rather than holding a second table.
+Holes 1 to 6 bend on the draw and 7 to 10 on the blow, which follows from the same
+"perevertysh" that makes the draw reed lower from hole 7 up.
+
+Bending is cheaper on a synthesised tone than on a sample: the frequency is already a
+parameter, so a bend is one multiplication by `2^(-semitones/12)`. The GDD routes Phase 6
+through `sampler.pitchBend` because a sample has to be dragged off its recorded pitch.
+
+Bend and vibrato travel like intensity, by their own methods and their own locks, because
+they change on every touch move. A voice carries the semitones it can bend and the render
+thread applies the shared fraction to each voice once per buffer, so the set of sounding
+pitches still changes rarely and the render's write-back is not invalidated. Vibrato is one
+shared LFO at 5.5 Hz reaching 3 per cent of the frequency, about 51 cents, at full depth.
 
 The screen shows ten numbered plates on a dark background and highlights the sounding ones.
 
@@ -203,6 +222,13 @@ remain, because the breath is taken from the topmost of all touches while only t
 on the strip sound a hole. It then has no circle, so nothing on screen says which finger
 decided. Deciding the breath among the sounding fingers only would fix both, and is a change
 to behaviour the user has not asked for.
+
+Where the wah filter goes is undecided. The zone's one finger already carries bend on its
+vertical axis and vibrato on its horizontal one, so a third parameter needs somewhere else:
+a second finger in the zone, the device's tilt, or giving the horizontal axis to wah and
+making vibrato automatic. Deciding it costs nothing today, because a resonant filter sweeping
+over a sine has no harmonics to emphasise and cannot be heard at all until the samples of
+Phase 5 arrive.
 
 Contact radius is not used. `UITouch.majorRadius` exists and `TouchTrackingView` is already
 the place that could read it, but nobody has measured whether it varies usefully on an

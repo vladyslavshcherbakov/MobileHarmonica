@@ -3,11 +3,22 @@ import Foundation
 struct RichterTuning {
     // MARK: - Public
 
-    func pitch(for reed: Reed, in key: HarmonicaKey) -> Measurement<UnitFrequency> {
-        note(for: reed).transposed(by: key.semitonesFromC).pitch
+    func tone(for reed: Reed, in key: HarmonicaKey) -> Tone {
+        Tone(
+            pitch: note(for: reed).transposed(by: key.semitonesFromC).pitch,
+            bendableSemitones: bendableSemitones(for: reed)
+        )
     }
 
     // MARK: - Private
+
+    private func bendableSemitones(for reed: Reed) -> Double {
+        let bending = note(for: reed).number
+        let neighbour = note(for: Reed(hole: reed.hole, breath: reed.breath.reversed)).number
+        guard bending > neighbour else { return 0 }
+
+        return Double(bending - neighbour - 1)
+    }
 
     private func note(for reed: Reed) -> MIDINote {
         switch reed.breath {

@@ -6,10 +6,13 @@ struct HarmonicaScreen: View {
     private static let keyLabelWidth: CGFloat = 34
     private static let fingerCircleDiameter: CGFloat = 56
     private static let fingerCircleLineWidth: CGFloat = 3
+    private static let zoneWidthFraction: CGFloat = 0.28
+    private static let zoneCornerRadius: CGFloat = 12
 
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var viewModel: HarmonicaViewModel
     @State private var fingerLocations: [CGPoint] = []
+    @State private var shapingLocations: [CGPoint] = []
 
     // MARK: - Public
 
@@ -55,6 +58,18 @@ struct HarmonicaScreen: View {
         return FingerMark(id: index, location: location, decidesBreath: position == deciding)
     }
 
+    private static func shapingMarks(at locations: [CGPoint]) -> [FingerMark] {
+        let leading = topmost(of: locations)
+
+        return locations.indices.map { index in
+            FingerMark(id: index, location: locations[index], decidesBreath: locations[index] == leading)
+        }
+    }
+
+    private static func topmost(of locations: [CGPoint]) -> CGPoint? {
+        locations.min { $0.y < $1.y }
+    }
+
     @ViewBuilder
     private var content: some View {
         switch viewModel.state {
@@ -73,7 +88,13 @@ struct HarmonicaScreen: View {
     private func playableHarmonica(_ playable: PlayableHarmonica) -> some View {
         VStack(spacing: 0) {
             keyBar(playable.key)
-            holes(playable.holes)
+            GeometryReader { geometry in
+                HStack(spacing: Self.holeSpacing) {
+                    holes(playable.holes)
+                    toneShapingZone(playable.toneShaping)
+                        .frame(width: geometry.size.width * Self.zoneWidthFraction)
+                }
+            }
         }
     }
 
@@ -105,13 +126,36 @@ struct HarmonicaScreen: View {
                     HoleView(state: hole)
                 }
             }
-            .overlay { fingerCircles(across: geometry.size) }
-            .overlay { touchArea(across: geometry.size) }
+            .overlay { circles(Self.fingerMarks(at: fingerLocations, across: geometry.size)) }
+            .overlay { holesTouchArea(across: geometry.size) }
         }
     }
 
-    private func fingerCircles(across size: CGSize) -> some View {
-        ForEach(Self.fingerMarks(at: fingerLocations, across: size)) { mark in
+    private func toneShapingZone(_ state: ToneShapingViewState) -> some View {
+        GeometryReader { geometry in
+            RoundedRectangle(cornerRadius: Self.zoneCornerRadius)
+                .fill(Color(white: 0.13))
+                .overlay(alignment: .leading) { zoneLabels(state) }
+                .overlay { circles(Self.shapingMarks(at: shapingLocations)) }
+                .overlay { shapingTouchArea(across: geometry.size) }
+        }
+        .accessibilityIdentifier("harmonica.toneShapingZone")
+    }
+
+    private func zoneLabels(_ state: ToneShapingViewState) -> some View {
+        VStack(alignment: .leading) {
+            Text(state.bendLabel)
+            Spacer()
+            Text(state.vibratoLabel)
+        }
+        .font(.caption)
+        .foregroundStyle(Color(white: 0.4))
+        .padding(8)
+        .accessibilityHidden(true)
+    }
+
+    private func circles(_ marks: [FingerMark]) -> some View {
+        ForEach(marks) { mark in
             Circle()
                 .strokeBorder(
                     mark.decidesBreath ? Color.white : Color(white: 0.5),
@@ -123,11 +167,30 @@ struct HarmonicaScreen: View {
         .accessibilityHidden(true)
     }
 
-    private func touchArea(across size: CGSize) -> some View {
+    private func holesTouchArea(across size: CGSize) -> some View {
         TouchArea { locations in
             fingerLocations = locations
             viewModel.play(at: locations.map { Self.position(of: $0, across: size) })
         }
+    }
+
+    private func shapingTouchArea(across size: CGSize) -> some View {
+        TouchArea { locations in
+            shapingLocations = locations
+            shapeTone(from: locations, across: size)
+        }
+    }
+
+    private func shapeTone(from locations: [CGPoint], across size: CGSize) {
+        guard let leading = Self.topmost(of: locations) else {
+            viewModel.stopShapingTone()
+            return
+        }
+
+        viewModel.shapeTone(
+            bend: Double(leading.y / size.height),
+            vibrato: Double(leading.x / size.width)
+        )
     }
 
     @MainActor
@@ -137,6 +200,7 @@ struct HarmonicaScreen: View {
             await viewModel.prepareSound()
         default:
             viewModel.stopPlaying()
+            viewModel.stopShapingTone()
         }
     }
 }

@@ -2,6 +2,7 @@ import Foundation
 
 struct HarmonicaPresenter {
     private static let soundUnavailableText = "Sound is unavailable."
+    private static let toneShaping = ToneShapingViewState(bendLabel: "bend", vibratoLabel: "vibrato")
 
     private let holeLabels: [String]
 
@@ -12,7 +13,13 @@ struct HarmonicaPresenter {
     }
 
     func present(soundingHoles: Set<Hole>, key: HarmonicaKey) -> HarmonicaViewState {
-        .ready(PlayableHarmonica(holes: holes(soundingHoles: soundingHoles), key: keyState(key)))
+        .ready(
+            PlayableHarmonica(
+                holes: holes(soundingHoles: soundingHoles),
+                key: keyState(key),
+                toneShaping: Self.toneShaping
+            )
+        )
     }
 
     func presentSoundUnavailable() -> HarmonicaViewState {
