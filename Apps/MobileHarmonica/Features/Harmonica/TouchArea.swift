@@ -49,7 +49,11 @@ final class TouchTrackingView: UIView {
     // MARK: - Private
 
     private func reportTouches(of event: UIEvent?) {
-        let stillDown = (event?.allTouches ?? []).filter { $0.phase != .ended && $0.phase != .cancelled }
-        touchesChanged(stillDown.map { $0.location(in: self) })
+        let mine = (event?.allTouches ?? []).filter(isStillDownHere)
+        touchesChanged(mine.map { $0.location(in: self) })
+    }
+
+    private func isStillDownHere(_ touch: UITouch) -> Bool {
+        touch.view === self && touch.phase != .ended && touch.phase != .cancelled
     }
 }

@@ -140,7 +140,11 @@ ten. The mix is divided by the total gain of the sounding voices, so ten notes c
 and one note is as loud as it was before.
 
 Touches arrive through `TouchArea`, a `UIViewRepresentable` over a `UIView` with
-`isMultipleTouchEnabled`. SwiftUI's `DragGesture` reports one finger and no contact radius,
+`isMultipleTouchEnabled`. `UIEvent.allTouches` is every touch in the application, not the
+ones this view received, so the view filters by `touch.view === self`. Without that filter
+each of the two areas sees the other's fingers, converted into its own coordinates, and the
+harmonica's fingers land at a negative x inside the zone, win the topmost arbitration and
+hold the vibrato at zero. SwiftUI's `DragGesture` reports one finger and no contact radius,
 so it cannot carry this. The view reports the whole set of touches still down on every
 change, and an empty set is what silences the harmonica.
 
@@ -153,7 +157,8 @@ Lifting the finger silences the note.
 A finger that leaves the strip horizontally silences the note. Returning to the strip
 sounds the hole again.
 
-The tone shaping zone takes the right 28 per cent of the strip. A finger there shapes the
+The tone shaping zone takes the right 18 per cent of the strip, which leaves each hole about
+63 points wide, close to a fingertip. A finger there shapes the
 sound instead of sounding a reed: down bends the pitch, right deepens the vibrato. The
 topmost finger in the zone drives it, the same rule the harmonica uses, because
 `UIEvent.allTouches` is a set and has no order to take a first finger from. Lifting every
