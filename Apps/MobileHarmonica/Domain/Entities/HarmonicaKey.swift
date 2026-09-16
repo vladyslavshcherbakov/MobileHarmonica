@@ -13,6 +13,11 @@ enum HarmonicaKey: Int, CaseIterable {
     case fSharp = 6
 
     static let lowest = HarmonicaKey.g
+    static let highestPosition = HarmonicaKey.allCases.count - 1
+
+    init(nearestPosition position: Int) {
+        self = Self.allCases[min(Self.highestPosition, max(0, position))]
+    }
 
     var semitonesFromC: Int {
         rawValue
@@ -20,14 +25,5 @@ enum HarmonicaKey: Int, CaseIterable {
 
     var position: Int {
         rawValue - Self.lowest.rawValue
-    }
-}
-
-// MARK: - HarmonicaKey + position
-
-extension HarmonicaKey {
-    init(nearestPosition position: Int) {
-        let clamped = min(Self.allCases.count - 1, max(0, position))
-        self = Self.allCases[clamped]
     }
 }

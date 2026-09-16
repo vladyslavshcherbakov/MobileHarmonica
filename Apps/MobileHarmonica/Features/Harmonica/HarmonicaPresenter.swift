@@ -31,7 +31,7 @@ struct HarmonicaPresenter {
         KeyViewState(
             label: label(for: key),
             position: Double(key.position),
-            highestPosition: Double(HarmonicaKey.allCases.count - 1)
+            highestPosition: Double(HarmonicaKey.highestPosition)
         )
     }
 

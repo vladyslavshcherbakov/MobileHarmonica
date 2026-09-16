@@ -34,6 +34,10 @@ final class Oscillator {
 
     // MARK: - Private
 
+    private static func gainStep(sampleRate: Double) -> Double {
+        1 / (crossfadeSeconds * sampleRate)
+    }
+
     private func fillWithSilence(frameCount: Int, into buffers: UnsafeMutableAudioBufferListPointer) {
         for frame in 0..<frameCount {
             write(0, atFrame: frame, into: buffers)
@@ -47,7 +51,7 @@ final class Oscillator {
         into buffers: UnsafeMutableAudioBufferListPointer,
         from rendering: inout VoiceSet
     ) {
-        let gainStep = 1 / (Self.crossfadeSeconds * sampleRate)
+        let gainStep = Self.gainStep(sampleRate: sampleRate)
         for frame in 0..<frameCount {
             let value = rendering.nextSample(sampleRate: sampleRate, gainStep: gainStep)
             write(Float(value) * amplitude, atFrame: frame, into: buffers)
