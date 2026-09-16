@@ -135,7 +135,8 @@ apart are a tongue block split. Two on one hole sound one note. Nothing caps the
 
 **The square.** Side is `min(height, width × 0.22)`, so both axes are comparable. The topmost
 finger in it drives both. Lifting out returns pitch and vibrato to rest. When the sounding
-reed cannot bend the square is hatched and its bend label dims.
+reed cannot bend, the bend label dims; the vibrato label does not, because the horizontal
+axis still works.
 
 **Touches** arrive through `TouchArea`, a `UIViewRepresentable` over a `UIView` with
 `isMultipleTouchEnabled`, because `DragGesture` reports one finger and no contact radius.
