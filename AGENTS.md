@@ -1,8 +1,8 @@
 # MobileHarmonica
 
 An expressive two-handed harmonica simulator for iPhone. The product plan is the GDD and
-runs in six phases. Phase 2 is the current state: single touch, both breath directions off
-the vertical axis, sine wave synthesised at runtime. Real samples arrive in Phase 5 and the
+runs in six phases. Phase 3 is the current state: single touch, both breath directions off
+the vertical axis, crossfaded sine wave synthesised at runtime. Real samples arrive in Phase 5 and the
 user supplies them.
 
 ## Constraints
@@ -47,6 +47,12 @@ reaches the user as silence. `PlayHarmonica` deliberately logs nothing. Its earl
 fire once per touch event, which makes them raw samples rather than story, and the domain
 has no log dependency to carry them. Give it one the first time a note-level question cannot
 be answered from the audio log.
+
+`Oscillator` crossfades. `soundTone(at:)` does not cut the previous note, it releases it
+into a fading voice and raises a new one over 20 ms, and `silence()` fades the same way.
+Two voices are enough: a third change during a fade drops the oldest, which is already near
+zero. The render thread reads the voice set, renders a whole buffer, then writes it back
+only when `changeCount` still matches, so a note started mid-buffer is never clobbered.
 
 `AVAudioSession` is configured inside a detached task, never on the main thread. Calling
 `setCategory` or `setActive` from the main thread raises the Hang Risk warnings that Xcode

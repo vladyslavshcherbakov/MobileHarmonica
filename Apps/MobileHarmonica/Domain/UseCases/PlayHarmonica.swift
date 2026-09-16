@@ -26,13 +26,12 @@ final class PlayHarmonica {
     func stopPlaying() {
         guard soundingReed != nil else { return }
 
-        audioEngine.stopTone()
+        audioEngine.silence()
         soundingReed = nil
     }
 
     private func sound(_ reed: Reed) {
-        audioEngine.stopTone()
-        audioEngine.startTone(at: tuning.pitch(for: reed))
+        audioEngine.soundTone(at: tuning.pitch(for: reed))
         soundingReed = reed
     }
 }

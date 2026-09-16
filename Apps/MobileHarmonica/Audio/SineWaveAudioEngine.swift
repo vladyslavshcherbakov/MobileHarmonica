@@ -25,12 +25,12 @@ final class SineWaveAudioEngine: AudioEngineProtocol {
         }
     }
 
-    func startTone(at pitch: Measurement<UnitFrequency>) {
-        oscillator.start(atHertz: pitch.converted(to: .hertz).value)
+    func soundTone(at pitch: Measurement<UnitFrequency>) {
+        oscillator.sound(atHertz: pitch.converted(to: .hertz).value)
     }
 
-    func stopTone() {
-        oscillator.stop()
+    func silence() {
+        oscillator.silence()
     }
 
     // MARK: - Private
