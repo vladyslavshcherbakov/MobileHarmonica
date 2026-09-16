@@ -6,8 +6,9 @@ struct HarmonicaScreen: View {
     private static let keyLabelWidth: CGFloat = 34
     private static let fingerCircleDiameter: CGFloat = 56
     private static let fingerCircleLineWidth: CGFloat = 3
-    private static let zoneWidthFraction: CGFloat = 0.13
+    private static let zoneWidthFraction: CGFloat = 0.22
     private static let zoneCornerRadius: CGFloat = 12
+    private static let stripeSpacing: CGFloat = 10
 
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var viewModel: HarmonicaViewModel
@@ -30,6 +31,10 @@ struct HarmonicaScreen: View {
     }
 
     // MARK: - Private
+
+    private static func zoneSide(in size: CGSize) -> CGFloat {
+        min(size.height, size.width * Self.zoneWidthFraction)
+    }
 
     private static func position(of location: CGPoint, across size: CGSize) -> PositionOnHarmonica {
         PositionOnHarmonica(
@@ -92,7 +97,10 @@ struct HarmonicaScreen: View {
                 HStack(spacing: Self.holeSpacing) {
                     holes(playable.holes)
                     toneShapingZone(playable.toneShaping)
-                        .frame(width: geometry.size.width * Self.zoneWidthFraction)
+                        .frame(
+                            width: Self.zoneSide(in: geometry.size),
+                            height: Self.zoneSide(in: geometry.size)
+                        )
                 }
             }
         }
@@ -135,6 +143,7 @@ struct HarmonicaScreen: View {
         GeometryReader { geometry in
             RoundedRectangle(cornerRadius: Self.zoneCornerRadius)
                 .fill(Color(white: 0.13))
+                .overlay { unavailableBendStripes(state) }
                 .overlay(alignment: .leading) { zoneLabels(state) }
                 .overlay { circles(Self.shapingMarks(at: shapingLocations)) }
                 .overlay { shapingTouchArea(across: geometry.size) }
@@ -142,14 +151,25 @@ struct HarmonicaScreen: View {
         .accessibilityIdentifier("harmonica.toneShapingZone")
     }
 
+    @ViewBuilder
+    private func unavailableBendStripes(_ state: ToneShapingViewState) -> some View {
+        if !state.bendIsAvailable {
+            DiagonalStripes(spacing: Self.stripeSpacing)
+                .stroke(Color(white: 0.28), lineWidth: 1)
+                .clipShape(RoundedRectangle(cornerRadius: Self.zoneCornerRadius))
+                .accessibilityHidden(true)
+        }
+    }
+
     private func zoneLabels(_ state: ToneShapingViewState) -> some View {
         VStack(alignment: .leading) {
             Text(state.bendLabel)
+                .foregroundStyle(state.bendIsAvailable ? Color(white: 0.55) : Color(white: 0.3))
             Spacer()
             Text(state.vibratoLabel)
+                .foregroundStyle(Color(white: 0.55))
         }
         .font(.caption)
-        .foregroundStyle(Color(white: 0.4))
         .padding(8)
         .accessibilityHidden(true)
     }

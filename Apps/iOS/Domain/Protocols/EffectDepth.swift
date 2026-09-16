@@ -8,6 +8,6 @@ protocol EffectDepth {
 
 extension EffectDepth {
     init(clamping value: Double) {
-        self.init(fraction: value.isFinite ? min(1, max(0, value)) : 0)
+        self.init(fraction: ControlPrecision.quantised(value))
     }
 }

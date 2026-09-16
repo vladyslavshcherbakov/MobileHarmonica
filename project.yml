@@ -18,7 +18,7 @@ targets:
     type: application
     platform: iOS
     sources:
-      - path: Apps/MobileHarmonica
+      - path: Apps/iOS
         excludes:
           - Tests
     settings:
@@ -27,7 +27,7 @@ targets:
         PRODUCT_NAME: MobileHarmonica
         GENERATE_INFOPLIST_FILE: NO
     info:
-      path: Apps/MobileHarmonica/Info.plist
+      path: Apps/iOS/Info.plist
       properties:
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
@@ -38,7 +38,7 @@ targets:
     type: bundle.unit-test
     platform: iOS
     sources:
-      - path: Apps/MobileHarmonica/Tests
+      - path: Apps/iOS/Tests
     dependencies:
       - target: MobileHarmonica
     settings:

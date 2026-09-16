@@ -17,6 +17,7 @@ struct PlayableHarmonica: Equatable {
 struct ToneShapingViewState: Equatable {
     let bendLabel: String
     let vibratoLabel: String
+    let bendIsAvailable: Bool
 }
 
 // MARK: - HoleViewState

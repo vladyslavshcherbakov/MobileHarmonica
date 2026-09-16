@@ -14,6 +14,6 @@ extension BreathIntensity {
     init(at position: PositionOnHarmonica) {
         let pressed = min(1, abs(position.fractionAboveCentreLine) / Self.distanceAtFullPressure)
         let headroom = 1 - Self.gainOnTheCentreLine
-        gain = Self.gainOnTheCentreLine + headroom * (1 - pow(1 - pressed, 2))
+        gain = ControlPrecision.quantised(Self.gainOnTheCentreLine + headroom * (1 - pow(1 - pressed, 2)))
     }
 }

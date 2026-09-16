@@ -72,7 +72,7 @@ final class PlayHarmonica {
         Set(soundingReeds.map(\.hole))
     }
 
-    private var bendableSemitones: Double {
+    var bendableSemitones: Double {
         soundingReeds.map { tuning.tone(for: $0, in: key).bendableSemitones }.max() ?? 0
     }
 

@@ -2,7 +2,8 @@ import Foundation
 
 struct HarmonicaPresenter {
     private static let soundUnavailableText = "Sound is unavailable."
-    private static let toneShaping = ToneShapingViewState(bendLabel: "bend ↓", vibratoLabel: "vibrato →")
+    private static let bendLabel = "bend ↓"
+    private static let vibratoLabel = "vibrato →"
 
     private let holeLabels: [String]
 
@@ -12,12 +13,12 @@ struct HarmonicaPresenter {
         holeLabels = Hole.allCases.map { $0.number.formatted(.number.locale(locale)) }
     }
 
-    func present(soundingHoles: Set<Hole>, key: HarmonicaKey) -> HarmonicaViewState {
+    func present(soundingHoles: Set<Hole>, key: HarmonicaKey, bendableSemitones: Double) -> HarmonicaViewState {
         .ready(
             PlayableHarmonica(
                 holes: holes(soundingHoles: soundingHoles),
                 key: keyState(key),
-                toneShaping: Self.toneShaping
+                toneShaping: toneShaping(bendableSemitones: bendableSemitones)
             )
         )
     }
@@ -32,6 +33,14 @@ struct HarmonicaPresenter {
         zip(Hole.allCases, holeLabels).map { hole, label in
             HoleViewState(id: hole.number, label: label, isSounding: soundingHoles.contains(hole))
         }
+    }
+
+    private func toneShaping(bendableSemitones: Double) -> ToneShapingViewState {
+        ToneShapingViewState(
+            bendLabel: Self.bendLabel,
+            vibratoLabel: Self.vibratoLabel,
+            bendIsAvailable: bendableSemitones > 0
+        )
     }
 
     private func keyState(_ key: HarmonicaKey) -> KeyViewState {

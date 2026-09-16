@@ -17,7 +17,7 @@ final class HarmonicaViewModel: ObservableObject {
     func prepareSound() async {
         do {
             try await playHarmonica.prepare()
-            show(presenter.present(soundingHoles: [], key: playHarmonica.key))
+            show(presented(soundingHoles: []))
         } catch {
             show(presenter.presentSoundUnavailable())
         }
@@ -26,14 +26,14 @@ final class HarmonicaViewModel: ObservableObject {
     func play(at positions: [PositionOnHarmonica]) {
         guard case .ready = state else { return }
 
-        show(presenter.present(soundingHoles: playHarmonica.play(at: positions), key: playHarmonica.key))
+        show(presented(soundingHoles: playHarmonica.play(at: positions)))
     }
 
     func changeKey(toPosition position: Double) {
         guard case .ready = state else { return }
 
         let key = HarmonicaKey(nearestPosition: Int(position.rounded()))
-        show(presenter.present(soundingHoles: playHarmonica.changeKey(to: key), key: key))
+        show(presented(soundingHoles: playHarmonica.changeKey(to: key)))
     }
 
     func shapeTone(bend: Double, vibrato: Double) {
@@ -48,10 +48,18 @@ final class HarmonicaViewModel: ObservableObject {
         playHarmonica.stopPlaying()
         guard case .ready = state else { return }
 
-        show(presenter.present(soundingHoles: [], key: playHarmonica.key))
+        show(presented(soundingHoles: []))
     }
 
     // MARK: - Private
+
+    private func presented(soundingHoles: Set<Hole>) -> HarmonicaViewState {
+        presenter.present(
+            soundingHoles: soundingHoles,
+            key: playHarmonica.key,
+            bendableSemitones: playHarmonica.bendableSemitones
+        )
+    }
 
     private func show(_ updated: HarmonicaViewState) {
         guard updated != state else { return }

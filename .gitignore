@@ -5,4 +5,4 @@ xcuserdata/
 DerivedData/
 build/
 .swiftpm/
-Apps/MobileHarmonica/Info.plist
+Apps/iOS/Info.plist
