@@ -13,6 +13,7 @@ final class HarmonicaViewModel: ObservableObject {
         self.presenter = presenter
     }
 
+    @MainActor
     func prepareSound() async {
         do {
             try await playHarmonica.prepare()

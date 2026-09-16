@@ -101,6 +101,7 @@ struct HarmonicaScreen: View {
         }
     }
 
+    @MainActor
     private func prepareOrSilence(for phase: ScenePhase) async {
         switch phase {
         case .active:

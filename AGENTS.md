@@ -35,8 +35,21 @@ behind the protocol is the only thing that changes between phases.
 
 Swift language mode 5 (`SWIFT_VERSION = 5.9`), strict concurrency left at its default of
 `minimal`. View models and the coordinator are plain `ObservableObject` and are not marked
-`@MainActor`, because a `@MainActor` view model cannot be constructed inside the
-`@autoclosure` that `@StateObject` takes. SwiftUI drives all of them from the main actor.
+`@MainActor`, because a `@MainActor` view model needs `MainActor.assumeIsolated` to be
+constructed inside the `@autoclosure` that `@StateObject` takes, and a bridge at every other
+non-isolated callback as well: the `Binding` setter a `Slider` takes, and the closure a
+`UIViewRepresentable` hands to its `UIView`.
+
+The price of leaving it off is that nothing checks which thread publishes. A nonisolated
+`async` function runs its body on the cooperative pool, not on the caller's actor, so every
+`async` function that ends by publishing state must be marked `@MainActor` by hand. That is
+why `HarmonicaViewModel.prepareSound()` and `HarmonicaScreen.prepareOrSilence(for:)` carry
+the annotation: without it the continuation after `await` resumes off the main thread and
+Combine reports publishing from a background thread. Every other caller of `show()` is
+synchronous and reached from a main-thread callback.
+
+Marking the whole view model `@MainActor` would hand that check to the compiler instead.
+It is worth doing the next time this class grows an `async` method.
 
 Logging goes through `TimestampedLog`, which prefixes every line with a fixed-format UTC
 timestamp to the millisecond so that lines can be ordered without depending on the reader's
