@@ -141,9 +141,10 @@ where it is on the instrument.
 **The square.** Natural side is `min(height, width × 0.22)`, so both axes are comparable.
 A pinch on the square resizes it between 0.45 and 2.0 of that, capped by the strip height,
 which on a 844 by 340 strip runs from 84 to 340 points and moves a hole between 70 and 44.
-The recogniser sits on the square's own `TouchTrackingView` and nowhere else: it cancels the
-touches under it, which is right when resizing and wrong on the strip, where two fingers are
-a chord. The size is not stored, so it returns to its natural side on the next launch. The topmost
+The recogniser is created only when a pinch handler is passed, which the strip never does. It
+cancels the touches beneath it, which is right when resizing and ruinous on the strip: two
+fingers there are a chord, and a recogniser attached to every touch view silenced them
+mid-phrase as soon as the pinch recognised. The size is not stored, so it returns to its natural side on the next launch. The topmost
 finger in it drives both. Lifting out returns pitch and vibrato to rest. When the sounding
 reed cannot bend, the bend label dims; the vibrato label does not, because the horizontal
 axis still works.

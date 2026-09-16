@@ -6,9 +6,7 @@ struct TouchArea: UIViewRepresentable {
     var pinched: ((CGFloat) -> Void)?
 
     func makeUIView(context: Context) -> TouchTrackingView {
-        let view = TouchTrackingView(touchesChanged: touchesChanged)
-        view.pinched = pinched
-        return view
+        TouchTrackingView(touchesChanged: touchesChanged, pinched: pinched)
     }
 
     func updateUIView(_ view: TouchTrackingView, context: Context) {
@@ -25,10 +23,13 @@ final class TouchTrackingView: UIView {
 
     // MARK: - Public
 
-    init(touchesChanged: @escaping ([CGPoint]) -> Void) {
+    init(touchesChanged: @escaping ([CGPoint]) -> Void, pinched: ((CGFloat) -> Void)?) {
         self.touchesChanged = touchesChanged
+        self.pinched = pinched
         super.init(frame: .zero)
         isMultipleTouchEnabled = true
+        guard pinched != nil else { return }
+
         addGestureRecognizer(UIPinchGestureRecognizer(target: self, action: #selector(reportPinch)))
     }
 
