@@ -97,14 +97,15 @@ struct HarmonicaScreen: View {
             keyBar(playable.key)
             GeometryReader { geometry in
                 HStack(spacing: Self.holeSpacing) {
-                    holes(playable.holes)
                     toneShapingZone(playable.toneShaping)
                         .frame(
                             width: Self.zoneSide(in: geometry.size, scaledBy: zoneScale),
                             height: Self.zoneSide(in: geometry.size, scaledBy: zoneScale)
                         )
+                    holes(playable.holes)
                 }
             }
+            .ignoresSafeArea(edges: .leading)
         }
     }
 

@@ -115,7 +115,7 @@ shrill. Transposing preserves intervals, so bend ranges are unchanged in every k
 
 | Control | Input | Effect |
 |---|---|---|
-| Hole | Finger x on the strip | Sounds that hole. Every finger sounds its own |
+| Hole | Finger x on the strip, right of the square | Sounds that hole. Every finger sounds its own |
 | Breath direction | y of the **topmost** finger | On or above the centre line blows, below draws |
 | Breath intensity | \|y\| of the same finger | 0.2 on the line to 1.0 at the edge |
 | Bend | Finger y in the square | 0 at the top to the reed's full range at the bottom |
@@ -134,6 +134,10 @@ both filter on `PositionOnHarmonica.isOnTheHarmonica`, which is one rule in one 
 **Chords are the point.** Two fingers on adjacent holes are the chord a mouth makes; two
 apart are a tongue block split. Two on one hole sound one note. Nothing caps the count.
 
+**The square sits on the left**, the strip on the right, for a right-handed player: the right
+hand picks holes, the left thumb shapes. Hole 1 stays at the left end of the strip, which is
+where it is on the instrument.
+
 **The square.** Natural side is `min(height, width × 0.22)`, so both axes are comparable.
 A pinch on the square resizes it between 0.45 and 2.0 of that, capped by the strip height,
 which on a 844 by 340 strip runs from 84 to 340 points and moves a hole between 70 and 44.
@@ -143,6 +147,10 @@ a chord. The size is not stored, so it returns to its natural side on the next l
 finger in it drives both. Lifting out returns pitch and vibrato to rest. When the sounding
 reed cannot bend, the bend label dims; the vibrato label does not, because the horizontal
 axis still works.
+
+**Safe area.** Only the leading edge is ignored, and only the square sits there. The strip
+keeps its trailing and bottom insets, so no plate goes under the notch or under the home
+indicator, and the draw half of every hole stays reachable. The key bar keeps every inset.
 
 **Touches** arrive through `TouchArea`, a `UIViewRepresentable` over a `UIView` with
 `isMultipleTouchEnabled`, because `DragGesture` reports one finger and no contact radius.
