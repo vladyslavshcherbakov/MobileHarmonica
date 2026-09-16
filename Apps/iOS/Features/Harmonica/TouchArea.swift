@@ -2,7 +2,7 @@ import SwiftUI
 import UIKit
 
 struct TouchArea: UIViewRepresentable {
-    let touchesChanged: ([CGPoint]) -> Void
+    let touchesChanged: ([FingerTouch]) -> Void
     var pinched: ((CGFloat) -> Void)?
 
     func makeUIView(context: Context) -> TouchTrackingView {
@@ -15,15 +15,22 @@ struct TouchArea: UIViewRepresentable {
     }
 }
 
+// MARK: - FingerTouch
+
+struct FingerTouch: Equatable {
+    let location: CGPoint
+    let radius: CGFloat
+}
+
 // MARK: - TouchTrackingView
 
 final class TouchTrackingView: UIView {
-    var touchesChanged: ([CGPoint]) -> Void
+    var touchesChanged: ([FingerTouch]) -> Void
     var pinched: ((CGFloat) -> Void)?
 
     // MARK: - Public
 
-    init(touchesChanged: @escaping ([CGPoint]) -> Void, pinched: ((CGFloat) -> Void)?) {
+    init(touchesChanged: @escaping ([FingerTouch]) -> Void, pinched: ((CGFloat) -> Void)?) {
         self.touchesChanged = touchesChanged
         self.pinched = pinched
         super.init(frame: .zero)
@@ -64,7 +71,11 @@ final class TouchTrackingView: UIView {
 
     private func reportTouches(of event: UIEvent?) {
         let mine = (event?.allTouches ?? []).filter(isStillDownHere)
-        touchesChanged(mine.map { $0.location(in: self) })
+        touchesChanged(mine.map(finger))
+    }
+
+    private func finger(_ touch: UITouch) -> FingerTouch {
+        FingerTouch(location: touch.location(in: self), radius: touch.majorRadius)
     }
 
     private func isStillDownHere(_ touch: UITouch) -> Bool {

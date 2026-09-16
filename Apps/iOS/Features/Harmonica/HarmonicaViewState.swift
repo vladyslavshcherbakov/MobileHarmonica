@@ -9,7 +9,17 @@ enum HarmonicaViewState: Equatable {
 struct PlayableHarmonica: Equatable {
     let holes: [HoleViewState]
     let key: KeyViewState
+    let style: PlayingStyleViewState
     let toneShaping: ToneShapingViewState
+}
+
+// MARK: - PlayingStyleViewState
+
+struct PlayingStyleViewState: Equatable {
+    let label: String
+    let fingersLabel: String
+    let mouthLabel: String
+    let isMouth: Bool
 }
 
 // MARK: - ToneShapingViewState

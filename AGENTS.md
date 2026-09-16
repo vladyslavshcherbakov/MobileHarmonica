@@ -115,13 +115,27 @@ shrill. Transposing preserves intervals, so bend ranges are unchanged in every k
 
 | Control | Input | Effect |
 |---|---|---|
-| Hole | Finger x on the strip, right of the square | Sounds that hole. Every finger sounds its own |
+| Hole | Finger x on the strip, right of the square | Sounds that hole. In `fingers` style every finger sounds its own; in `mouth` style only the topmost plays, and it sounds every hole its contact circle touches |
 | Breath direction | y of the **topmost** finger | On or above the centre line blows, below draws |
 | Breath intensity | \|y\| of the same finger | 0.2 on the line to 1.0 at the edge |
 | Bend | Finger y in the square | 0 at the top to the reed's full range at the bottom |
 | Vibrato | Finger x in the square | 0 at the left to 51 cents at the right |
 | Key | Slider in the top bar | Transposes every reed |
 | Zone size | Pinch on the square | Resizes it, trading width with the strip |
+| Playing style | Segmented control in the top bar | `fingers` or `mouth` |
+
+**Two playing styles.** `fingers` is the default and unchanged: one finger, one hole, as many
+fingers as the player has. `mouth` takes the topmost finger only and sounds every hole the
+reported contact circle overlaps, which is `UITouch.majorRadius` either side of the centre.
+Breath direction and intensity come from the centre of that contact, so an edge of the pad
+crossing the centre line changes nothing. Switching style silences whatever was sounding.
+
+The radius is taken literally, with no multiplier, and it is deliberately on trial: at the
+natural square size a hole is about 66 points and a fingertip reports something like 8 to 30,
+so a contact covers well under one hole and reaches two only by straddling a boundary. Two
+things measure it. The finger circle is drawn at the reported radius in `mouth` style instead
+of the fixed 56 points, and `PlayHarmonica` logs the width in hole widths at debug level,
+deduplicated to a hundredth. Decide the multiplier from those numbers, not from an estimate.
 
 **One breath for the whole instrument.** One mouth gives one airflow, so the topmost finger
 decides direction and intensity for every sounding hole. The boundary belongs to blow.
@@ -271,15 +285,15 @@ Everything else drives the app's own graph with the leaves swapped.
 
 ## Known limits
 
-**No mouth width.** A real mouth covers one to four adjacent holes and every covered reed
-sounds at full volume. Position decides which holes, width decides how many, and there is no
-position-based blend between neighbours. This is also why the horizontal crossfade is not
-physical: a real slide overlaps, it does not fade. Modelling width needs no new audio work,
-the engine is already polyphonic; it needs a control surface and the user's decision on where.
+**Mouth width is only as wide as a fingertip.** `mouth` style models width, but from the
+contact radius taken literally, which covers one hole and sometimes two. A real mouth covers
+one to four. Whether `majorRadius` varies usefully on an iPhone has still not been measured;
+that is what the drawn circle and the debug line are for. `UITouch.force` is not an option:
+3D Touch hardware ended with the iPhone XS.
 
-**No contact radius.** `UITouch.majorRadius` exists and `TouchTrackingView` could read it,
-but nobody has measured whether it varies usefully on an iPhone. `UITouch.force` is not an
-option: 3D Touch hardware ended with the iPhone XS.
+**No blend between neighbours.** A covered hole sounds at full volume and an uncovered one is
+silent, with nothing in between. This is also why the horizontal crossfade is not physical: a
+real slide overlaps, it does not fade.
 
 **No wah.** A resonant filter sweeping a sine has no harmonics to emphasise, so it cannot be
 heard before the samples of phase 5.
@@ -301,5 +315,5 @@ screen.
 | Question | Blocked on |
 |---|---|
 | Where the wah control lives: second finger in the square, device tilt, or taking the horizontal axis from vibrato | Nothing audible until phase 5 samples |
-| Where mouth width lives: which phase, and which control surface | The user's decision |
+| Whether the contact radius needs a multiplier to reach a mouth's one to four holes, and which | The measurement from a device |
 | Whether vibrato rate becomes a third axis | Needs a free control |

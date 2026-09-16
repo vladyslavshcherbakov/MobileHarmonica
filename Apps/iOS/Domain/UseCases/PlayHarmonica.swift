@@ -8,8 +8,10 @@ final class PlayHarmonica {
     private var soundingIntensity: BreathIntensity?
     private var bend: BendDepth = .unbent
     private var vibrato: VibratoDepth = .off
+    private var recordedMouthWidth = ""
 
     private(set) var key: HarmonicaKey = .c
+    private(set) var style: PlayingStyle = .fingers
 
     // MARK: - Public
 
@@ -33,10 +35,20 @@ final class PlayHarmonica {
         }
 
         applyBreathIntensity(intensity)
+        recordMouthWidth(of: sounding)
         guard reeds != soundingReeds else { return soundingHoles }
 
         sound(reeds)
         return soundingHoles
+    }
+
+    func changeStyle(to style: PlayingStyle) -> Set<Hole> {
+        guard style != self.style else { return soundingHoles }
+
+        self.style = style
+        log.record("playing style changed to \(style)")
+        stopPlaying()
+        return []
     }
 
     func changeKey(to key: HarmonicaKey) -> Set<Hole> {
@@ -96,7 +108,22 @@ final class PlayHarmonica {
     }
 
     private func holesUnder(_ positions: [PositionOnHarmonica]) -> [Hole] {
-        Set(positions.compactMap(Hole.init(at:))).sorted { $0.number < $1.number }
+        switch style {
+        case .fingers:
+            Set(positions.compactMap(Hole.init(at:))).sorted { $0.number < $1.number }
+        case .mouth:
+            PositionOnHarmonica.topmost(of: positions).map(Hole.allCovered(by:)) ?? []
+        }
+    }
+
+    private func recordMouthWidth(of positions: [PositionOnHarmonica]) {
+        guard style == .mouth, let mouth = PositionOnHarmonica.topmost(of: positions) else { return }
+
+        let width = rounded(mouth.coveredHoleWidths)
+        guard width != recordedMouthWidth else { return }
+
+        recordedMouthWidth = width
+        log.recordSample("mouth \(width) holes wide")
     }
 
     private func sound(_ reeds: [Reed]) {

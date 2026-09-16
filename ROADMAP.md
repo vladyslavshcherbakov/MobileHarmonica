@@ -63,7 +63,12 @@ or writes avoids it.
 
 ## 4. Mouth width
 
-**What.** One control for how many adjacent holes sound at once, from one to four.
+**Partly built.** `mouth` playing style takes the topmost finger and sounds every hole its
+contact circle overlaps. What is missing is reach: the radius is used literally, so a contact
+covers one hole and sometimes two, never the three or four a mouth covers. See item 5.
+
+**What is left.** A rule that turns the reported radius into a mouth-sized span, or a
+different input if the radius turns out not to vary.
 
 **Why it matters more than it looks.** It is the same gap as two other things:
 
@@ -79,23 +84,23 @@ So width and a physical slide are one feature, not two.
 normalised, so four reeds at full gain cannot clip. What it needs is a control surface and a
 decision about where it lives.
 
-**Candidate inputs.** A second finger in the square; `UITouch.majorRadius`, which needs
-measuring first (see item 5); a third axis somewhere.
+**Candidate inputs.** The contact radius, scaled (see item 5); a second finger in the
+square; a third axis somewhere.
 
-**Blocked on.** The user choosing the input.
+**Blocked on.** The measurement in item 5.
 
 ## 5. Contact radius
 
-**What.** Read `UITouch.majorRadius` in `TouchTrackingView`, which already receives the
-touches, and see whether the area of the fingertip varies usefully on an iPhone.
+**Built, on trial.** `TouchTrackingView` reports `UITouch.majorRadius` with every touch, and
+`mouth` style spends it as the mouth's half-width. Whether the value varies usefully on an
+iPhone is still unmeasured, which is the whole question.
 
-**Why.** If it does, it is the natural input for mouth width: press flat to cover more holes,
-press with the tip to isolate one. That is the real gesture.
-
-**Blocked on.** A measurement, not a decision. Twenty lines that log the radius while a
-finger presses flat, on its tip and with two pads. If the value swings between roughly 8 and
-25 points the idea lives; if it sits on one number it is dead. `UITouch.force` is not an
-alternative: 3D Touch hardware ended with the iPhone XS.
+**How it is measured.** In `mouth` style the finger circle is drawn at the reported radius
+rather than the fixed 56 points, and `PlayHarmonica` logs the width in hole widths at debug
+level. Press flat, press on the tip, press with two pads. If the value swings between roughly
+8 and 25 points the idea lives and item 4 gets its multiplier; if it sits on one number it is
+dead and mouth width needs another input. `UITouch.force` is not an alternative: 3D Touch
+hardware ended with the iPhone XS.
 
 ## 6. Smaller wishes
 

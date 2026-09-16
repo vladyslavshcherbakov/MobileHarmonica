@@ -19,11 +19,22 @@ enum Hole: Int, CaseIterable {
 
 extension Hole {
     init?(at position: PositionOnHarmonica) {
-        guard (0...1).contains(position.fractionFromLeftEdge) else { return nil }
+        guard position.isOnTheHarmonica else { return nil }
 
-        let holeCount = Hole.allCases.count
-        let index = min(holeCount - 1, Int(position.fractionFromLeftEdge * Double(holeCount)))
-        self = Hole.allCases[index]
+        self = Hole.allCases[Hole.nearestIndex(atFraction: position.fractionFromLeftEdge)]
+    }
+
+    static func allCovered(by position: PositionOnHarmonica) -> [Hole] {
+        guard position.isOnTheHarmonica else { return [] }
+
+        let leftmost = nearestIndex(atFraction: position.fractionFromLeftEdge - position.fractionCoveredEitherSide)
+        let rightmost = nearestIndex(atFraction: position.fractionFromLeftEdge + position.fractionCoveredEitherSide)
+        return (leftmost...rightmost).map { allCases[$0] }
+    }
+
+    private static func nearestIndex(atFraction fraction: Double) -> Int {
+        let withinTheStrip = min(1, max(0, fraction))
+        return min(allCases.count - 1, Int(withinTheStrip * Double(allCases.count)))
     }
 }
 
@@ -31,6 +42,10 @@ extension Hole {
 
 extension PositionOnHarmonica {
     var isOnTheHarmonica: Bool {
-        Hole(at: self) != nil
+        (0...1).contains(fractionFromLeftEdge)
+    }
+
+    var coveredHoleWidths: Double {
+        2 * fractionCoveredEitherSide * Double(Hole.allCases.count)
     }
 }

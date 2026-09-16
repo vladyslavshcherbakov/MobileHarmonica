@@ -36,6 +36,12 @@ final class HarmonicaViewModel: ObservableObject {
         show(presented(soundingHoles: playHarmonica.changeKey(to: key)))
     }
 
+    func changeStyle(toMouth isMouth: Bool) {
+        guard case .ready = state else { return }
+
+        show(presented(soundingHoles: playHarmonica.changeStyle(to: isMouth ? .mouth : .fingers)))
+    }
+
     func shapeTone(bend: Double, vibrato: Double) {
         playHarmonica.shapeTone(bend: BendDepth(clamping: bend), vibrato: VibratoDepth(clamping: vibrato))
     }
@@ -57,6 +63,7 @@ final class HarmonicaViewModel: ObservableObject {
         presenter.present(
             soundingHoles: soundingHoles,
             key: playHarmonica.key,
+            style: playHarmonica.style,
             bendableSemitones: playHarmonica.bendableSemitones
         )
     }
