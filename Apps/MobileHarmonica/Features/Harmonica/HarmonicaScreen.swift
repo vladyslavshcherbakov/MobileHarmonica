@@ -6,7 +6,7 @@ struct HarmonicaScreen: View {
     private static let keyLabelWidth: CGFloat = 34
     private static let fingerCircleDiameter: CGFloat = 56
     private static let fingerCircleLineWidth: CGFloat = 3
-    private static let zoneWidthFraction: CGFloat = 0.18
+    private static let zoneWidthFraction: CGFloat = 0.13
     private static let zoneCornerRadius: CGFloat = 12
 
     @Environment(\.scenePhase) private var scenePhase

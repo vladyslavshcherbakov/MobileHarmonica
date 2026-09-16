@@ -56,6 +56,10 @@ timestamp to the millisecond so that lines can be ordered without depending on t
 locale. The composition root owns the subsystem and passes it in, so no layer reads
 `Bundle.main` itself.
 
+`changeBend(to:)` and `changeVibrato(to:)` log the value they received at debug level, which
+is the raw-sample level the log rules reserve for frequent input. They were added the first
+time a question about the shaping zone could not be answered from the code alone.
+
 Only the audio layer logs: it is where the story lives, and where a failure
 reaches the user as silence. `PlayHarmonica` deliberately logs nothing. Its early exits
 fire once per touch event, which makes them raw samples rather than story, and the domain
@@ -157,8 +161,8 @@ Lifting the finger silences the note.
 A finger that leaves the strip horizontally silences the note. Returning to the strip
 sounds the hole again.
 
-The tone shaping zone takes the right 18 per cent of the strip, which leaves each hole about
-63 points wide, close to a fingertip. A finger there shapes the
+The tone shaping zone takes the right 13 per cent of the strip, which leaves each hole about
+67 points wide, close to a fingertip. A finger there shapes the
 sound instead of sounding a reed: down bends the pitch, right deepens the vibrato. The
 topmost finger in the zone drives it, the same rule the harmonica uses, because
 `UIEvent.allTouches` is a set and has no order to take a first finger from. Lifting every

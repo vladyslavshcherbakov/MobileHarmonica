@@ -34,10 +34,12 @@ final class SineWaveAudioEngine: AudioEngineProtocol {
     }
 
     func changeBend(to depth: BendDepth) {
+        log.recordSample("bend \(depth.fraction)")
         oscillator.changeBend(to: depth.fraction)
     }
 
     func changeVibrato(to depth: VibratoDepth) {
+        log.recordSample("vibrato \(depth.fraction)")
         oscillator.changeVibrato(to: depth.fraction)
     }
 
