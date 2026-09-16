@@ -47,6 +47,13 @@ final class SineWaveAudioEngine: AudioEngineProtocol {
 
     // MARK: - Private
 
+    private static func sounding(_ tone: Tone) -> SoundingTone {
+        SoundingTone(
+            hertz: tone.pitch.converted(to: .hertz).value,
+            bendableSemitones: tone.bendableSemitones
+        )
+    }
+
     private func configureAudioSession() async throws {
         try await Task.detached(priority: .userInitiated) {
             let session = AVAudioSession.sharedInstance()
