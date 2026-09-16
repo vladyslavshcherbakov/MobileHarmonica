@@ -8,11 +8,14 @@ struct HarmonicaScreen: View {
     private static let fingerCircleLineWidth: CGFloat = 3
     private static let zoneWidthFraction: CGFloat = 0.22
     private static let zoneCornerRadius: CGFloat = 12
+    private static let smallestZoneScale: CGFloat = 0.45
+    private static let largestZoneScale: CGFloat = 2.0
 
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var viewModel: HarmonicaViewModel
     @State private var fingerLocations: [CGPoint] = []
     @State private var shapingLocations: [CGPoint] = []
+    @State private var zoneScale: CGFloat = 1
 
     // MARK: - Public
 
@@ -31,8 +34,8 @@ struct HarmonicaScreen: View {
 
     // MARK: - Private
 
-    private static func zoneSide(in size: CGSize) -> CGFloat {
-        min(size.height, size.width * Self.zoneWidthFraction)
+    private static func zoneSide(in size: CGSize, scaledBy scale: CGFloat) -> CGFloat {
+        min(size.height, min(size.height, size.width * Self.zoneWidthFraction) * scale)
     }
 
     private static func position(of location: CGPoint, across size: CGSize) -> PositionOnHarmonica {
@@ -97,8 +100,8 @@ struct HarmonicaScreen: View {
                     holes(playable.holes)
                     toneShapingZone(playable.toneShaping)
                         .frame(
-                            width: Self.zoneSide(in: geometry.size),
-                            height: Self.zoneSide(in: geometry.size)
+                            width: Self.zoneSide(in: geometry.size, scaledBy: zoneScale),
+                            height: Self.zoneSide(in: geometry.size, scaledBy: zoneScale)
                         )
                 }
             }
@@ -183,10 +186,17 @@ struct HarmonicaScreen: View {
     }
 
     private func shapingTouchArea(across size: CGSize) -> some View {
-        TouchArea { locations in
-            shapingLocations = locations
-            shapeTone(from: locations, across: size)
-        }
+        TouchArea(
+            touchesChanged: { locations in
+                shapingLocations = locations
+                shapeTone(from: locations, across: size)
+            },
+            pinched: resizeZone(by:)
+        )
+    }
+
+    private func resizeZone(by magnification: CGFloat) {
+        zoneScale = min(Self.largestZoneScale, max(Self.smallestZoneScale, zoneScale * magnification))
     }
 
     private func shapeTone(from locations: [CGPoint], across size: CGSize) {

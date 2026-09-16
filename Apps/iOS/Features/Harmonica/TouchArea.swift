@@ -3,13 +3,17 @@ import UIKit
 
 struct TouchArea: UIViewRepresentable {
     let touchesChanged: ([CGPoint]) -> Void
+    var pinched: ((CGFloat) -> Void)?
 
     func makeUIView(context: Context) -> TouchTrackingView {
-        TouchTrackingView(touchesChanged: touchesChanged)
+        let view = TouchTrackingView(touchesChanged: touchesChanged)
+        view.pinched = pinched
+        return view
     }
 
     func updateUIView(_ view: TouchTrackingView, context: Context) {
         view.touchesChanged = touchesChanged
+        view.pinched = pinched
     }
 }
 
@@ -17,6 +21,7 @@ struct TouchArea: UIViewRepresentable {
 
 final class TouchTrackingView: UIView {
     var touchesChanged: ([CGPoint]) -> Void
+    var pinched: ((CGFloat) -> Void)?
 
     // MARK: - Public
 
@@ -24,6 +29,7 @@ final class TouchTrackingView: UIView {
         self.touchesChanged = touchesChanged
         super.init(frame: .zero)
         isMultipleTouchEnabled = true
+        addGestureRecognizer(UIPinchGestureRecognizer(target: self, action: #selector(reportPinch)))
     }
 
     required init?(coder: NSCoder) {
@@ -47,6 +53,13 @@ final class TouchTrackingView: UIView {
     }
 
     // MARK: - Private
+
+    @objc private func reportPinch(_ recogniser: UIPinchGestureRecognizer) {
+        guard recogniser.state == .changed else { return }
+
+        pinched?(recogniser.scale)
+        recogniser.scale = 1
+    }
 
     private func reportTouches(of event: UIEvent?) {
         let mine = (event?.allTouches ?? []).filter(isStillDownHere)

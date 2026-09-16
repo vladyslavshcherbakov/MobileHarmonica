@@ -121,6 +121,7 @@ shrill. Transposing preserves intervals, so bend ranges are unchanged in every k
 | Bend | Finger y in the square | 0 at the top to the reed's full range at the bottom |
 | Vibrato | Finger x in the square | 0 at the left to 51 cents at the right |
 | Key | Slider in the top bar | Transposes every reed |
+| Zone size | Pinch on the square | Resizes it, trading width with the strip |
 
 **One breath for the whole instrument.** One mouth gives one airflow, so the topmost finger
 decides direction and intensity for every sounding hole. The boundary belongs to blow.
@@ -133,7 +134,12 @@ both filter on `PositionOnHarmonica.isOnTheHarmonica`, which is one rule in one 
 **Chords are the point.** Two fingers on adjacent holes are the chord a mouth makes; two
 apart are a tongue block split. Two on one hole sound one note. Nothing caps the count.
 
-**The square.** Side is `min(height, width × 0.22)`, so both axes are comparable. The topmost
+**The square.** Natural side is `min(height, width × 0.22)`, so both axes are comparable.
+A pinch on the square resizes it between 0.45 and 2.0 of that, capped by the strip height,
+which on a 844 by 340 strip runs from 84 to 340 points and moves a hole between 70 and 44.
+The recogniser sits on the square's own `TouchTrackingView` and nowhere else: it cancels the
+touches under it, which is right when resizing and wrong on the strip, where two fingers are
+a chord. The size is not stored, so it returns to its natural side on the next launch. The topmost
 finger in it drives both. Lifting out returns pitch and vibrato to rest. When the sounding
 reed cannot bend, the bend label dims; the vibrato label does not, because the horizontal
 axis still works.
