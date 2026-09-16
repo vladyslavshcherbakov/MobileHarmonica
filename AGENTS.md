@@ -180,7 +180,9 @@ sounds the hole again.
 
 The tone shaping zone takes the right 13 per cent of the strip, which leaves each hole about
 67 points wide, close to a fingertip. A finger there shapes the
-sound instead of sounding a reed: down bends the pitch, right deepens the vibrato. The
+sound instead of sounding a reed: down bends the pitch, right deepens the vibrato. The two
+labels carry an arrow each, because stacked one above the other they read as two rungs of
+the same vertical axis and a player drags down for both. The
 topmost finger in the zone drives it, the same rule the harmonica uses, because
 `UIEvent.allTouches` is a set and has no order to take a first finger from. Lifting every
 finger out of the zone returns the pitch and the vibrato to rest.
@@ -248,6 +250,11 @@ remain, because the breath is taken from the topmost of all touches while only t
 on the strip sound a hole. It then has no circle, so nothing on screen says which finger
 decided. Deciding the breath among the sounding fingers only would fix both, and is a change
 to behaviour the user has not asked for.
+
+Nothing on screen says which reed can bend or by how much, so on most of the harmonica the
+zone's vertical axis does nothing and looks broken. Only eight of the twenty reeds bend at
+all: the draw reed on holes 1, 2, 3, 4 and 6, and the blow reed on holes 8, 9 and 10. The
+number is already in the debug log as "of N semitones", but a player is not reading a log.
 
 Where the wah filter goes is undecided. The zone's one finger already carries bend on its
 vertical axis and vibrato on its horizontal one, so a third parameter needs somewhere else:

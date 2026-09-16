@@ -2,7 +2,7 @@ import Foundation
 
 struct HarmonicaPresenter {
     private static let soundUnavailableText = "Sound is unavailable."
-    private static let toneShaping = ToneShapingViewState(bendLabel: "bend", vibratoLabel: "vibrato")
+    private static let toneShaping = ToneShapingViewState(bendLabel: "bend ↓", vibratoLabel: "vibrato →")
 
     private let holeLabels: [String]
 
