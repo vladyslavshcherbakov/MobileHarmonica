@@ -175,15 +175,15 @@ target gain and the semitones it can bend.
 
 | Call | Frequency | Effect |
 |---|---|---|
-| `soundTones(_:)` | On reed change | Drops the target gain of unwanted voices, raises new ones over 20 ms, bumps `changeCount` |
+| `soundTones(_:)` | On reed change | Drops the target gain of unwanted voices, raises new ones over 20 ms |
 | `changeIntensity(to:)` | Every touch move | One number in its own lock |
 | `changeBend(to:)` | Every touch move | One number in its own lock |
 | `changeVibrato(to:)` | Every touch move | One number in its own lock |
 | `silence()` | Lift | Fades every voice |
 
 **Why the split.** Continuous parameters change on every touch event while the set of
-pitches changes rarely. Routing them through the voice bank would bump `changeCount` on
-nearly every buffer, the render's write-back would be rejected and the note would stutter.
+pitches changes rarely. Routing them through the voice bank would rewrite the voice array on
+nearly every buffer for a number that is one `Double` wide.
 
 **Crossfade, not overlap.** 20 ms linear gain, enough to remove the click at a hole boundary.
 It is not a model of the instrument: a real mouth covers both holes for a moment and both
@@ -200,14 +200,24 @@ Cheaper than a sample, which has to be dragged off its recorded pitch.
 ## Concurrency contract
 
 **The oscillator** is reached from the render thread and the main thread. All state sits
-behind `OSAllocatedUnfairLock`. The render thread reads the bank, renders a whole buffer,
-writes it back **only if `changeCount` still matches**, so a note started mid-buffer is never
-clobbered.
+behind `OSAllocatedUnfairLock`. The render thread reads the bank, renders a whole buffer
+outside the lock, then takes the lock again and **merges its progress into whatever the bank
+now holds**: phase, gain, breath gain and LFO phase per voice, matched by frequency, which is
+unique because `sound(_:)` retargets a voice at a pitch it already holds instead of adding a
+second one. A voice the render pass did not hold was either added mid-buffer or finished
+fading out, and both start a cycle at phase zero.
 
-**Known cost.** That read-modify-write copies the voice array, so the first mutation in a
-buffer triggers one small copy-on-write allocation on the render thread, about ninety times
-a second. Not real-time safe in principle. Accepted: the alternative is a manually allocated
-`os_unfair_lock` held across the whole buffer, and the array holds a handful of voices.
+**Why not write the buffer back whole.** It was, guarded by a `changeCount` that rejected the
+write when the bank had been re-sounded meanwhile. Rejecting it threw away the phase the
+buffer had just advanced, so the next buffer restarted the sine from where the discarded one
+began: a jump of up to 26 times a normal adjacent-sample step, heard as a click. The window
+is the render time, one or two per cent of a buffer period, which is why it was intermittent
+and why stopping a note was the likeliest moment to hit it.
+
+**Known cost.** Merging copies the voice array, so the render thread does one small
+copy-on-write allocation per buffer, about ninety times a second. Not real-time safe in
+principle. Accepted: the alternative is holding the lock across the whole buffer, which
+blocks the main thread for the render's duration, and the array holds a handful of voices.
 Revisit if the audio glitches under load.
 
 **`AVAudioSession`** is configured inside a detached task, never on the main thread.

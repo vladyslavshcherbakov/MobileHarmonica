@@ -53,8 +53,7 @@ final class Oscillator {
             into: buffers,
             from: &rendering
         )
-        rendering.dropSilentVoices()
-        keep(rendering)
+        keepProgress(of: rendering)
     }
 
     // MARK: - Private
@@ -90,12 +89,12 @@ final class Oscillator {
         }
     }
 
-    private func keep(_ rendering: VoiceBank) {
-        bank.withLock { current in
-            guard current.changeCount == rendering.changeCount else { return }
-
-            current = rendering
-        }
+    /// The bank can be re-sounded while the buffer is being filled, so the rendered copy is
+    /// not written back whole. What it carries back is a buffer's worth of progress, applied
+    /// to whatever the bank asks for by the time the buffer is done, so neither a note started
+    /// mid-buffer nor the phase the buffer just advanced is lost.
+    private func keepProgress(of rendering: VoiceBank) {
+        bank.withLock { $0.absorbProgress(of: rendering) }
     }
 
     private func write(_ sample: Float, atFrame frame: Int, into buffers: UnsafeMutableAudioBufferListPointer) {
@@ -121,7 +120,6 @@ private struct VoiceBank {
     var voices: [Voice] = []
     var breathGain = 0.0
     var lfoPhase = 0.0
-    var changeCount = 0
 
     // MARK: - Public
 
@@ -136,14 +134,12 @@ private struct VoiceBank {
         for tone in tones where !isRising(atHertz: tone.hertz) {
             voices.append(Voice(tone))
         }
-        changeCount += 1
     }
 
     mutating func silence() {
         for index in voices.indices {
             voices[index].targetGain = 0
         }
-        changeCount += 1
     }
 
     mutating func bend(by fraction: Double) {
@@ -173,7 +169,12 @@ private struct VoiceBank {
         return mixed * scale
     }
 
-    mutating func dropSilentVoices() {
+    mutating func absorbProgress(of rendered: VoiceBank) {
+        breathGain = rendered.breathGain
+        lfoPhase = rendered.lfoPhase
+        for index in voices.indices {
+            voices[index].absorbProgress(of: rendered.voice(atHertz: voices[index].hertz))
+        }
         voices.removeAll { $0.isSilent }
     }
 
@@ -181,6 +182,10 @@ private struct VoiceBank {
 
     private var soundingGain: Double {
         voices.reduce(0) { $0 + $1.gain }
+    }
+
+    private func voice(atHertz hertz: Double) -> Voice? {
+        voices.first { $0.hertz == hertz }
     }
 
     private mutating func nextVibratoRatio(sampleRate: Double, depth: Double) -> Double {
@@ -216,6 +221,13 @@ private struct Voice {
 
     mutating func bend(by fraction: Double) {
         bendRatio = pow(2, -bendableSemitones * fraction / 12)
+    }
+
+    /// A voice the render pass did not hold has either just been added to the bank or has
+    /// finished fading out there, and both belong at the start of a cycle.
+    mutating func absorbProgress(of rendered: Voice?) {
+        phase = rendered?.phase ?? 0
+        gain = rendered?.gain ?? 0
     }
 
     mutating func nextSample(sampleRate: Double, gainStep: Double, vibratoRatio: Double) -> Double {
