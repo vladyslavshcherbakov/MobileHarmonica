@@ -59,14 +59,14 @@ struct HarmonicaScreen: View {
     }
 
     private static func shapingMarks(at locations: [CGPoint]) -> [FingerMark] {
-        let leading = topmost(of: locations)
+        let leading = topmostOnScreen(of: locations)
 
         return locations.indices.map { index in
             FingerMark(id: index, location: locations[index], decidesBreath: locations[index] == leading)
         }
     }
 
-    private static func topmost(of locations: [CGPoint]) -> CGPoint? {
+    private static func topmostOnScreen(of locations: [CGPoint]) -> CGPoint? {
         locations.min { $0.y < $1.y }
     }
 
@@ -182,7 +182,7 @@ struct HarmonicaScreen: View {
     }
 
     private func shapeTone(from locations: [CGPoint], across size: CGSize) {
-        guard let leading = Self.topmost(of: locations) else {
+        guard let leading = Self.topmostOnScreen(of: locations) else {
             viewModel.stopShapingTone()
             return
         }

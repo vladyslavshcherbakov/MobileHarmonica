@@ -123,6 +123,8 @@ private struct VoiceBank {
     var lfoPhase = 0.0
     var changeCount = 0
 
+    // MARK: - Public
+
     var isSilent: Bool {
         voices.isEmpty
     }
@@ -174,6 +176,8 @@ private struct VoiceBank {
     mutating func dropSilentVoices() {
         voices.removeAll { $0.isSilent }
     }
+
+    // MARK: - Private
 
     private var soundingGain: Double {
         voices.reduce(0) { $0 + $1.gain }

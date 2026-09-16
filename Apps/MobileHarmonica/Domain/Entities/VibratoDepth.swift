@@ -1,9 +1,5 @@
-struct VibratoDepth: Equatable {
+struct VibratoDepth: EffectDepth, Equatable {
     static let off = VibratoDepth(clamping: 0)
 
     let fraction: Double
-
-    init(clamping fraction: Double) {
-        self.fraction = fraction.isFinite ? min(1, max(0, fraction)) : 0
-    }
 }
