@@ -26,6 +26,13 @@ struct HarmonicaScreen: View {
 
     // MARK: - Private
 
+    private static func position(of location: CGPoint, across size: CGSize) -> PositionOnHarmonica {
+        PositionOnHarmonica(
+            fractionFromLeftEdge: Double(location.x / size.width),
+            fractionAboveCentreLine: Double((size.height / 2 - location.y) / size.height)
+        )
+    }
+
     @ViewBuilder
     private var content: some View {
         switch viewModel.state {
@@ -77,8 +84,7 @@ struct HarmonicaScreen: View {
                 }
             }
             .overlay { centreLine }
-            .contentShape(Rectangle())
-            .gesture(playGesture(across: geometry.size))
+            .overlay { touchArea(across: geometry.size) }
         }
     }
 
@@ -89,21 +95,10 @@ struct HarmonicaScreen: View {
             .accessibilityHidden(true)
     }
 
-    private func playGesture(across size: CGSize) -> some Gesture {
-        DragGesture(minimumDistance: 0)
-            .onChanged { touch in
-                viewModel.play(at: position(of: touch.location, across: size))
-            }
-            .onEnded { _ in
-                viewModel.stopPlaying()
-            }
-    }
-
-    private func position(of location: CGPoint, across size: CGSize) -> PositionOnHarmonica {
-        PositionOnHarmonica(
-            fractionFromLeftEdge: Double(location.x / size.width),
-            fractionAboveCentreLine: Double((size.height / 2 - location.y) / size.height)
-        )
+    private func touchArea(across size: CGSize) -> some View {
+        TouchArea { [viewModel] locations in
+            viewModel.play(at: locations.map { Self.position(of: $0, across: size) })
+        }
     }
 
     private func prepareOrSilence(for phase: ScenePhase) async {

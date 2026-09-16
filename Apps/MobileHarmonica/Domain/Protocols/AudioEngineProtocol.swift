@@ -2,6 +2,6 @@ import Foundation
 
 protocol AudioEngineProtocol: AnyObject {
     func prepare() async throws
-    func soundTone(at pitch: Measurement<UnitFrequency>)
+    func soundTones(at pitches: [Measurement<UnitFrequency>])
     func silence()
 }

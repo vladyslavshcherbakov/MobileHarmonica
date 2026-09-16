@@ -1,8 +1,9 @@
 # MobileHarmonica
 
 An expressive two-handed harmonica simulator for iPhone. The product plan is the GDD and
-runs in six phases. Phase 4 is the current state: single touch, both breath directions off
-the vertical axis, crossfaded sine wave synthesised at runtime, and a key slider. Real samples arrive in Phase 5 and the
+runs in six phases. Phase 4 is the current state, with multi-touch pulled forward from the
+user's own design: several fingers, both breath directions off the vertical axis, a
+crossfaded polyphonic sine wave synthesised at runtime, and a key slider. Real samples arrive in Phase 5 and the
 user supplies them.
 
 ## Constraints
@@ -48,11 +49,18 @@ fire once per touch event, which makes them raw samples rather than story, and t
 has no log dependency to carry them. Give it one the first time a note-level question cannot
 be answered from the audio log.
 
-`Oscillator` crossfades. `soundTone(at:)` does not cut the previous note, it releases it
-into a fading voice and raises a new one over 20 ms, and `silence()` fades the same way.
-Two voices are enough: a third change during a fade drops the oldest, which is already near
-zero. The render thread reads the voice set, renders a whole buffer, then writes it back
-only when `changeCount` still matches, so a note started mid-buffer is never clobbered.
+`Oscillator` crossfades and is polyphonic. `soundTones(at:)` does not cut anything: it
+drops the target gain of every voice whose pitch is no longer wanted, and raises a voice for
+every pitch that is not already rising, over 20 ms. A pitch that is still wanted keeps its
+voice, so adding a finger does not re-attack the note already held. `silence()` fades them
+all. The render thread reads the bank, renders a whole buffer, then writes it back only when
+`changeCount` still matches, so a note started mid-buffer is never clobbered.
+
+That read-modify-write copies the voice array, so the first mutation in a buffer triggers one
+small copy-on-write allocation on the render thread, about ninety times a second. Allocating
+there is not real-time safe in principle. It is accepted because the alternative is a
+manually allocated `os_unfair_lock` held across the whole buffer, and because the array holds
+at most a handful of voices. Revisit it if the audio ever glitches under load.
 
 `AVAudioSession` is configured inside a detached task, never on the main thread. Calling
 `setCategory` or `setActive` from the main thread raises the Hang Risk warnings that Xcode
@@ -87,8 +95,23 @@ The key slider sits in a 44 point bar above the harmonica, so the harmonica no l
 the entire screen. The gesture reads its fractions from the harmonica's own area, not the
 window, so the centre line stays at the middle of the playable strip.
 
-The horizontal centre line splits blow from draw. A finger on the line or above it blows,
-a finger below it draws. The boundary belongs to blow, by the user's decision.
+Every finger on the harmonica sounds its own hole. Two fingers on adjacent holes are the
+chord a mouth makes; two fingers apart are the tongue block split a player makes by
+blocking the holes between them. Two fingers on one hole sound one note, not two.
+
+The topmost finger decides the breath for all of them, by the user's decision. On the
+centre line or above it, every sounding hole blows; below it, every one draws. Nobody can
+blow and draw at once, so one finger has to win and the highest one does. The boundary
+belongs to blow.
+
+Nothing caps how many holes sound at once. A mouth reaches about four; ten fingers reach
+ten. The mix is divided by the total gain of the sounding voices, so ten notes cannot clip,
+and one note is as loud as it was before.
+
+Touches arrive through `TouchArea`, a `UIViewRepresentable` over a `UIView` with
+`isMultipleTouchEnabled`. SwiftUI's `DragGesture` reports one finger and no contact radius,
+so it cannot carry this. The view reports the whole set of touches still down on every
+change, and an empty set is what silences the harmonica.
 
 Hole 1 is on the left. The ten segments divide the full width of the safe area equally.
 
@@ -128,7 +151,11 @@ is not handled at all.
 
 UI strings are not localized. `HarmonicaPresenter` holds English literals.
 
-Mouth width is not modelled. On a real harmonica the mouth covers one to four adjacent
+Contact radius is not used. `UITouch.majorRadius` exists and `TouchTrackingView` is already
+the place that could read it, but nobody has measured whether it varies usefully on an
+iPhone. `UITouch.force` is not an option at all: 3D Touch hardware ended with the iPhone XS.
+
+Mouth width as a separate parameter is not modelled. On a real harmonica the mouth covers one to four adjacent
 holes and every covered reed sounds at full volume; position decides which holes are
 covered, width decides how many. There is no position-based blend between neighbours.
 Modelling width needs a polyphonic `AudioEngineProtocol`, which is why it is not in

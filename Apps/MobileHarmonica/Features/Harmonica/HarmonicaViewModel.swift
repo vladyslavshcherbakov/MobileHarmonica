@@ -16,30 +16,30 @@ final class HarmonicaViewModel: ObservableObject {
     func prepareSound() async {
         do {
             try await playHarmonica.prepare()
-            show(presenter.present(soundingHole: nil, key: playHarmonica.key))
+            show(presenter.present(soundingHoles: [], key: playHarmonica.key))
         } catch {
             show(presenter.presentSoundUnavailable())
         }
     }
 
-    func play(at position: PositionOnHarmonica) {
+    func play(at positions: [PositionOnHarmonica]) {
         guard case .ready = state else { return }
 
-        show(presenter.present(soundingHole: playHarmonica.play(at: position), key: playHarmonica.key))
+        show(presenter.present(soundingHoles: playHarmonica.play(at: positions), key: playHarmonica.key))
     }
 
     func changeKey(toPosition position: Double) {
         guard case .ready = state else { return }
 
         let key = HarmonicaKey(nearestPosition: Int(position.rounded()))
-        show(presenter.present(soundingHole: playHarmonica.changeKey(to: key), key: key))
+        show(presenter.present(soundingHoles: playHarmonica.changeKey(to: key), key: key))
     }
 
     func stopPlaying() {
         playHarmonica.stopPlaying()
         guard case .ready = state else { return }
 
-        show(presenter.present(soundingHole: nil, key: playHarmonica.key))
+        show(presenter.present(soundingHoles: [], key: playHarmonica.key))
     }
 
     // MARK: - Private

@@ -4,16 +4,16 @@ import os
 final class Oscillator {
     private static let crossfadeSeconds = 0.02
 
-    private let voices = OSAllocatedUnfairLock(initialState: VoiceSet())
+    private let bank = OSAllocatedUnfairLock(initialState: VoiceBank())
 
     // MARK: - Public
 
-    func sound(atHertz hertz: Double) {
-        voices.withLock { $0.sound(atHertz: hertz) }
+    func sound(atHertz hertzValues: [Double]) {
+        bank.withLock { $0.sound(atHertz: hertzValues) }
     }
 
     func silence() {
-        voices.withLock { $0.silence() }
+        bank.withLock { $0.silence() }
     }
 
     func render(
@@ -22,13 +22,14 @@ final class Oscillator {
         amplitude: Float,
         into buffers: UnsafeMutableAudioBufferListPointer
     ) {
-        var rendering = voices.withLock { $0 }
+        var rendering = bank.withLock { $0 }
         guard !rendering.isSilent else {
             fillWithSilence(frameCount: frameCount, into: buffers)
             return
         }
 
         fill(frameCount: frameCount, sampleRate: sampleRate, amplitude: amplitude, into: buffers, from: &rendering)
+        rendering.dropSilentVoices()
         keep(rendering)
     }
 
@@ -49,7 +50,7 @@ final class Oscillator {
         sampleRate: Double,
         amplitude: Float,
         into buffers: UnsafeMutableAudioBufferListPointer,
-        from rendering: inout VoiceSet
+        from rendering: inout VoiceBank
     ) {
         let gainStep = Self.gainStep(sampleRate: sampleRate)
         for frame in 0..<frameCount {
@@ -58,8 +59,8 @@ final class Oscillator {
         }
     }
 
-    private func keep(_ rendering: VoiceSet) {
-        voices.withLock { current in
+    private func keep(_ rendering: VoiceBank) {
+        bank.withLock { current in
             guard current.changeCount == rendering.changeCount else { return }
 
             current = rendering
@@ -73,47 +74,52 @@ final class Oscillator {
     }
 }
 
-// MARK: - VoiceSet
+// MARK: - VoiceBank
 
-private struct VoiceSet {
-    var sounding: Voice?
-    var fading: Voice?
+private struct VoiceBank {
+    var voices: [Voice] = []
     var changeCount = 0
 
     var isSilent: Bool {
-        sounding == nil && fading == nil
+        voices.isEmpty
     }
 
-    mutating func sound(atHertz hertz: Double) {
-        release()
-        sounding = Voice(hertz: hertz, phase: 0, gain: 0, targetGain: 1)
+    mutating func sound(atHertz hertzValues: [Double]) {
+        for index in voices.indices {
+            voices[index].targetGain = hertzValues.contains(voices[index].hertz) ? 1 : 0
+        }
+        for hertz in hertzValues where !isRising(atHertz: hertz) {
+            voices.append(Voice(hertz: hertz, phase: 0, gain: 0, targetGain: 1))
+        }
         changeCount += 1
     }
 
     mutating func silence() {
-        release()
+        for index in voices.indices {
+            voices[index].targetGain = 0
+        }
         changeCount += 1
     }
 
     mutating func nextSample(sampleRate: Double, gainStep: Double) -> Double {
-        Self.advance(&sounding, sampleRate: sampleRate, gainStep: gainStep)
-            + Self.advance(&fading, sampleRate: sampleRate, gainStep: gainStep)
+        let scale = 1 / max(1, soundingGain)
+        var mixed = 0.0
+        for index in voices.indices {
+            mixed += voices[index].nextSample(sampleRate: sampleRate, gainStep: gainStep)
+        }
+        return mixed * scale
     }
 
-    private static func advance(_ voice: inout Voice?, sampleRate: Double, gainStep: Double) -> Double {
-        guard var playing = voice else { return 0 }
-
-        let value = playing.nextSample(sampleRate: sampleRate, gainStep: gainStep)
-        voice = playing.isSilent ? nil : playing
-        return value
+    mutating func dropSilentVoices() {
+        voices.removeAll { $0.isSilent }
     }
 
-    private mutating func release() {
-        guard var releasing = sounding else { return }
+    private var soundingGain: Double {
+        voices.reduce(0) { $0 + $1.gain }
+    }
 
-        releasing.targetGain = 0
-        fading = releasing
-        sounding = nil
+    private func isRising(atHertz hertz: Double) -> Bool {
+        voices.contains { $0.hertz == hertz && $0.targetGain > 0 }
     }
 }
 

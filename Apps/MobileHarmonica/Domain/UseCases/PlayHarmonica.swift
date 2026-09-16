@@ -1,7 +1,7 @@
 final class PlayHarmonica {
     private let tuning: RichterTuning
     private let audioEngine: AudioEngineProtocol
-    private var soundingReed: Reed?
+    private var soundingReeds: [Reed] = []
 
     private(set) var key: HarmonicaKey = .c
 
@@ -16,36 +16,51 @@ final class PlayHarmonica {
         try await audioEngine.prepare()
     }
 
-    func play(at position: PositionOnHarmonica) -> Hole? {
-        guard let reed = Reed(at: position) else {
+    func play(at positions: [PositionOnHarmonica]) -> Set<Hole> {
+        let reeds = reedsUnder(positions)
+        guard !reeds.isEmpty else {
             stopPlaying()
-            return nil
+            return []
         }
-        guard reed != soundingReed else { return reed.hole }
+        guard reeds != soundingReeds else { return soundingHoles }
 
-        sound(reed)
-        return reed.hole
+        sound(reeds)
+        return soundingHoles
     }
 
-    func changeKey(to key: HarmonicaKey) -> Hole? {
+    func changeKey(to key: HarmonicaKey) -> Set<Hole> {
         self.key = key
-        guard let reed = soundingReed else { return nil }
+        guard !soundingReeds.isEmpty else { return [] }
 
-        sound(reed)
-        return reed.hole
+        sound(soundingReeds)
+        return soundingHoles
     }
 
     func stopPlaying() {
-        guard soundingReed != nil else { return }
+        guard !soundingReeds.isEmpty else { return }
 
         audioEngine.silence()
-        soundingReed = nil
+        soundingReeds = []
     }
 
     // MARK: - Private
 
-    private func sound(_ reed: Reed) {
-        audioEngine.soundTone(at: tuning.pitch(for: reed, in: key))
-        soundingReed = reed
+    private var soundingHoles: Set<Hole> {
+        Set(soundingReeds.map(\.hole))
+    }
+
+    private func reedsUnder(_ positions: [PositionOnHarmonica]) -> [Reed] {
+        guard let breath = Breath(topmostOf: positions) else { return [] }
+
+        return holesUnder(positions).map { Reed(hole: $0, breath: breath) }
+    }
+
+    private func holesUnder(_ positions: [PositionOnHarmonica]) -> [Hole] {
+        Set(positions.compactMap(Hole.init(at:))).sorted { $0.number < $1.number }
+    }
+
+    private func sound(_ reeds: [Reed]) {
+        audioEngine.soundTones(at: reeds.map { tuning.pitch(for: $0, in: key) })
+        soundingReeds = reeds
     }
 }

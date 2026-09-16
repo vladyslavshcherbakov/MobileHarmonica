@@ -25,8 +25,8 @@ final class SineWaveAudioEngine: AudioEngineProtocol {
         }
     }
 
-    func soundTone(at pitch: Measurement<UnitFrequency>) {
-        oscillator.sound(atHertz: pitch.converted(to: .hertz).value)
+    func soundTones(at pitches: [Measurement<UnitFrequency>]) {
+        oscillator.sound(atHertz: pitches.map { $0.converted(to: .hertz).value })
     }
 
     func silence() {

@@ -11,8 +11,8 @@ struct HarmonicaPresenter {
         holeLabels = Hole.allCases.map { $0.number.formatted(.number.locale(locale)) }
     }
 
-    func present(soundingHole: Hole?, key: HarmonicaKey) -> HarmonicaViewState {
-        .ready(PlayableHarmonica(holes: holes(soundingHole: soundingHole), key: keyState(key)))
+    func present(soundingHoles: Set<Hole>, key: HarmonicaKey) -> HarmonicaViewState {
+        .ready(PlayableHarmonica(holes: holes(soundingHoles: soundingHoles), key: keyState(key)))
     }
 
     func presentSoundUnavailable() -> HarmonicaViewState {
@@ -21,9 +21,9 @@ struct HarmonicaPresenter {
 
     // MARK: - Private
 
-    private func holes(soundingHole: Hole?) -> [HoleViewState] {
+    private func holes(soundingHoles: Set<Hole>) -> [HoleViewState] {
         zip(Hole.allCases, holeLabels).map { hole, label in
-            HoleViewState(id: hole.number, label: label, isSounding: hole == soundingHole)
+            HoleViewState(id: hole.number, label: label, isSounding: soundingHoles.contains(hole))
         }
     }
 
