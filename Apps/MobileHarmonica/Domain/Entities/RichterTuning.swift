@@ -1,9 +1,13 @@
 import Foundation
 
 struct RichterTuning {
-    func pitch(for reed: Reed) -> Measurement<UnitFrequency> {
-        note(for: reed).pitch
+    // MARK: - Public
+
+    func pitch(for reed: Reed, in key: HarmonicaKey) -> Measurement<UnitFrequency> {
+        note(for: reed).transposed(by: key.semitonesFromC).pitch
     }
+
+    // MARK: - Private
 
     private func note(for reed: Reed) -> MIDINote {
         switch reed.breath {

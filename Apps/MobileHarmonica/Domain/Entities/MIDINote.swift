@@ -27,9 +27,17 @@ struct MIDINote: Equatable {
 
     let number: Int
 
+    // MARK: - Public
+
+    func transposed(by semitones: Int) -> MIDINote {
+        MIDINote(number: number + semitones)
+    }
+
     var pitch: Measurement<UnitFrequency> {
         Self.concertPitch * pow(2, semitonesFromConcertPitch / Self.semitonesPerOctave)
     }
+
+    // MARK: - Private
 
     private var semitonesFromConcertPitch: Double {
         Double(number - Self.concertPitchNumber)

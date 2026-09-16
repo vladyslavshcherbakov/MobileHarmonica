@@ -3,6 +3,10 @@ final class PlayHarmonica {
     private let audioEngine: AudioEngineProtocol
     private var soundingReed: Reed?
 
+    private(set) var key: HarmonicaKey = .c
+
+    // MARK: - Public
+
     init(tuning: RichterTuning, audioEngine: AudioEngineProtocol) {
         self.tuning = tuning
         self.audioEngine = audioEngine
@@ -23,6 +27,14 @@ final class PlayHarmonica {
         return reed.hole
     }
 
+    func changeKey(to key: HarmonicaKey) -> Hole? {
+        self.key = key
+        guard let reed = soundingReed else { return nil }
+
+        sound(reed)
+        return reed.hole
+    }
+
     func stopPlaying() {
         guard soundingReed != nil else { return }
 
@@ -30,8 +42,10 @@ final class PlayHarmonica {
         soundingReed = nil
     }
 
+    // MARK: - Private
+
     private func sound(_ reed: Reed) {
-        audioEngine.soundTone(at: tuning.pitch(for: reed))
+        audioEngine.soundTone(at: tuning.pitch(for: reed, in: key))
         soundingReed = reed
     }
 }

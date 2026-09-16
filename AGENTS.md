@@ -1,8 +1,8 @@
 # MobileHarmonica
 
 An expressive two-handed harmonica simulator for iPhone. The product plan is the GDD and
-runs in six phases. Phase 3 is the current state: single touch, both breath directions off
-the vertical axis, crossfaded sine wave synthesised at runtime. Real samples arrive in Phase 5 and the
+runs in six phases. Phase 4 is the current state: single touch, both breath directions off
+the vertical axis, crossfaded sine wave synthesised at runtime, and a key slider. Real samples arrive in Phase 5 and the
 user supplies them.
 
 ## Constraints
@@ -76,6 +76,16 @@ The harmonica is a ten hole diatonic in the key of C, Richter tuning.
 
 From hole 7 upwards the draw reed is lower than the blow reed. That is the real Richter
 layout, not a mistake.
+
+The key slider transposes every reed by a whole number of semitones. The twelve keys run
+from G, five semitones below C, to F sharp, six above, so C sits in the middle of the
+slider and no key is shrill. The GDD asks for D and E flat to play along with the Cowboy
+Bebop tracks; both are on the slider. Moving the slider while a note sounds re-sounds it in
+the new key, through the same crossfade.
+
+The key slider sits in a 44 point bar above the harmonica, so the harmonica no longer fills
+the entire screen. The gesture reads its fractions from the harmonica's own area, not the
+window, so the centre line stays at the middle of the playable strip.
 
 The horizontal centre line splits blow from draw. A finger on the line or above it blows,
 a finger below it draws. The boundary belongs to blow, by the user's decision.
