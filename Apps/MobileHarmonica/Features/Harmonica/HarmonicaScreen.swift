@@ -2,7 +2,6 @@ import SwiftUI
 
 struct HarmonicaScreen: View {
     private static let holeSpacing: CGFloat = 6
-    private static let centreLineThickness: CGFloat = 1
     private static let keyBarHeight: CGFloat = 44
     private static let keyLabelWidth: CGFloat = 34
     private static let fingerCircleDiameter: CGFloat = 56
@@ -106,17 +105,9 @@ struct HarmonicaScreen: View {
                     HoleView(state: hole)
                 }
             }
-            .overlay { centreLine }
             .overlay { fingerCircles(across: geometry.size) }
             .overlay { touchArea(across: geometry.size) }
         }
-    }
-
-    private var centreLine: some View {
-        Rectangle()
-            .fill(Color(white: 0.45))
-            .frame(height: Self.centreLineThickness)
-            .accessibilityHidden(true)
     }
 
     private func fingerCircles(across size: CGSize) -> some View {

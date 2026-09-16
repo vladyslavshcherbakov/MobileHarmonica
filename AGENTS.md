@@ -160,6 +160,10 @@ Until it exists, no finger is ignored.
 
 The screen shows ten numbered plates on a dark background and highlights the sounding ones.
 
+Each plate is split in half by shade rather than by a drawn line: the blow half on top at
+full colour, the draw half below it dimmed to 0.55. The split is the centre line, so the
+boundary is visible on every plate at once instead of on one thin rule across them.
+
 A hollow circle follows each finger, drawn where the finger actually is rather than snapped
 to the hole it plays, so the distance to a hole boundary and to the centre line stays
 visible. The finger deciding the breath is drawn in white and the rest in grey. A finger
