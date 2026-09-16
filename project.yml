@@ -19,6 +19,8 @@ targets:
     platform: iOS
     sources:
       - path: Apps/MobileHarmonica
+        excludes:
+          - Tests
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.vladyslavshcherbakov.mobileharmonica
@@ -32,12 +34,25 @@ targets:
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
 
+  MobileHarmonicaTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Apps/MobileHarmonica/Tests
+    dependencies:
+      - target: MobileHarmonica
+
 schemes:
   MobileHarmonica:
     build:
       targets:
         MobileHarmonica: all
+        MobileHarmonicaTests: [test]
     run:
       config: Debug
+    test:
+      config: Debug
+      targets:
+        - MobileHarmonicaTests
     archive:
       config: Release

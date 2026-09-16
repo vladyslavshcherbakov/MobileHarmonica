@@ -23,8 +23,17 @@ question has not come up. Every folder is still written as if it were a module.
 
 Naming register: plain English, as in writing-swift-code.
 
-Test policy: no tests in Phase 1, by the user's decision. From Phase 2, behaviour tests
-through real screens, one bundle hosted by the app.
+Test policy: `MobileHarmonicaTests`, one bundle hosted by the app, added when three fixes in
+a row had gone out for sound this environment cannot hear.
+
+Sound is the one guarantee no screen can show, so it is checked where it is visible: on the
+real `Oscillator`, rendered offline into an `AudioBufferList` by `RenderedSound`, with the
+pitch read back from rising zero crossings. Everything else goes through the app's own graph
+with the leaves swapped, never a second assembly written beside the tests.
+
+The thresholds are chosen so the reader can do the arithmetic: 440 Hz swung by three per
+cent covers 26 Hz, so a spread over 5 Hz is vibrato and a spread under 2 Hz is the
+estimator wandering. B4 pulled down three semitones is A flat 4, 415.30 Hz.
 
 Tools allowed: XcodeGen. AudioKit through Swift Package Manager from Phase 2. Nothing else
 without asking.
