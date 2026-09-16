@@ -1,274 +1,273 @@
 # MobileHarmonica
 
-An expressive two-handed harmonica simulator for iPhone. The product plan is the GDD and
-runs in six phases. Phase 4 is the current state, with multi-touch pulled forward from the
-user's own design: several fingers, both breath directions off the vertical axis, a
-crossfaded polyphonic sine wave synthesised at runtime, and a key slider. Real samples arrive in Phase 5 and the
-user supplies them.
+Expressive harmonica simulator for iPhone. The screen is the instrument: fingers on the left
+strip sound reeds, a square zone on the right shapes the tone. Landscape only.
+
+The product plan is the GDD, in six phases. **Current state: phase 4 complete, with
+multi-touch and the phase 6 shaping zone pulled forward.** Sound is synthesised; real
+samples arrive in phase 5 and the user supplies them.
+
+## Contents
+
+1. [Quick start](#quick-start)
+2. [Constraints](#constraints)
+3. [Repository layout](#repository-layout)
+4. [Architecture](#architecture)
+5. [Instrument reference](#instrument-reference)
+6. [Interaction model](#interaction-model)
+7. [Audio pipeline](#audio-pipeline)
+8. [Concurrency contract](#concurrency-contract)
+9. [Conventions](#conventions)
+10. [Known limits](#known-limits)
+11. [Open questions](#open-questions)
+
+## Quick start
+
+```sh
+xcodegen generate          # after any change to project.yml
+open MobileHarmonica.xcodeproj
+```
+
+Scheme `MobileHarmonica` builds the app and runs `MobileHarmonicaTests`.
+
+`MobileHarmonica.xcodeproj` and `Apps/iOS/Info.plist` are generated and not committed.
 
 ## Constraints
 
-Platforms and minimum OS: iOS 17.0. iPhone only (`TARGETED_DEVICE_FAMILY = 1`).
-Landscape only, both orientations, enforced in the generated Info.plist.
+| | |
+|---|---|
+| Platform | iOS 17.0, iPhone only (`TARGETED_DEVICE_FAMILY = 1`) |
+| Orientation | Landscape only, both directions, enforced in the generated Info.plist |
+| Language | Swift 5.9, language mode 5, strict concurrency `minimal` |
+| Build | XcodeGen via `project.yml`. No other tooling without asking |
+| Dependencies | None. AudioKit through SPM is planned for phase 5 |
+| Persistence | None. No storage, no paired device, no extension |
+| Targets | `MobileHarmonica` (app), `MobileHarmonicaTests` (unit tests hosted by it) |
 
-Targets: `MobileHarmonica` (app) and `MobileHarmonicaTests`, a unit test bundle hosted by it.
-The app target excludes `Tests` from its sources. The test bundle generates its own
-Info.plist through `GENERATE_INFOPLIST_FILE`, because without one Xcode refuses to sign it,
-while the app keeps the generated plist `project.yml` writes for it.
+## Repository layout
 
-What shares storage, and what runs on another device: nothing. One app, no persistence,
-no paired device, no extension.
+```
+Apps/iOS/
+  App/          entry point and composition root
+  Domain/       Entities, Protocols, UseCases. Imports Foundation only
+  Audio/        AudioEngineProtocol implementation
+  Features/     one folder per feature: view state, presenter, view model, views
+  Logging/      TimestampedLog
+  Navigation/   coordinator and routes
+  Tests/        Harmonica/ for behaviour, Support/ for doubles and helpers
+project.yml
+AGENTS.md
+```
 
-## Rules chosen
+The app target's sources are `Apps/iOS` with `Tests` excluded. The test bundle generates its
+own Info.plist through `GENERATE_INFOPLIST_FILE`; without one Xcode refuses to sign it.
 
-Shared code becomes a module when: undecided. There is one app and no shared code, so the
-question has not come up. Every folder is still written as if it were a module.
+One app, so no modules. Every folder is written as if it were one: public on the boundary,
+imports pointing inward.
 
-Naming register: plain English, as in writing-swift-code.
+## Architecture
 
-Test policy: `MobileHarmonicaTests`, one bundle hosted by the app, added when three fixes in
-a row had gone out for sound this environment cannot hear.
+Clean layering. A rule lives in exactly one layer.
+
+| Layer | Path | May import | Owns |
+|---|---|---|---|
+| Domain | `Domain/` | Foundation | Entities, the protocols it needs, the use case |
+| Audio | `Audio/` | AVFoundation, os | The synthesiser behind `AudioEngineProtocol` |
+| Presentation | `Features/` | SwiftUI, UIKit, Combine | View state, presenter, view model, views |
+| Composition | `App/` | everything | Building the graph |
+
+**Enforced boundaries.** Nothing under `Domain/` or `Features/` imports AVFoundation or will
+import AudioKit. No domain type imports `os`; it reaches the log through `LogProtocol`. Only
+values cross a boundary.
+
+**Composition.** `CompositionRoot` takes the audio engine and the log as parameters and
+assembles everything else. `MobileHarmonicaApp` builds the real leaves and hands them in, so
+a test assembles the app's own graph with doubles in their place rather than a second
+assembly that drifts.
+
+**Why one use case.** `PlayHarmonica` covers playing, changing key and shaping the tone,
+because all three read and write one piece of state: which reeds are sounding now.
+`changeKey` re-sounds them, `shapeTone` needs their bend range. Split into three and all
+three would need a shared instrument object, which is this use case under another name. Split
+it only if that state moves into a `Harmonica` entity first.
+
+## Instrument reference
+
+Ten hole diatonic, Richter tuning, key of C at slider position 5.
+
+| hole | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| blow | C4 | E4 | G4 | C5 | E5 | G5 | C6 | E6 | G6 | C7 |
+| draw | D4 | G4 | B4 | D5 | F5 | A5 | B5 | D6 | F6 | A6 |
+| bend | −1 draw | −2 draw | −3 draw | −1 draw | none | −1 draw | none | −1 blow | −1 blow | −2 blow |
+
+From hole 7 up the draw reed is lower than the blow reed. That is the real layout, not a bug.
+
+**Bend.** Not a note of its own: the sounding reed is pulled down towards the other reed of
+the same hole and stops a semitone short, so the range is the interval between the two reeds
+minus one. `RichterTuning` derives it from the two reeds rather than holding a second table.
+Eight of the twenty reeds bend.
+
+**Key slider.** Twelve keys, G (−5 semitones) to F♯ (+6), C in the middle so neither end is
+shrill. Transposing preserves intervals, so bend ranges are unchanged in every key.
+
+## Interaction model
+
+| Control | Input | Effect |
+|---|---|---|
+| Hole | Finger x on the strip | Sounds that hole. Every finger sounds its own |
+| Breath direction | y of the **topmost** finger | On or above the centre line blows, below draws |
+| Breath intensity | \|y\| of the same finger | 0.2 on the line to 1.0 at the edge |
+| Bend | Finger y in the square | 0 at the top to the reed's full range at the bottom |
+| Vibrato | Finger x in the square | 0 at the left to 51 cents at the right |
+| Key | Slider in the top bar | Transposes every reed |
+
+**One breath for the whole instrument.** One mouth gives one airflow, so the topmost finger
+decides direction and intensity for every sounding hole. The boundary belongs to blow.
+
+**Chords are the point.** Two fingers on adjacent holes are the chord a mouth makes; two
+apart are a tongue block split. Two on one hole sound one note. Nothing caps the count.
+
+**The square.** Side is `min(height, width × 0.22)`, so both axes are comparable. The topmost
+finger in it drives both. Lifting out returns pitch and vibrato to rest. When the sounding
+reed cannot bend the square is hatched and its bend label dims.
+
+**Touches** arrive through `TouchArea`, a `UIViewRepresentable` over a `UIView` with
+`isMultipleTouchEnabled`, because `DragGesture` reports one finger and no contact radius.
+
+> `UIEvent.allTouches` is every touch in the application, not the ones this view received.
+> `TouchTrackingView` filters on `touch.view === self`. Without that filter the strip and the
+> square each see the other's fingers in their own coordinates, and a finger on the strip
+> lands at a negative x inside the square, wins the topmost arbitration and pins vibrato to
+> zero.
+
+## Audio pipeline
+
+`Oscillator` is polyphonic and crossfading. A voice is a sine with a frequency, a gain, a
+target gain and the semitones it can bend.
+
+| Call | Frequency | Effect |
+|---|---|---|
+| `soundTones(_:)` | On reed change | Drops the target gain of unwanted voices, raises new ones over 20 ms, bumps `changeCount` |
+| `changeIntensity(to:)` | Every touch move | One number in its own lock |
+| `changeBend(to:)` | Every touch move | One number in its own lock |
+| `changeVibrato(to:)` | Every touch move | One number in its own lock |
+| `silence()` | Lift | Fades every voice |
+
+**Why the split.** Continuous parameters change on every touch event while the set of
+pitches changes rarely. Routing them through the voice bank would bump `changeCount` on
+nearly every buffer, the render's write-back would be rejected and the note would stutter.
+
+**Crossfade, not overlap.** 20 ms linear gain, enough to remove the click at a hole boundary.
+It is not a model of the instrument: a real mouth covers both holes for a moment and both
+sound at full volume. See [Known limits](#known-limits).
+
+**Mixing.** The sum is divided by the total gain of the sounding voices, then by the breath
+gain, so ten notes cannot clip and one note is as loud as it was.
+
+**Bend** is one multiplication by `2^(-semitones/12)`, applied per voice once per buffer.
+Cheaper than a sample, which has to be dragged off its recorded pitch.
+
+**Vibrato** is one shared LFO at 5.5 Hz reaching 3 per cent of the frequency, about 51 cents.
+
+## Concurrency contract
+
+**The oscillator** is reached from the render thread and the main thread. All state sits
+behind `OSAllocatedUnfairLock`. The render thread reads the bank, renders a whole buffer,
+writes it back **only if `changeCount` still matches**, so a note started mid-buffer is never
+clobbered.
+
+**Known cost.** That read-modify-write copies the voice array, so the first mutation in a
+buffer triggers one small copy-on-write allocation on the render thread, about ninety times
+a second. Not real-time safe in principle. Accepted: the alternative is a manually allocated
+`os_unfair_lock` held across the whole buffer, and the array holds a handful of voices.
+Revisit if the audio glitches under load.
+
+**`AVAudioSession`** is configured inside a detached task, never on the main thread.
+`setCategory` and `setActive` can block while the session is active, which is the
+`AVAudioSession Hang Risk` warning.
+
+**Publishing.** View models and the coordinator are plain `ObservableObject`, not
+`@MainActor`. A `@MainActor` view model would need `MainActor.assumeIsolated` inside the
+`@autoclosure` that `@StateObject` takes, plus a bridge at the `Slider` binding and the
+`UIViewRepresentable` callback.
+
+> The price: nothing checks which thread publishes. A nonisolated `async` function runs its
+> body on the cooperative pool, not the caller's actor, so **every `async` function that ends
+> by publishing must be marked `@MainActor` by hand**. That is why
+> `HarmonicaViewModel.prepareSound()` and `HarmonicaScreen.prepareOrSilence(for:)` carry it.
+> Every other caller of `show()` is synchronous and reached from a main-thread callback.
+> Marking the whole view model `@MainActor` hands the check to the compiler; do it the next
+> time this class grows an `async` method.
+
+**Control precision.** `ControlPrecision` quantises intensity, bend and vibrato to a
+hundredth. One per cent of gain and three cents of bend are both below hearing, and without
+it a finger that barely moves fires the engine and the log on every touch event.
+
+## Conventions
+
+**Code.** Plain English names, no comments or documentation comments, one level of
+abstraction per function. `MARK: - Public` and `MARK: - Private` on any type past roughly
+forty lines, and a mark naming every other type or extension in a file.
+
+**Logging.** `PlayHarmonica` tells the story, because only it knows the hole, the breath and
+the key; the engine sees frequencies nobody can trace to a finger.
+
+| Level | Content |
+|---|---|
+| `info` | What starts and stops sounding, key changes, audio engine outcomes |
+| `debug` | Breath intensity, bend with the semitones actually available, vibrato |
+
+Every line carries a fixed-format UTC timestamp to the millisecond, so lines order without
+depending on the reader's locale.
+
+**Tests.** One bundle hosted by the app. Names are `test_subject_whenCondition_outcome`.
+Files are named for the promise, not the type.
 
 Sound is the one guarantee no screen can show, so it is checked where it is visible: on the
-real `Oscillator`, rendered offline into an `AudioBufferList` by `RenderedSound`, with the
-pitch read back from rising zero crossings. Everything else goes through the app's own graph
-with the leaves swapped, never a second assembly written beside the tests.
+real `Oscillator`, rendered offline into an `AudioBufferList` by `RenderedSound`, with pitch
+read back from rising zero crossings. Thresholds are chosen so the reader can do the
+arithmetic: 440 Hz swung by 3 per cent covers 26 Hz, so a spread over 5 Hz is vibrato and
+under 2 Hz is the estimator wandering; B4 pulled three semitones is A♭4, 415.30 Hz.
 
-The thresholds are chosen so the reader can do the arithmetic: 440 Hz swung by three per
-cent covers 26 Hz, so a spread over 5 Hz is vibrato and a spread under 2 Hz is the
-estimator wandering. B4 pulled down three semitones is A flat 4, 415.30 Hz.
+Everything else drives the app's own graph with the leaves swapped.
 
-Tools allowed: XcodeGen. AudioKit through Swift Package Manager from Phase 2. Nothing else
-without asking.
+## Known limits
 
-Audio is reached only through `AudioEngineProtocol`. Nothing under `Domain/` or `Features/`
-imports AVFoundation, and nothing will import AudioKit when it arrives. The implementation
-behind the protocol is the only thing that changes between phases.
+**No mouth width.** A real mouth covers one to four adjacent holes and every covered reed
+sounds at full volume. Position decides which holes, width decides how many, and there is no
+position-based blend between neighbours. This is also why the horizontal crossfade is not
+physical: a real slide overlaps, it does not fade. Modelling width needs no new audio work,
+the engine is already polyphonic; it needs a control surface and the user's decision on where.
 
-Swift language mode 5 (`SWIFT_VERSION = 5.9`), strict concurrency left at its default of
-`minimal`. View models and the coordinator are plain `ObservableObject` and are not marked
-`@MainActor`, because a `@MainActor` view model needs `MainActor.assumeIsolated` to be
-constructed inside the `@autoclosure` that `@StateObject` takes, and a bridge at every other
-non-isolated callback as well: the `Binding` setter a `Slider` takes, and the closure a
-`UIViewRepresentable` hands to its `UIView`.
+**No contact radius.** `UITouch.majorRadius` exists and `TouchTrackingView` could read it,
+but nobody has measured whether it varies usefully on an iPhone. `UITouch.force` is not an
+option: 3D Touch hardware ended with the iPhone XS.
 
-The price of leaving it off is that nothing checks which thread publishes. A nonisolated
-`async` function runs its body on the cooperative pool, not on the caller's actor, so every
-`async` function that ends by publishing state must be marked `@MainActor` by hand. That is
-why `HarmonicaViewModel.prepareSound()` and `HarmonicaScreen.prepareOrSilence(for:)` carry
-the annotation: without it the continuation after `await` resumes off the main thread and
-Combine reports publishing from a background thread. Every other caller of `show()` is
-synchronous and reached from a main-thread callback.
+**No wah.** A resonant filter sweeping a sine has no harmonics to emphasise, so it cannot be
+heard before the samples of phase 5.
 
-Marking the whole view model `@MainActor` would hand that check to the compiler instead.
-It is worth doing the next time this class grows an `async` method.
+**Audio interruptions** are handled only through `scenePhase`. A call takes the app out of
+`.active` and the note stops, but nothing observes
+`AVAudioSession.interruptionNotification`, and a route change such as unplugging headphones
+is not handled.
 
-Logging goes through `TimestampedLog`, which prefixes every line with a fixed-format UTC
-timestamp to the millisecond so that lines can be ordered without depending on the reader's
-locale. The composition root owns the subsystem and passes it in, so no layer reads
-`Bundle.main` itself.
+**UI strings are not localized.** `HarmonicaPresenter` holds English literals.
 
-`PlayHarmonica` tells the story, because only it knows the identity a reader needs: the
-hole, the breath and the key. The engine sees frequencies and would log lines nobody can
-trace back to a finger. It records what starts and stops sounding, and key changes, at info
-level; breath intensity, bend and vibrato are frequent input and go to debug, which is the
-raw-sample level the log rules reserve for it. It reaches the log through `LogProtocol`, so
-no domain type imports `os`.
+**A finger off the strip still decides the breath.** Breath comes from the topmost of all
+touches while only touches on the strip sound a hole, so a finger that has slid off the side
+controls the others and has no circle to show it. Deciding among sounding fingers only would
+fix both; it is a behaviour change nobody has asked for.
 
-The audio layer still logs its own outcomes, because a failure there reaches the user as
-silence and nothing else says why.
-
-`Oscillator` crossfades and is polyphonic. `soundTones(at:)` does not cut anything: it
-drops the target gain of every voice whose pitch is no longer wanted, and raises a voice for
-every pitch that is not already rising, over 20 ms. A pitch that is still wanted keeps its
-voice, so adding a finger does not re-attack the note already held. `silence()` fades them
-all. The render thread reads the bank, renders a whole buffer, then writes it back only when
-`changeCount` still matches, so a note started mid-buffer is never clobbered.
-
-That read-modify-write copies the voice array, so the first mutation in a buffer triggers one
-small copy-on-write allocation on the render thread, about ninety times a second. Allocating
-there is not real-time safe in principle. It is accepted because the alternative is a
-manually allocated `os_unfair_lock` held across the whole buffer, and because the array holds
-at most a handful of voices. Revisit it if the audio ever glitches under load.
-
-`AVAudioSession` is configured inside a detached task, never on the main thread. Calling
-`setCategory` or `setActive` from the main thread raises the Hang Risk warnings that Xcode
-reported after Phase 1, because either call can block while the session is active.
-
-`Oscillator` is reached from the audio render thread and from the main thread. All of its
-state sits behind an `OSAllocatedUnfairLock`, taken twice per buffer rather than once per
-sample.
-
-`CompositionRoot` takes the audio engine and the log as parameters and assembles everything
-else. `MobileHarmonicaApp` builds the real leaves and hands them in, so a test can assemble
-the app's own graph with doubles in their place instead of writing a second assembly beside
-the tests that drifts from this one.
-
-Generated files are not committed: `MobileHarmonica.xcodeproj` and
-`Apps/MobileHarmonica/Info.plist` both come from `project.yml`. Run `xcodegen generate`
-after changing it.
-
-## Behaviour, as settled with the user
-
-The harmonica is a ten hole diatonic in the key of C, Richter tuning.
-
-    hole  1   2   3   4   5   6   7   8   9  10
-    blow  C4  E4  G4  C5  E5  G5  C6  E6  G6  C7
-    draw  D4  G4  B4  D5  F5  A5  B5  D6  F6  A6
-
-From hole 7 upwards the draw reed is lower than the blow reed. That is the real Richter
-layout, not a mistake.
-
-The key slider transposes every reed by a whole number of semitones. The twelve keys run
-from G, five semitones below C, to F sharp, six above, so C sits in the middle of the
-slider and no key is shrill. The GDD asks for D and E flat to play along with the Cowboy
-Bebop tracks; both are on the slider. Moving the slider while a note sounds re-sounds it in
-the new key, through the same crossfade.
-
-The key slider sits in a 44 point bar above the harmonica and the tone shaping zone, so the
-harmonica no longer fills the entire screen. The gesture reads its fractions from the harmonica's own area, not the
-window, so the centre line stays at the middle of the playable strip.
-
-Every finger on the harmonica sounds its own hole. Two fingers on adjacent holes are the
-chord a mouth makes; two fingers apart are the tongue block split a player makes by
-blocking the holes between them. Two fingers on one hole sound one note, not two.
-
-The topmost finger decides the breath for all of them, by the user's decision. On the
-centre line or above it, every sounding hole blows; below it, every one draws. Nobody can
-blow and draw at once, so one finger has to win and the highest one does. The boundary
-belongs to blow.
-
-The vertical distance from the centre line sets how hard the harmonica is blown, taken from
-the same finger that decides the breath, because one mouth gives one airflow to every hole
-at once. On the line the gain is 0.2 rather than 0, by the user's decision, so the
-instrument is always audible; at the top or bottom edge it is 1.
-
-The curve is compressive: it rises fast near the line and flattens towards the edge, which
-is the half of a real reed's response a sine can carry. The other half it cannot. A real
-reed reaches its excursion limit and turns extra pressure into harmonics, so it gets dirtier
-rather than louder, and a sine has no harmonics to add. That waits for the sample layers of
-Phase 5, which ride on this curve rather than replace it.
-
-Intensity changes on every touch move, while the set of sounding pitches changes rarely, so
-they travel by separate methods. `soundTones(at:)` replaces the voices and bumps
-`changeCount`; `changeIntensity(to:)` writes one number to its own lock, which the render
-thread reads fresh each buffer and ramps towards over the same 20 ms. Routing intensity
-through the voice bank instead would invalidate the render's write-back on nearly every
-buffer and the note would stutter.
-
-Nothing caps how many holes sound at once. A mouth reaches about four; ten fingers reach
-ten. The mix is divided by the total gain of the sounding voices, so ten notes cannot clip,
-and one note is as loud as it was before.
-
-Touches arrive through `TouchArea`, a `UIViewRepresentable` over a `UIView` with
-`isMultipleTouchEnabled`. `UIEvent.allTouches` is every touch in the application, not the
-ones this view received, so the view filters by `touch.view === self`. Without that filter
-each of the two areas sees the other's fingers, converted into its own coordinates, and the
-harmonica's fingers land at a negative x inside the zone, win the topmost arbitration and
-hold the vibrato at zero. SwiftUI's `DragGesture` reports one finger and no contact radius,
-so it cannot carry this. The view reports the whole set of touches still down on every
-change, and an empty set is what silences the harmonica.
-
-Hole 1 is on the left. The ten segments divide the full width of the safe area equally.
-
-A hole sounds the moment the finger touches it, before any movement.
-
-Lifting the finger silences the note.
-
-A finger that leaves the strip horizontally silences the note. Returning to the strip
-sounds the hole again.
-
-The tone shaping zone takes the right 13 per cent of the strip, which leaves each hole about
-67 points wide, close to a fingertip. A finger there shapes the
-sound instead of sounding a reed: down bends the pitch, right deepens the vibrato. The two
-labels carry an arrow each, because stacked one above the other they read as two rungs of
-the same vertical axis and a player drags down for both. The
-topmost finger in the zone drives it, the same rule the harmonica uses, because
-`UIEvent.allTouches` is a set and has no order to take a first finger from. Lifting every
-finger out of the zone returns the pitch and the vibrato to rest.
-
-A bend is not a note of its own. It is the sounding reed pulled down towards the other reed
-of the same hole, and it stops a semitone short of reaching it, so each reed has its own
-range: three semitones on hole 3 draw, two on hole 2 draw and hole 10 blow, one on most of
-the rest, and none at all on holes 5 and 7 where the two reeds are already a semitone apart.
-`RichterTuning` derives that range from the two reeds rather than holding a second table.
-Holes 1 to 6 bend on the draw and 7 to 10 on the blow, which follows from the same
-"perevertysh" that makes the draw reed lower from hole 7 up.
-
-Bending is cheaper on a synthesised tone than on a sample: the frequency is already a
-parameter, so a bend is one multiplication by `2^(-semitones/12)`. The GDD routes Phase 6
-through `sampler.pitchBend` because a sample has to be dragged off its recorded pitch.
-
-Bend and vibrato travel like intensity, by their own methods and their own locks, because
-they change on every touch move. A voice carries the semitones it can bend and the render
-thread applies the shared fraction to each voice once per buffer, so the set of sounding
-pitches still changes rarely and the render's write-back is not invalidated. Vibrato is one
-shared LFO at 5.5 Hz reaching 3 per cent of the frequency, about 51 cents, at full depth.
-
-The screen shows ten numbered plates on a dark background and highlights the sounding ones.
-
-Each plate is split in half by shade rather than by a drawn line: the blow half on top at
-full colour, the draw half below it dimmed to 0.55. The split is the centre line, so the
-boundary is visible on every plate at once instead of on one thin rule across them.
-
-A hollow circle follows each finger, drawn where the finger actually is rather than snapped
-to the hole it plays, so the distance to a hole boundary and to the centre line stays
-visible. The finger deciding the breath is drawn in white and the rest in grey. A finger
-that has left the strip sideways makes no sound and gets no circle.
-
-The circles live in the view's own state. They mark where a touch is, which is the view's
-own geometry, so nothing about them reaches the presenter and a finger moving inside one
-hole still publishes no view state.
-
-The app sounds through the silent switch (`AVAudioSession` category `.playback`).
-
-An incoming call or a move to the background silences the note.
-
-When the audio engine fails to start, the screen says so. It never fails quietly.
-
-`HarmonicaViewState` is an enum over the three situations the screen can be in:
-`preparingSound` while the engine starts, `ready` with the ten holes, `soundUnavailable`
-with a message. Returning to the foreground runs `prepareSound()` again, so a screen that
-failed once can recover.
-
-`AppRoute.harmonica` names the only screen that exists and nothing pushes it yet. The scene
-root renders the harmonica directly and installs no `navigationDestination`, because a
-destination mapping `.harmonica` to a second screen would build a second audio engine.
-Add the destination together with the second screen.
+**`AppRoute.harmonica`** names the only screen and nothing pushes it. The scene root renders
+the harmonica directly and installs no `navigationDestination`, because mapping `.harmonica`
+to a destination would build a second audio engine. Add the destination with the second
+screen.
 
 ## Open questions
 
-Audio interruptions are handled only through `scenePhase`. A phone call normally takes the
-app out of `.active`, so the note stops, but nothing observes
-`AVAudioSession.interruptionNotification`, and a route change such as unplugging headphones
-is not handled at all.
-
-UI strings are not localized. `HarmonicaPresenter` holds English literals.
-
-A finger that has left the strip sideways still decides the breath for the fingers that
-remain, because the breath is taken from the topmost of all touches while only the touches
-on the strip sound a hole. It then has no circle, so nothing on screen says which finger
-decided. Deciding the breath among the sounding fingers only would fix both, and is a change
-to behaviour the user has not asked for.
-
-Nothing on screen says which reed can bend or by how much, so on most of the harmonica the
-zone's vertical axis does nothing and looks broken. Only eight of the twenty reeds bend at
-all: the draw reed on holes 1, 2, 3, 4 and 6, and the blow reed on holes 8, 9 and 10. The
-number is already in the debug log as "of N semitones", but a player is not reading a log.
-
-Where the wah filter goes is undecided. The zone's one finger already carries bend on its
-vertical axis and vibrato on its horizontal one, so a third parameter needs somewhere else:
-a second finger in the zone, the device's tilt, or giving the horizontal axis to wah and
-making vibrato automatic. Deciding it costs nothing today, because a resonant filter sweeping
-over a sine has no harmonics to emphasise and cannot be heard at all until the samples of
-Phase 5 arrive.
-
-Contact radius is not used. `UITouch.majorRadius` exists and `TouchTrackingView` is already
-the place that could read it, but nobody has measured whether it varies usefully on an
-iPhone. `UITouch.force` is not an option at all: 3D Touch hardware ended with the iPhone XS.
-
-Mouth width as a separate parameter is not modelled. On a real harmonica the mouth covers one to four adjacent
-holes and every covered reed sounds at full volume; position decides which holes are
-covered, width decides how many. There is no position-based blend between neighbours.
-Modelling width needs a polyphonic `AudioEngineProtocol`, which is why it is not in
-Phases 1 to 4. The user raised it and it is theirs to place.
+| Question | Blocked on |
+|---|---|
+| Where the wah control lives: second finger in the square, device tilt, or taking the horizontal axis from vibrato | Nothing audible until phase 5 samples |
+| Where mouth width lives: which phase, and which control surface | The user's decision |
+| Whether vibrato rate becomes a third axis | Needs a free control |
