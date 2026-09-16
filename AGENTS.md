@@ -56,15 +56,15 @@ timestamp to the millisecond so that lines can be ordered without depending on t
 locale. The composition root owns the subsystem and passes it in, so no layer reads
 `Bundle.main` itself.
 
-`changeBend(to:)` and `changeVibrato(to:)` log the value they received at debug level, which
-is the raw-sample level the log rules reserve for frequent input. They were added the first
-time a question about the shaping zone could not be answered from the code alone.
+`PlayHarmonica` tells the story, because only it knows the identity a reader needs: the
+hole, the breath and the key. The engine sees frequencies and would log lines nobody can
+trace back to a finger. It records what starts and stops sounding, and key changes, at info
+level; breath intensity, bend and vibrato are frequent input and go to debug, which is the
+raw-sample level the log rules reserve for it. It reaches the log through `LogProtocol`, so
+no domain type imports `os`.
 
-Only the audio layer logs: it is where the story lives, and where a failure
-reaches the user as silence. `PlayHarmonica` deliberately logs nothing. Its early exits
-fire once per touch event, which makes them raw samples rather than story, and the domain
-has no log dependency to carry them. Give it one the first time a note-level question cannot
-be answered from the audio log.
+The audio layer still logs its own outcomes, because a failure there reaches the user as
+silence and nothing else says why.
 
 `Oscillator` crossfades and is polyphonic. `soundTones(at:)` does not cut anything: it
 drops the target gain of every voice whose pitch is no longer wanted, and raises a voice for
@@ -86,6 +86,11 @@ reported after Phase 1, because either call can block while the session is activ
 `Oscillator` is reached from the audio render thread and from the main thread. All of its
 state sits behind an `OSAllocatedUnfairLock`, taken twice per buffer rather than once per
 sample.
+
+`CompositionRoot` takes the audio engine and the log as parameters and assembles everything
+else. `MobileHarmonicaApp` builds the real leaves and hands them in, so a test can assemble
+the app's own graph with doubles in their place instead of writing a second assembly beside
+the tests that drifts from this one.
 
 Generated files are not committed: `MobileHarmonica.xcodeproj` and
 `Apps/MobileHarmonica/Info.plist` both come from `project.yml`. Run `xcodegen generate`

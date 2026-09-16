@@ -1,25 +1,20 @@
-import Foundation
-
 struct CompositionRoot {
+    private let audioEngine: AudioEngineProtocol
+    private let log: LogProtocol
+
+    init(audioEngine: AudioEngineProtocol, log: LogProtocol) {
+        self.audioEngine = audioEngine
+        self.log = log
+    }
+
     func harmonicaScreen() -> HarmonicaScreen {
         HarmonicaScreen(viewModel: self.harmonicaViewModel())
     }
 
     private func harmonicaViewModel() -> HarmonicaViewModel {
         HarmonicaViewModel(
-            playHarmonica: PlayHarmonica(tuning: RichterTuning(), audioEngine: audioEngine()),
+            playHarmonica: PlayHarmonica(tuning: RichterTuning(), audioEngine: audioEngine, log: log),
             presenter: HarmonicaPresenter(locale: .current)
         )
-    }
-
-    private func audioEngine() -> AudioEngineProtocol {
-        SineWaveAudioEngine(log: TimestampedLog(subsystem: bundleIdentifier(), category: "audio"))
-    }
-
-    private func bundleIdentifier() -> String {
-        guard let identifier = Bundle.main.bundleIdentifier else {
-            preconditionFailure("the app bundle has no CFBundleIdentifier")
-        }
-        return identifier
     }
 }

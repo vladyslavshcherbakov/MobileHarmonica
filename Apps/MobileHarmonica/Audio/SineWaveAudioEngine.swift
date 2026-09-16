@@ -5,12 +5,12 @@ final class SineWaveAudioEngine: AudioEngineProtocol {
 
     private let engine = AVAudioEngine()
     private let oscillator = Oscillator()
-    private let log: TimestampedLog
+    private let log: LogProtocol
     private var sourceNode: AVAudioSourceNode?
 
     // MARK: - Public
 
-    init(log: TimestampedLog) {
+    init(log: LogProtocol) {
         self.log = log
     }
 
@@ -34,12 +34,10 @@ final class SineWaveAudioEngine: AudioEngineProtocol {
     }
 
     func changeBend(to depth: BendDepth) {
-        log.recordSample("bend \(depth.fraction)")
         oscillator.changeBend(to: depth.fraction)
     }
 
     func changeVibrato(to depth: VibratoDepth) {
-        log.recordSample("vibrato \(depth.fraction)")
         oscillator.changeVibrato(to: depth.fraction)
     }
 

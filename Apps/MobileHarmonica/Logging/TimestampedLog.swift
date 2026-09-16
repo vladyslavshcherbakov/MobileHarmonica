@@ -1,7 +1,7 @@
 import Foundation
 import os
 
-struct TimestampedLog {
+struct TimestampedLog: LogProtocol {
     private static let timestampStyle = Date.ISO8601FormatStyle(timeZone: .gmt)
         .year()
         .month()
