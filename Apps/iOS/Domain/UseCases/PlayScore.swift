@@ -34,7 +34,7 @@ final class PlayScore {
             await perform(event, secondsPerBeat: score.secondsPerBeat, into: continuation)
         }
         continuation.yield(harmonica.shapeTone(.rest, vibrato: .off))
-        continuation.yield(harmonica.stopPlaying())
+        continuation.yield(harmonica.stopPlaying(.ringsDown))
         log.record(Task.isCancelled ? "score stopped early" : "score finished")
         continuation.finish()
     }
@@ -88,7 +88,7 @@ final class PlayScore {
             continuation.yield(harmonica.play(Self.holes(of: note, at: step), breathing: note.breath))
             await wait(until: started, plus: sounding * Double(step + 1) / Double(steps))
         }
-        continuation.yield(harmonica.stopPlaying())
+        continuation.yield(harmonica.stopPlaying(.damped))
         await wait(gap)
     }
 

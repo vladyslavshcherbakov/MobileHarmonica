@@ -78,7 +78,7 @@ final class HarmonicaViewModel: ObservableObject {
         guard case .ready = state else { return }
 
         stopTheScore()
-        show(playHarmonica.stopPlaying())
+        show(playHarmonica.stopPlaying(.ringsDown))
     }
 
     func shapeTone(pitch: Double, vibrato: Double) {
@@ -97,7 +97,7 @@ final class HarmonicaViewModel: ObservableObject {
 
     func stopPlaying() {
         stopTheScore()
-        let harmonica = playHarmonica.stopPlaying()
+        let harmonica = playHarmonica.stopPlaying(.ringsDown)
         guard case .ready = state else { return }
 
         show(harmonica)
@@ -110,7 +110,7 @@ final class HarmonicaViewModel: ObservableObject {
             show(harmonica)
         }
         performance = nil
-        show(playHarmonica.stopPlaying())
+        show(playHarmonica.stopPlaying(.ringsDown))
     }
 
     private func cupHands(to cup: CupDepth) {

@@ -30,7 +30,7 @@ final class PlayHarmonica {
     func play(at positions: [PositionOnHarmonica]) -> Harmonica {
         let sounding = positions.filter(\.isOnTheHarmonica)
         let reeds = reedsUnder(sounding)
-        guard !reeds.isEmpty, let intensity = intensityOf(sounding) else { return stopPlaying() }
+        guard !reeds.isEmpty, let intensity = intensityOf(sounding) else { return stopPlaying(.ringsDown) }
 
         applyBreathIntensity(intensity)
         recordMouthWidth(of: sounding)
@@ -54,7 +54,7 @@ final class PlayHarmonica {
 
         self.style = style
         log.record("playing style changed to \(style)")
-        return stopPlaying()
+        return stopPlaying(.ringsDown)
     }
 
     func changeKey(to key: HarmonicaKey) -> Harmonica {
@@ -90,11 +90,11 @@ final class PlayHarmonica {
         return harmonica
     }
 
-    func stopPlaying() -> Harmonica {
+    func stopPlaying(_ release: ReedRelease) -> Harmonica {
         guard !soundingReeds.isEmpty else { return harmonica }
 
-        audioEngine.silence()
-        log.record("silent, \(describe(soundingReeds)) released")
+        audioEngine.silence(release)
+        log.record("silent, \(describe(soundingReeds)) \(release)")
         soundingReeds = []
         soundingIntensity = nil
         return harmonica

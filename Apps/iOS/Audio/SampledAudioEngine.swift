@@ -52,8 +52,11 @@ final class SampledAudioEngine: AudioEngineProtocol {
         oscillator?.cupHands(to: depth.fraction)
     }
 
-    func silence() {
-        oscillator?.silence()
+    func silence(_ release: ReedRelease) {
+        switch release {
+        case .ringsDown: oscillator?.ringDown()
+        case .damped: oscillator?.damp()
+        }
     }
 
     // MARK: - Private

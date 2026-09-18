@@ -7,7 +7,11 @@ final class RecordingAudioEngine: AudioEngineProtocol {
     private(set) var bends: [BendDepth] = []
     private(set) var vibratos: [VibratoDepth] = []
     private(set) var cups: [CupDepth] = []
-    private(set) var silencings = 0
+    private(set) var releases: [ReedRelease] = []
+
+    var silencings: Int {
+        releases.count
+    }
 
     func prepare() async throws {}
 
@@ -32,8 +36,8 @@ final class RecordingAudioEngine: AudioEngineProtocol {
         cups.append(depth)
     }
 
-    func silence() {
-        silencings += 1
+    func silence(_ release: ReedRelease) {
+        releases.append(release)
     }
 }
 

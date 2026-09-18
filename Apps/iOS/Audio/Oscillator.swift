@@ -44,8 +44,12 @@ final class Oscillator {
         requestedCup.withLock { $0 = fraction }
     }
 
-    func silence() {
-        voices.withLock { $0.silence(over: Self.reedStopsInSeconds) }
+    func ringDown() {
+        voices.withLock { $0.ringDown() }
+    }
+
+    func damp() {
+        voices.withLock { $0.damp(over: Self.reedStopsInSeconds) }
     }
 
     func render(
@@ -61,6 +65,7 @@ final class Oscillator {
         }
 
         rendering.bend(by: requestedBend.withLock { $0 })
+        rendering.prepareRingDown(sampleRate: sampleRate)
         let vibrato = rendering.driftedVibrato(
             depth: requestedVibrato.withLock { $0 },
             overFrames: frameCount,
@@ -213,6 +218,7 @@ private struct Vibrato {
 
 private struct VoiceBank {
     static let reedsOneMouthCovers = 4.0
+    static let ringDownCycles = 30.0
     static let vibratoHertz = 5.5
     static let vibratoPitchAtFullDepth = 0.015
     static let vibratoDipAtFullDepth = 0.25
@@ -227,6 +233,7 @@ private struct VoiceBank {
     var voicesEverSounded = 0
     var cup = CupFilter()
     var driftPhase = 0.0
+    var ringingDown = false
 
     // MARK: - Public
 
@@ -236,6 +243,7 @@ private struct VoiceBank {
 
     mutating func sound(_ playable: [PlayableTone], over seconds: Double, everyReedSpeaksAgain: Bool) {
         crossfadeSeconds = seconds
+        ringingDown = false
         for index in voices.indices where everyReedSpeaksAgain || !isStillWanted(voices[index], in: playable) {
             voices[index].targetGain = 0
         }
@@ -244,10 +252,26 @@ private struct VoiceBank {
         }
     }
 
-    mutating func silence(over seconds: Double) {
+    mutating func ringDown() {
+        ringingDown = true
+        for index in voices.indices {
+            voices[index].targetGain = 0
+        }
+    }
+
+    mutating func damp(over seconds: Double) {
+        ringingDown = false
         crossfadeSeconds = seconds
         for index in voices.indices {
             voices[index].targetGain = 0
+        }
+    }
+
+    mutating func prepareRingDown(sampleRate: Double) {
+        guard ringingDown else { return }
+
+        for index in voices.indices {
+            voices[index].ringDown(overCycles: Self.ringDownCycles, sampleRate: sampleRate)
         }
     }
 
@@ -334,6 +358,8 @@ private struct VoiceBank {
 // MARK: - Voice
 
 private struct Voice {
+    static let inaudibleGain = 0.001
+
     let number: Int
     let hertz: Double
     let bendableSemitones: Double
@@ -343,6 +369,7 @@ private struct Voice {
     var gain = 0.0
     var targetGain = 1.0
     var bendRatio = 1.0
+    var decayPerSample = 0.0
 
     init(_ tone: SoundingTone, playing recorded: RecordedNote, number: Int) {
         self.number = number
@@ -352,7 +379,11 @@ private struct Voice {
     }
 
     var isSilent: Bool {
-        gain <= 0 && targetGain <= 0
+        gain <= Self.inaudibleGain && targetGain <= 0
+    }
+
+    mutating func ringDown(overCycles cycles: Double, sampleRate: Double) {
+        decayPerSample = pow(Self.inaudibleGain, hertz / (cycles * sampleRate))
     }
 
     mutating func bend(by fraction: Double) {
@@ -375,11 +406,20 @@ private struct Voice {
         let value = Double(interpolated(from: frames)) * gain
         position += positionIncrement(sampleRate: sampleRate, pitchRatio: pitchRatio)
         wrapIntoTheLoop()
-        gain = ramped(gain, toward: targetGain, by: ramp)
+        advanceGain(by: ramp)
         return value
     }
 
     // MARK: - Private
+
+    private mutating func advanceGain(by ramp: GainRamp) {
+        guard decayPerSample > 0, targetGain <= 0 else {
+            gain = ramped(gain, toward: targetGain, by: ramp)
+            return
+        }
+
+        gain *= decayPerSample
+    }
 
     private func interpolated(from frames: UnsafeBufferPointer<Float>) -> Float {
         let frame = Int(position)

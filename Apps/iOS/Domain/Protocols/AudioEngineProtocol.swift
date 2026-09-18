@@ -5,5 +5,5 @@ protocol AudioEngineProtocol: AnyObject {
     func changeBend(to depth: BendDepth)
     func changeVibrato(to depth: VibratoDepth)
     func cupHands(to depth: CupDepth)
-    func silence()
+    func silence(_ release: ReedRelease)
 }

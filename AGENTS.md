@@ -435,7 +435,7 @@ until phase 5, and the change was one line: a table read with linear interpolati
 | `changeBend(to:)` | Every touch move | One number in its own lock |
 | `changeVibrato(to:)` | Every touch move | One number in its own lock |
 | `cupHands(to:)` | Every lean of the phone | One number in its own lock |
-| `silence()` | Lift | Fades every voice over the time a reed takes to stop |
+| `silence(_:)` | Lift, or a note ending | Rings every voice down, or damps it, depending on which stopped it |
 
 **Why the split.** Continuous parameters change on every touch event while the set of
 pitches changes rarely. Routing them through the voice bank would rewrite the voice array on
@@ -449,10 +449,23 @@ short enough that a fast run is not smeared, and `.newReed` is 50 ms, for an ove
 or releasing, where one reed really does hand over to another. The domain names the event and
 the audio layer owns the milliseconds.
 
-Letting go has its own 20 ms rather than the last change's, because how long a released reed
-takes to stop is not a property of what was played before it. It used to borrow whatever
-`crossfadeSeconds` held, so a note released after an overbend faded over 50 ms and the same
-note released after a slide over 20.
+**Letting go and being stopped are two different things**, and `ReedRelease` says which one
+happened. When the mouth comes off there is nothing to damp the reed, so it rings down on its
+own, exponentially, over about thirty cycles of its own pitch: 29 ms at C6, 68 ms at A4, 115 ms
+at C4. Measurements of a harmonica reed give 30 to 60 ms up high and 150 to 200 ms down low,
+which is the same statement said the other way round, because the damping is viscous and a
+reed's velocity scales with its frequency, so what is constant is the count of cycles rather
+than the time. Thirty rather than the forty-five those figures average to, because a well set up
+instrument with tight slots and no leaks damps harder, and a set up instrument is what this
+project models everywhere else.
+
+When something stops the reed instead, it is damped and gone in 20 ms, linearly. That is the
+tongue between two notes of a chug, the mouth sliding to the next hole, and the air reversing. A
+score articulates, a lifted finger releases.
+
+Both used to be one linear 20 ms borrowed from whatever `crossfadeSeconds` last held, so nothing
+ever rang, a released note ended like a fade rather than like an instrument, and a note released
+after an overbend took 50 ms while the same note after a slide took 20.
 
 Rise and fall being different is what makes a slide physical: the arriving hole is at full
 volume 5 ms in while the leaving one is still dying, so both sound together for a moment, which

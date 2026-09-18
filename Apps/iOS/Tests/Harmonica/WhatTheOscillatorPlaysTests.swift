@@ -45,6 +45,18 @@ final class WhatTheOscillatorPlaysTests: XCTestCase {
         XCTAssertGreaterThan(kept, 5, "shut hands ring near 600 Hz, which is what makes a wah a vowel")
     }
 
+    func test_release_whenTheMouthComesOff_ringsOnAfterATonguedStopHasGone() {
+        let released = sounding(hertz: 440)
+        let tongued = sounding(hertz: 440)
+        released.ringDown()
+        tongued.damp()
+        RenderedSound.render(1, from: released)
+        RenderedSound.render(1, from: tongued)
+
+        XCTAssertLessThan(RenderedSound.loudness(of: tongued), 0.001, "a tongued reed is gone inside 20 ms")
+        XCTAssertGreaterThan(RenderedSound.loudness(of: released), 0.02, "a released reed rings about 30 cycles")
+    }
+
     func test_vibrato_whenOff_holdsThePitchSteady() {
         let oscillator = sounding(hertz: 440, bendableSemitones: 0)
 
