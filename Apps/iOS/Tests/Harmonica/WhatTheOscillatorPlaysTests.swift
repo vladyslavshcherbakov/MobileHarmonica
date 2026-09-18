@@ -82,7 +82,7 @@ final class WhatTheOscillatorPlaysTests: XCTestCase {
 
     private func sounding(_ tones: [SoundingTone]) -> Oscillator {
         let oscillator = Oscillator(samples: SineSamples.bank())
-        oscillator.sound(tones, over: 0.02)
+        oscillator.sound(tones, over: 0.02, everyReedSpeaksAgain: false)
         oscillator.changeBreathGain(to: 1)
         RenderedSound.settle(oscillator)
         return oscillator

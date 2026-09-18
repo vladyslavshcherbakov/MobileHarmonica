@@ -35,7 +35,7 @@ final class PlayHarmonica {
         recordMouthWidth(of: sounding)
         guard reeds != soundingReeds else { return harmonica }
 
-        sound(reeds, as: .slide)
+        sound(reeds, as: breathTurns(into: reeds) ? .breathReversed : .slide)
         return harmonica
     }
 
@@ -44,7 +44,7 @@ final class PlayHarmonica {
         applyBreathIntensity(.full)
         guard reeds != soundingReeds else { return harmonica }
 
-        sound(reeds, as: .slide)
+        sound(reeds, as: breathTurns(into: reeds) ? .breathReversed : .slide)
         return harmonica
     }
 
@@ -159,6 +159,12 @@ final class PlayHarmonica {
         guard style.coversTheContactWidth else { return Hole(at: position).map { [$0] } ?? [] }
 
         return Hole.allCovered(by: position)
+    }
+
+    private func breathTurns(into reeds: [Reed]) -> Bool {
+        guard let sounding = soundingReeds.first?.breath, let arriving = reeds.first?.breath else { return false }
+
+        return sounding != arriving
     }
 
     private func recordMouthWidth(of positions: [PositionOnHarmonica]) {

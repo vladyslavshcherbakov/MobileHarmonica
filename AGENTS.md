@@ -408,7 +408,7 @@ until phase 5, and the change was one line: a table read with linear interpolati
 
 | Call | Frequency | Effect |
 |---|---|---|
-| `soundTones(_:as:)` | On reed change | Drops the target gain of unwanted voices, raises new ones over the change's crossfade |
+| `soundTones(_:as:)` | On reed change | Fades the voices that are no longer wanted, starts the new ones from their attack |
 | `changeIntensity(to:)` | Every touch move | One number in its own lock |
 | `changeBend(to:)` | Every touch move | One number in its own lock |
 | `changeVibrato(to:)` | Every touch move | One number in its own lock |
@@ -428,8 +428,20 @@ the audio layer owns the milliseconds.
 
 Rise and fall being different is what makes a slide physical: the arriving hole is at full
 volume 5 ms in while the leaving one is still dying, so both sound together for a moment, which
-is what a mouth dragging across the strip actually does. It used to be a true crossfade, one
+is what a mouth dragging against the strip actually does. It used to be a true crossfade, one
 reed's gain trading against the other's, which is a dissolve and not a mouth.
+
+**A reed that has stopped speaks again rather than resuming.** A voice that is still wanted
+keeps sounding, because the mouth never left that hole. A voice that is fading is never revived:
+when its pitch is asked for again, it goes on dying and a new voice starts from the recorded
+attack beside it. Reviving it meant a note taken again within the fade came back from the middle
+of its loop with no attack at all, which is what made a fast repeat on one hole sound smeared.
+
+**Turning the breath makes every reed speak again**, because every reed really does stop when
+the air reverses. `ToneChange.breathReversed` says so, and the bank drops all its voices and
+starts the wanted pitches afresh. Without it a pitch belonging to both breaths carried straight
+through the reversal: on a C harmonica that is G4, hole 3 blown and hole 2 drawn, so a contact
+covering both holes kept one note going while the rest re-attacked.
 
 **The recordings.** `RecordedHarmonica` reads every WAV in the bundle's `Samples` folder at
 `prepare()`, mixes each to mono and appends it to one contiguous `[Float]`, so nothing is
@@ -497,10 +509,14 @@ leaves.
 **The oscillator** is reached from the render thread and the main thread. All state sits
 behind `OSAllocatedUnfairLock`. The render thread reads the bank, renders a whole buffer
 outside the lock, then takes the lock again and **merges its progress into whatever the bank
-now holds**: phase, gain, breath gain and LFO phase per voice, matched by frequency, which is
-unique because `sound(_:)` retargets a voice at a pitch it already holds instead of adding a
-second one. A voice the render pass did not hold was either added mid-buffer or finished
-fading out, and both start a cycle at phase zero.
+now holds**: phase, gain, breath gain and LFO phase per voice, matched by the number the voice
+was given when it started. A voice the render pass did not hold was either added mid-buffer or
+finished fading out, and both start a cycle at phase zero.
+
+The number is what lets two voices hold one pitch, which is what a note taken again before it
+has faded needs: the old one goes on dying while the new one speaks. Matching by frequency was
+enough only while a pitch could never appear twice, and buying that uniqueness cost every
+re-articulation.
 
 **Why not write the buffer back whole.** It was, guarded by a `changeCount` that rejected the
 write when the bank had been re-sounded meanwhile. Rejecting it threw away the phase the
@@ -587,12 +603,6 @@ that is what the drawn circle and the debug line are for. `UITouch.force` is not
 silent, with nothing in between. The slide across a boundary does overlap now, since a reed
 rises faster than the one it replaces falls, but how much of a hole is covered still changes
 nothing.
-
-**A pitch two chords share does not re-articulate.** Voices are matched by frequency, which is
-what lets the render thread merge its progress back, so a pitch that survives a change keeps
-its loop position instead of speaking again. Only G4 is in both breaths of a C harmonica, at
-hole 3 blown and hole 2 drawn, so it takes a chord spanning those holes reversing its breath.
-Fixing it needs two voices at one pitch, which is exactly the invariant the merge relies on.
 
 **Blow and draw sound the same.** The library records 19 distinct pitches, not 20 reeds, so
 nothing separates a blow reed from a draw reed. The screen still says which breath is

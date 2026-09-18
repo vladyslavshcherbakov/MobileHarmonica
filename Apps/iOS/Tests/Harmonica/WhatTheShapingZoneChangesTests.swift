@@ -83,6 +83,15 @@ final class WhatTheShapingZoneChangesTests: XCTestCase {
         XCTAssertEqual(engine.soundedTones.last?.first?.bendableSemitones, 3)
     }
 
+    func test_harmonica_whenTheBreathTurnsWhileAHoleSounds_makesEveryReedSpeakAgain() {
+        let harmonica = harmonica()
+        _ = harmonica.play(at: [PositionOnHarmonica(fractionFromLeftEdge: 0.25, fractionAboveCentreLine: 0.2)])
+
+        _ = harmonica.play(at: [PositionOnHarmonica(fractionFromLeftEdge: 0.25, fractionAboveCentreLine: -0.3)])
+
+        XCTAssertEqual(engine.toneChanges, [.slide, .breathReversed])
+    }
+
     func test_harmonica_whenTheTopmostFingerIsAboveTheLine_blowsEveryHole() {
         let harmonica = harmonica()
         _ = harmonica.changeStyle(to: .severalFingersOneNote)

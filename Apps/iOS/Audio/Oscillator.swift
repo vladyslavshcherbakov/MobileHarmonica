@@ -16,9 +16,11 @@ final class Oscillator {
         self.samples = samples
     }
 
-    func sound(_ tones: [SoundingTone], over crossfadeSeconds: Double) {
+    func sound(_ tones: [SoundingTone], over crossfadeSeconds: Double, everyReedSpeaksAgain: Bool) {
         let playable = recorded(tones)
-        voices.withLock { $0.sound(playable, over: crossfadeSeconds) }
+        voices.withLock {
+            $0.sound(playable, over: crossfadeSeconds, everyReedSpeaksAgain: everyReedSpeaksAgain)
+        }
     }
 
     func changeBreathGain(to gain: Double) {
@@ -163,6 +165,7 @@ private struct VoiceBank {
     var breathGain = 0.0
     var lfoPhase = 0.0
     var crossfadeSeconds = 0.02
+    var voicesEverSounded = 0
 
     // MARK: - Public
 
@@ -170,13 +173,13 @@ private struct VoiceBank {
         voices.isEmpty
     }
 
-    mutating func sound(_ playable: [PlayableTone], over seconds: Double) {
+    mutating func sound(_ playable: [PlayableTone], over seconds: Double, everyReedSpeaksAgain: Bool) {
         crossfadeSeconds = seconds
-        for index in voices.indices {
-            voices[index].targetGain = playable.contains { $0.tone.hertz == voices[index].hertz } ? 1 : 0
+        for index in voices.indices where everyReedSpeaksAgain || !isStillWanted(voices[index], in: playable) {
+            voices[index].targetGain = 0
         }
         for wanted in playable where !isRising(atHertz: wanted.tone.hertz) {
-            voices.append(Voice(wanted.tone, playing: wanted.recorded))
+            add(wanted)
         }
     }
 
@@ -219,7 +222,7 @@ private struct VoiceBank {
         breathGain = rendered.breathGain
         lfoPhase = rendered.lfoPhase
         for index in voices.indices {
-            voices[index].absorbProgress(of: rendered.voice(atHertz: voices[index].hertz))
+            voices[index].absorbProgress(of: rendered.voice(numbered: voices[index].number))
         }
         voices.removeAll { $0.isSilent }
     }
@@ -234,8 +237,17 @@ private struct VoiceBank {
         voices.reduce(0) { $0 + $1.gain }
     }
 
-    private func voice(atHertz hertz: Double) -> Voice? {
-        voices.first { $0.hertz == hertz }
+    private func voice(numbered number: Int) -> Voice? {
+        voices.first { $0.number == number }
+    }
+
+    private func isStillWanted(_ voice: Voice, in playable: [PlayableTone]) -> Bool {
+        voice.targetGain > 0 && playable.contains { $0.tone.hertz == voice.hertz }
+    }
+
+    private mutating func add(_ wanted: PlayableTone) {
+        voicesEverSounded += 1
+        voices.append(Voice(wanted.tone, playing: wanted.recorded, number: voicesEverSounded))
     }
 
     private mutating func nextVibrato(sampleRate: Double, depth: Double) -> Vibrato {
@@ -256,6 +268,7 @@ private struct VoiceBank {
 // MARK: - Voice
 
 private struct Voice {
+    let number: Int
     let hertz: Double
     let bendableSemitones: Double
     let recorded: RecordedNote
@@ -265,7 +278,8 @@ private struct Voice {
     var targetGain = 1.0
     var bendRatio = 1.0
 
-    init(_ tone: SoundingTone, playing recorded: RecordedNote) {
+    init(_ tone: SoundingTone, playing recorded: RecordedNote, number: Int) {
+        self.number = number
         hertz = tone.hertz
         bendableSemitones = tone.bendableSemitones
         self.recorded = recorded

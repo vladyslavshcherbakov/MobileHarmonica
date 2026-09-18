@@ -29,7 +29,11 @@ final class SampledAudioEngine: AudioEngineProtocol {
     }
 
     func soundTones(_ tones: [Tone], as change: ToneChange) {
-        oscillator?.sound(tones.map(Self.sounding), over: Self.crossfadeSeconds(for: change))
+        oscillator?.sound(
+            tones.map(Self.sounding),
+            over: Self.crossfadeSeconds(for: change),
+            everyReedSpeaksAgain: change == .breathReversed
+        )
     }
 
     func changeIntensity(to intensity: BreathIntensity) {
@@ -52,7 +56,7 @@ final class SampledAudioEngine: AudioEngineProtocol {
 
     private static func crossfadeSeconds(for change: ToneChange) -> Double {
         switch change {
-        case .slide: slideCrossfadeSeconds
+        case .slide, .breathReversed: slideCrossfadeSeconds
         case .newReed: newReedCrossfadeSeconds
         }
     }
