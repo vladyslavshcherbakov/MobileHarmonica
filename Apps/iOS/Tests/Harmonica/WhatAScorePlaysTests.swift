@@ -48,7 +48,7 @@ final class WhatAScorePlaysTests: XCTestCase {
 
     func test_score_whenThePlayingStyleTakesOneFinger_stillSoundsEveryHoleTheScoreNames() async {
         let harmonica = PlayHarmonica(tuning: RichterTuning(), audioEngine: engine, log: SilentLog())
-        _ = harmonica.changeStyle(to: .solo)
+        _ = harmonica.changeStyle(to: .oneFingerSeveralNotes)
 
         await play([.note(ScoreNote(holes: [.one, .two, .three], breath: .draw, beats: 1))], on: harmonica)
 

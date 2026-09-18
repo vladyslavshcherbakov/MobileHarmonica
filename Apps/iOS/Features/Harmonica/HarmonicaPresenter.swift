@@ -5,9 +5,6 @@ struct HarmonicaPresenter {
     private static let overbendLabel = "overbend ↑"
     private static let bendLabel = "bend ↓"
     private static let vibratoLabel = "vibrato →"
-    private static let notesLabel = "notes"
-    private static let mouthLabel = "mouth"
-    private static let soloLabel = "solo"
     private static let playDemoLabel = "play"
     private static let stopDemoLabel = "stop"
     private static let bendEffectLabel = "bend"
@@ -57,8 +54,15 @@ struct HarmonicaPresenter {
             label: label,
             note: sounding.map { name(of: $0.pitch) } ?? "",
             effect: sounding.map(effect(shaping:)) ?? "",
-            sounding: sounding?.breath
+            lit: sounding.map { Self.half(litBy: $0.breath) }
         )
+    }
+
+    private static func half(litBy breath: Breath) -> LitHalf {
+        switch breath {
+        case .blow: .top
+        case .draw: .bottom
+        }
     }
 
     private func effect(shaping reed: SoundingReed) -> String {
@@ -88,18 +92,38 @@ struct HarmonicaPresenter {
     }
 
     private func styleState(_ style: PlayingStyle) -> PlayingStyleViewState {
-        PlayingStyleViewState(choices: PlayingStyle.allCases.map(choice(for:)), selected: style)
+        PlayingStyleViewState(
+            label: Self.shortName(of: Self.choice(of: style)),
+            choices: PlayingStyle.allCases.map(Self.choiceState(of:))
+        )
     }
 
-    private func choice(for style: PlayingStyle) -> PlayingStyleChoiceViewState {
-        PlayingStyleChoiceViewState(id: style, name: label(for: style))
+    private static func choiceState(of style: PlayingStyle) -> PlayingStyleChoiceViewState {
+        let chosen = choice(of: style)
+        return PlayingStyleChoiceViewState(id: chosen, name: fullName(of: chosen))
     }
 
-    private func label(for style: PlayingStyle) -> String {
+    private static func choice(of style: PlayingStyle) -> PlayingStyleChoice {
         switch style {
-        case .notes: Self.notesLabel
-        case .mouth: Self.mouthLabel
-        case .solo: Self.soloLabel
+        case .severalFingersSeveralNotes: .severalFingersSeveralNotes
+        case .severalFingersOneNote: .severalFingersOneNote
+        case .oneFingerSeveralNotes: .oneFingerSeveralNotes
+        }
+    }
+
+    private static func shortName(of choice: PlayingStyleChoice) -> String {
+        switch choice {
+        case .severalFingersSeveralNotes: "5 × many"
+        case .severalFingersOneNote: "5 × 1"
+        case .oneFingerSeveralNotes: "1 × many"
+        }
+    }
+
+    private static func fullName(of choice: PlayingStyleChoice) -> String {
+        switch choice {
+        case .severalFingersSeveralNotes: "Several fingers, several notes each"
+        case .severalFingersOneNote: "Several fingers, one note each"
+        case .oneFingerSeveralNotes: "One finger, several notes"
         }
     }
 

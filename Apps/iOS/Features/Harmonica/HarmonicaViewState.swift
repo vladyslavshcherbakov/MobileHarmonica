@@ -18,15 +18,23 @@ struct PlayableHarmonica: Equatable {
 // MARK: - PlayingStyleViewState
 
 struct PlayingStyleViewState: Equatable {
+    let label: String
     let choices: [PlayingStyleChoiceViewState]
-    let selected: PlayingStyle
 }
 
 // MARK: - PlayingStyleChoiceViewState
 
 struct PlayingStyleChoiceViewState: Equatable, Identifiable {
-    let id: PlayingStyle
+    let id: PlayingStyleChoice
     let name: String
+}
+
+// MARK: - PlayingStyleChoice
+
+enum PlayingStyleChoice: Hashable {
+    case severalFingersSeveralNotes
+    case severalFingersOneNote
+    case oneFingerSeveralNotes
 }
 
 // MARK: - FingerMarksViewState
@@ -68,7 +76,14 @@ struct HoleViewState: Equatable, Identifiable {
     let label: String
     let note: String
     let effect: String
-    let sounding: Breath?
+    let lit: LitHalf?
+}
+
+// MARK: - LitHalf
+
+enum LitHalf: Hashable {
+    case top
+    case bottom
 }
 
 // MARK: - KeyViewState

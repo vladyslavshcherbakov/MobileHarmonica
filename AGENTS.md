@@ -95,6 +95,13 @@ Clean layering. A rule lives in exactly one layer.
 import AudioKit. No domain type imports `os`; it reaches the log through `LogProtocol`. Only
 values cross a boundary.
 
+**A view state names no domain type.** A presenter takes domain values and returns strings and
+presentation values, and a view sees only the second kind, so the two layers change for their
+own reasons. `PlayingStyle` has a presentation twin in `PlayingStyleChoice`, mapped out by the
+presenter and back by the view model, and a breath reaches the plate as `LitHalf.top`. Both
+used to travel as themselves, which let a view ask a domain value a business question and get
+an answer the presenter had already given it a field for.
+
 **Composition.** `CompositionRoot` takes the audio engine and the log as parameters and
 assembles everything else. `MobileHarmonicaApp` builds the real leaves and hands them in, so
 a test assembles the app's own graph with doubles in their place rather than a second
@@ -172,19 +179,27 @@ harmonica in C and moves the slider there when it starts.
 | Vibrato | Finger x in the square | 0 at the left to 51 cents at the right |
 | Key | Slider in the top bar | Transposes every reed |
 | Zone size | Pinch on the square | Resizes it, trading width with the strip |
-| Playing style | Segmented control in the top bar | `fingers` or `mouth` |
+| Playing style | Menu in the top bar | How many fingers count, and how many notes each one takes |
 
-**Three playing styles**, and they differ in two things: how many fingers take part, and
-whether the width of a contact counts. `notes` is one finger, one hole, as many fingers as the
-player has. `mouth` is the default: every finger takes part, and each sounds every hole its
-contact circle overlaps, which is `UITouch.majorRadius` either side of the centre. `solo` keeps
-that width and takes the topmost finger only. Breath direction and intensity always come from
-the topmost contact's centre, so an edge of a pad crossing the centre line changes nothing.
-Switching style silences whatever was sounding.
+**Three playing styles, named after the two things that tell them apart**: how many fingers
+count, and how many notes one finger takes. `severalFingersSeveralNotes` is the default, where
+every finger takes part and each sounds every hole its contact circle overlaps, which is
+`UITouch.majorRadius` either side of the centre. `severalFingersOneNote` keeps every finger but
+gives each exactly the hole it is over. `oneFingerSeveralNotes` keeps the width and counts the
+topmost finger only. Breath direction and intensity always come from the topmost contact's
+centre, so an edge of a pad crossing the centre line changes nothing. Switching style silences
+whatever was sounding.
 
-`PlayingStyle` answers the two questions rather than being switched on three ways:
-`coversTheContactWidth` and `takesTheTopmostFingerOnly`. The fourth combination, one hole from
-one finger, is an instrument that plays no chords, so it is not offered.
+The names are that long on purpose. They were `fingers` and `mouth`, then `notes`, `mouth` and
+`solo`, and every one of those had to be explained again each time it came up, because a
+metaphor for playing does not say which of the two questions it is answering. `PlayingStyle`
+answers them separately, as `coversTheContactWidth` and `takesTheTopmostFingerOnly`, so no case
+ever has to be decoded. The fourth combination, one finger and one note, is an instrument that
+plays no chords, so it is not offered.
+
+The control is a menu rather than a segmented control, because the whole point is that the
+names are sentences and a segment is too narrow for one. The button shows the pair it stands
+for, `5 × many` for fingers by notes.
 
 The radius is taken literally, with no multiplier, and it is deliberately on trial: at the
 natural square size a hole is about 66 points and a fingertip reports something like 8 to 30,
@@ -247,7 +262,8 @@ reed's own range.
 
 What a score does not go through is the finger interpretation, because there is nothing to
 interpret: it already says which holes. It used to build synthetic finger positions and go
-through `play(at:)`, and then the playing style reinterpreted the music — in `solo` a written
+through `play(at:)`, and then the playing style reinterpreted the music — with one finger
+counting, a written
 three-hole chord came out as whichever single hole the arbitration picked. The switch describes
 how to read a live hand, so `play(at:)` is where it lives and the score enters beside it.
 
@@ -332,7 +348,9 @@ jitter is a few milliseconds: fine for a demo, not for music. See ROADMAP item 3
 
 **A sounding plate lights only the half that is sounding**, the top for blow and the bottom
 for draw, so the demo shows where to put a finger and which way to breathe. It used to light
-both halves, which said which hole and not which breath.
+both halves, which said which hole and not which breath. Which half a breath lights is the
+presenter's decision, so `HoleViewState` says `top` or `bottom` and the view never hears the
+word blow.
 
 **One breath for the whole instrument.** One mouth gives one airflow, so the topmost finger
 decides direction and intensity for every sounding hole. The boundary belongs to blow.
@@ -553,7 +571,7 @@ Everything else drives the app's own graph with the leaves swapped.
 
 ## Known limits
 
-**Mouth width is only as wide as a fingertip.** `mouth` style models width, but from the
+**Mouth width is only as wide as a fingertip.** Both several-note styles model width, but from the
 contact radius taken literally, which covers one hole and sometimes two. A real mouth covers
 one to four. Whether `majorRadius` varies usefully on an iPhone has still not been measured;
 that is what the drawn circle and the debug line are for. `UITouch.force` is not an option:

@@ -4,7 +4,7 @@ struct KeyBar: View {
     static let height: CGFloat = 44
 
     private static let keyLabelWidth: CGFloat = 34
-    private static let styleControlWidth: CGFloat = 186
+    private static let styleControlWidth: CGFloat = 104
     private static let demoButtonWidth: CGFloat = 64
 
     let playable: PlayableHarmonica
@@ -44,13 +44,13 @@ struct KeyBar: View {
     }
 
     private var playingStyleControl: some View {
-        Picker("", selection: Binding(get: { playable.style.selected }, set: viewModel.changeStyle(to:))) {
+        Menu(playable.style.label) {
             ForEach(playable.style.choices) { choice in
-                Text(choice.name).tag(choice.id)
+                Button(choice.name) { viewModel.changeStyle(to: choice.id) }
             }
         }
-        .pickerStyle(.segmented)
-        .labelsHidden()
+        .buttonStyle(.bordered)
+        .tint(.orange)
         .frame(width: Self.styleControlWidth)
     }
 

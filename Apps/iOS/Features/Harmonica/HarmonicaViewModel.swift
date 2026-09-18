@@ -44,10 +44,10 @@ final class HarmonicaViewModel: ObservableObject {
         show(playHarmonica.changeKey(to: key))
     }
 
-    func changeStyle(to style: PlayingStyle) {
+    func changeStyle(to choice: PlayingStyleChoice) {
         guard case .ready = state else { return }
 
-        show(playHarmonica.changeStyle(to: style))
+        show(playHarmonica.changeStyle(to: Self.style(chosen: choice)))
     }
 
     func playTheTune(at index: Int) {
@@ -98,6 +98,14 @@ final class HarmonicaViewModel: ObservableObject {
         }
         performance = nil
         show(playHarmonica.stopPlaying())
+    }
+
+    private static func style(chosen choice: PlayingStyleChoice) -> PlayingStyle {
+        switch choice {
+        case .severalFingersSeveralNotes: .severalFingersSeveralNotes
+        case .severalFingersOneNote: .severalFingersOneNote
+        case .oneFingerSeveralNotes: .oneFingerSeveralNotes
+        }
     }
 
     private func stopTheScore() {

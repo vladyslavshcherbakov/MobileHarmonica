@@ -1,13 +1,13 @@
 enum PlayingStyle: CaseIterable, Hashable {
-    case notes
-    case mouth
-    case solo
+    case severalFingersSeveralNotes
+    case severalFingersOneNote
+    case oneFingerSeveralNotes
 
     var coversTheContactWidth: Bool {
-        self != .notes
+        self != .severalFingersOneNote
     }
 
     var takesTheTopmostFingerOnly: Bool {
-        self == .solo
+        self == .oneFingerSeveralNotes
     }
 }

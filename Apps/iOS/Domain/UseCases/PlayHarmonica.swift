@@ -10,7 +10,7 @@ final class PlayHarmonica {
     private var vibrato: VibratoDepth = .off
     private var recordedMouthWidth = ""
     private var key: HarmonicaKey = .c
-    private var style: PlayingStyle = .mouth
+    private var style: PlayingStyle = .severalFingersSeveralNotes
 
     // MARK: - Public
 

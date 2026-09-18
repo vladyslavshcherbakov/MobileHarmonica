@@ -2,7 +2,7 @@ import SwiftUI
 
 struct HoleView: View {
     private static let cornerRadius: CGFloat = 8
-    private static let drawHalfDimming = 0.55
+    private static let bottomHalfDimming = 0.55
 
     let state: HoleViewState
 
@@ -15,22 +15,22 @@ struct HoleView: View {
     private var breathHalves: LinearGradient {
         LinearGradient(
             stops: [
-                .init(color: blowHalf, location: 0),
-                .init(color: blowHalf, location: 0.5),
-                .init(color: drawHalf, location: 0.5),
-                .init(color: drawHalf, location: 1)
+                .init(color: topHalf, location: 0),
+                .init(color: topHalf, location: 0.5),
+                .init(color: bottomHalf, location: 0.5),
+                .init(color: bottomHalf, location: 1)
             ],
             startPoint: .top,
             endPoint: .bottom
         )
     }
 
-    private var blowHalf: Color {
-        shade(lit: state.sounding == .blow)
+    private var topHalf: Color {
+        shade(lit: state.lit == .top)
     }
 
-    private var drawHalf: Color {
-        shade(lit: state.sounding == .draw).opacity(Self.drawHalfDimming)
+    private var bottomHalf: Color {
+        shade(lit: state.lit == .bottom).opacity(Self.bottomHalfDimming)
     }
 
     private func shade(lit: Bool) -> Color {
@@ -40,6 +40,6 @@ struct HoleView: View {
     private var number: some View {
         Text(state.label)
             .font(.title2.weight(.semibold))
-            .foregroundStyle(state.sounding == nil ? Color(white: 0.55) : Color.black)
+            .foregroundStyle(state.lit == nil ? Color(white: 0.55) : Color.black)
     }
 }

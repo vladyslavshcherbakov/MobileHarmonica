@@ -51,7 +51,7 @@ final class WhatTheShapingZoneChangesTests: XCTestCase {
 
     func test_bend_whenAChordSounds_pullsEveryReedAsFarAsTheShallowestChamber() {
         let harmonica = harmonica()
-        _ = harmonica.changeStyle(to: .notes)
+        _ = harmonica.changeStyle(to: .severalFingersOneNote)
 
         _ = harmonica.play(at: [
             PositionOnHarmonica(fractionFromLeftEdge: 0.25, fractionAboveCentreLine: -0.3),
@@ -85,7 +85,7 @@ final class WhatTheShapingZoneChangesTests: XCTestCase {
 
     func test_harmonica_whenTheTopmostFingerIsAboveTheLine_blowsEveryHole() {
         let harmonica = harmonica()
-        _ = harmonica.changeStyle(to: .notes)
+        _ = harmonica.changeStyle(to: .severalFingersOneNote)
 
         _ = harmonica.play(at: [
             PositionOnHarmonica(fractionFromLeftEdge: 0.05, fractionAboveCentreLine: 0.2),
