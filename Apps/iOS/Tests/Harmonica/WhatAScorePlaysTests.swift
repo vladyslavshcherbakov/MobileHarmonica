@@ -7,13 +7,13 @@ final class WhatAScorePlaysTests: XCTestCase {
     // MARK: - Tests
 
     func test_score_whenItNamesAHole_soundsThatHolesReed() async {
-        await play([.note(ScoreNote(hole: .four, breath: .blow, beats: 1))])
+        await play([.note(ScoreNote(holes: [.four], breath: .blow, beats: 1))])
 
         XCTAssertEqual(hertzOfTheFirstTone(), 523.25, accuracy: 0.5, "hole 4 blows C5")
     }
 
     func test_score_whenANoteIsBentBySemitones_bendsThatFarIntoTheReedsRange() async {
-        await play([.note(ScoreNote(hole: .three, breath: .draw, beats: 1, bentBySemitones: 1))])
+        await play([.note(ScoreNote(holes: [.three], breath: .draw, beats: 1, bentBySemitones: 1))])
 
         XCTAssertTrue(
             engine.bends.contains { $0.fraction == 0.33 },
@@ -22,7 +22,7 @@ final class WhatAScorePlaysTests: XCTestCase {
     }
 
     func test_score_whenANoteIsOverbent_soundsTheOverblow() async {
-        await play([.note(ScoreNote(hole: .three, breath: .blow, beats: 1, isOverbent: true))])
+        await play([.note(ScoreNote(holes: [.three], breath: .blow, beats: 1, isOverbent: true))])
 
         XCTAssertEqual(hertzOfTheFirstTone(), 523.25, accuracy: 0.5, "hole 3 overblown is C5")
     }
@@ -34,10 +34,16 @@ final class WhatAScorePlaysTests: XCTestCase {
     }
 
     func test_score_whenItEnds_leavesNothingSounding() async {
-        await play([.note(ScoreNote(hole: .four, breath: .draw, beats: 1))])
+        await play([.note(ScoreNote(holes: [.four], breath: .draw, beats: 1))])
 
         XCTAssertEqual(engine.soundedTones.last?.count, 1)
         XCTAssertGreaterThan(engine.silencings, 0)
+    }
+
+    func test_score_whenAnEventNamesSeveralHoles_soundsThemAsAChord() async {
+        await play([.note(ScoreNote(holes: [.one, .two, .three], breath: .draw, beats: 1))])
+
+        XCTAssertEqual(engine.soundedTones.first?.count, 3, "holes 1 to 3 drawn are D4 G4 B4")
     }
 
     // MARK: - Helpers

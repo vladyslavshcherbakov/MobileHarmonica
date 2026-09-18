@@ -50,7 +50,7 @@ final class PlayScore {
 
         let gap = min(Self.articulationSeconds, seconds / 4)
         continuation.yield(harmonica.shapeTone(shaping(for: note), vibrato: VibratoDepth(clamping: note.vibrato)))
-        continuation.yield(harmonica.play(at: [Self.position(of: note)]))
+        continuation.yield(harmonica.play(at: Self.positions(of: note)))
         await wait(seconds - gap)
         continuation.yield(harmonica.stopPlaying())
         await wait(gap)
@@ -63,16 +63,20 @@ final class PlayScore {
     private func shaping(for note: ScoreNote) -> PitchShaping {
         guard !note.isOverbent else { return PitchShaping(clamping: 1) }
 
-        let range = tuning.bendableSemitones(for: Reed(hole: note.hole, breath: note.breath))
+        let range = note.holes
+            .map { tuning.bendableSemitones(for: Reed(hole: $0, breath: note.breath)) }
+            .max() ?? 0
         guard note.bentBySemitones > 0, range > 0 else { return .rest }
 
         return PitchShaping(clamping: -note.bentBySemitones / range)
     }
 
-    private static func position(of note: ScoreNote) -> PositionOnHarmonica {
-        PositionOnHarmonica(
-            fractionFromLeftEdge: (Double(note.hole.number) - 0.5) / Double(Hole.allCases.count),
-            fractionAboveCentreLine: note.breath == .blow ? 0.5 : -0.5
-        )
+    private static func positions(of note: ScoreNote) -> [PositionOnHarmonica] {
+        note.holes.map {
+            PositionOnHarmonica(
+                fractionFromLeftEdge: (Double($0.number) - 0.5) / Double(Hole.allCases.count),
+                fractionAboveCentreLine: note.breath == .blow ? 0.5 : -0.5
+            )
+        }
     }
 }

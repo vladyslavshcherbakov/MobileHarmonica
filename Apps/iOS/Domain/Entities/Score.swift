@@ -25,7 +25,7 @@ enum ScoreEvent: Equatable {
 // MARK: - ScoreNote
 
 struct ScoreNote: Equatable {
-    let hole: Hole
+    let holes: [Hole]
     let breath: Breath
     let beats: Double
     var bentBySemitones = 0.0

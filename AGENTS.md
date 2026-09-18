@@ -213,11 +213,22 @@ real finger makes. Nothing about the tuning, the bend ranges or the breath rule 
 second time, and everything the screen already shows keeps working: the plates light, the note
 row names the note, a bend is a fraction of that reed's own range.
 
+**An event names holes, not a hole**, because a mouth covers two to four of them and that is
+how the instrument is actually played: the chords are the rhythm and the single notes are the
+melody, in the same phrase. `PlayScore` puts down one synthetic finger per hole, all at the
+same height, so the breath rule sees what it would see from a mouth.
+
 A score says a bend in **semitones**, not in axis travel, because a score should not know that
 hole 3 draw bends three semitones and hole 4 draw bends one. `PlayScore` asks `RichterTuning`
 for the range and divides. Each note is cut short by up to 50 ms so the next one re-attacks;
 without that gap two of the same note in a row would be one long note, because `play(at:)`
 sees the same reeds and does not re-sound.
+
+`Score.demo` is a twelve bar blues chorus in second position, 48 beats at 96, with a shuffled
+train chug on holes 1 and 2, the I, IV and V chords on holes 1 to 3 and 4 to 6, the bent third
+draw, a held second draw under vibrato and the hole 6 overblow in the upper fill. It is
+written out of the idiom rather than transcribed from a recording, because a published tab is
+someone's transcription of someone's composition.
 
 A live finger stops the score, since both drive one instrument. Timing is `Task.sleep`, whose
 jitter is a few milliseconds: fine for a demo, not for music. See ROADMAP item 3.
