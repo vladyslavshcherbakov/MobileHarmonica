@@ -35,7 +35,10 @@ struct BundledScores {
     }
 
     private func read(_ url: URL) throws -> Score {
-        let read = try ScoreReader(tuning: tuning).read(String(contentsOf: url, encoding: .utf8))
+        let read = try ScoreReader(tuning: tuning).read(
+            String(contentsOf: url, encoding: .utf8),
+            named: url.deletingPathExtension().lastPathComponent
+        )
         log.record(
             "read \(url.lastPathComponent) in \(read.score.key), \(read.score.position) position,"
             + " on a harmonica in \(read.score.harmonicaKey): \(read.playability.summary)"

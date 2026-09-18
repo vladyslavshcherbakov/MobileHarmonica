@@ -53,10 +53,26 @@ struct KeyBar: View {
         .frame(width: Self.styleControlWidth)
     }
 
+    @ViewBuilder
     private var demoControl: some View {
-        Button(playable.demo.label, action: viewModel.playTheDemo)
-            .buttonStyle(.bordered)
-            .tint(.orange)
-            .frame(width: Self.demoButtonWidth)
+        if playable.demo.isPlaying {
+            Button(playable.demo.label, action: viewModel.stopTheTune)
+                .buttonStyle(.bordered)
+                .tint(.orange)
+                .frame(width: Self.demoButtonWidth)
+        } else {
+            tuneMenu
+        }
+    }
+
+    private var tuneMenu: some View {
+        Menu(playable.demo.label) {
+            ForEach(Array(playable.demo.tunes.enumerated()), id: \.offset) { index, tune in
+                Button(tune) { viewModel.playTheTune(at: index) }
+            }
+        }
+        .buttonStyle(.bordered)
+        .tint(.orange)
+        .frame(width: Self.demoButtonWidth)
     }
 }

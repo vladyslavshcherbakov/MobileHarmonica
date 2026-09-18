@@ -1,4 +1,5 @@
 struct Score: Equatable {
+    let name: String
     let key: HarmonicaKey
     let position: HarmonicaPosition
     let beatsPerMinute: Double
@@ -11,6 +12,8 @@ struct Score: Equatable {
     var secondsPerBeat: Double {
         60 / beatsPerMinute
     }
+
+    static let tunes: [Score] = [.bluesStrain, .slowDrag, .hammerSong, .foxChase]
 }
 
 // MARK: - ScoreEvent

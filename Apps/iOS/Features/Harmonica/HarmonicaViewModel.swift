@@ -5,16 +5,16 @@ final class HarmonicaViewModel: ObservableObject {
 
     private let playHarmonica: PlayHarmonica
     private let playScore: PlayScore
-    private let demo: Score
+    private let tunes: [Score]
     private let presenter: HarmonicaPresenter
     private var performance: Task<Void, Never>?
 
     // MARK: - Public
 
-    init(playHarmonica: PlayHarmonica, playScore: PlayScore, demo: Score, presenter: HarmonicaPresenter) {
+    init(playHarmonica: PlayHarmonica, playScore: PlayScore, tunes: [Score], presenter: HarmonicaPresenter) {
         self.playHarmonica = playHarmonica
         self.playScore = playScore
-        self.demo = demo
+        self.tunes = tunes
         self.presenter = presenter
     }
 
@@ -50,17 +50,21 @@ final class HarmonicaViewModel: ObservableObject {
         show(playHarmonica.changeStyle(to: isMouth ? .mouth : .fingers))
     }
 
-    func playTheDemo() {
-        guard case .ready = state else { return }
-        guard performance == nil else {
-            stopTheScore()
-            show(playHarmonica.stopPlaying())
-            return
-        }
+    func playTheTune(at index: Int) {
+        guard case .ready = state, tunes.indices.contains(index) else { return }
 
+        stopTheScore()
+        let tune = tunes[index]
         performance = Task { @MainActor [weak self] in
-            await self?.perform()
+            await self?.perform(tune)
         }
+    }
+
+    func stopTheTune() {
+        guard case .ready = state else { return }
+
+        stopTheScore()
+        show(playHarmonica.stopPlaying())
     }
 
     func shapeTone(pitch: Double, vibrato: Double) {
@@ -88,8 +92,8 @@ final class HarmonicaViewModel: ObservableObject {
     // MARK: - Private
 
     @MainActor
-    private func perform() async {
-        for await harmonica in playScore.play(demo) {
+    private func perform(_ tune: Score) async {
+        for await harmonica in playScore.play(tune) {
             show(harmonica)
         }
         performance = nil

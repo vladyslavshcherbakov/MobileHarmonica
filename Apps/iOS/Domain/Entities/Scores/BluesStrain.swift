@@ -1,5 +1,11 @@
 extension Score {
-    static let demo = Score(key: .g, position: .second, beatsPerMinute: 96, events: twelveBarBlues)
+    static let bluesStrain = Score(
+        name: "Blues strain",
+        key: .g,
+        position: .second,
+        beatsPerMinute: 96,
+        events: twelveBarBlues
+    )
 
     private static let twelveBarBlues: [ScoreEvent] =
         chuggedBar + chuggedBar + openingRiff + heldTonic
@@ -34,7 +40,7 @@ extension Score {
 
     private static let upperFill: [ScoreEvent] = [
         blow(.six, 0.5), overblow(.six, 0.5), draw(.six, 0.5), blow(.six, 0.5),
-        draw(.five, 1), draw(.four, 1)
+        .draw(.five, 1, shakenWith: .six), draw(.four, 1)
     ]
 
     private static let dominantChord: [ScoreEvent] = [

@@ -14,13 +14,13 @@ struct ScoreReader {
         self.tuning = tuning
     }
 
-    func read(_ text: String) throws -> ReadScore {
+    func read(_ text: String, named name: String) throws -> ReadScore {
         var header = ScoreHeader()
         var written: [WrittenEvent] = []
         for line in text.split(separator: "\n", omittingEmptySubsequences: false) {
             try read(String(line), into: &header, and: &written)
         }
-        return try scored(header, written)
+        return try scored(header, written, named: name)
     }
 
     // MARK: - Private
@@ -37,7 +37,7 @@ struct ScoreReader {
         }
     }
 
-    private func scored(_ header: ScoreHeader, _ written: [WrittenEvent]) throws -> ReadScore {
+    private func scored(_ header: ScoreHeader, _ written: [WrittenEvent], named name: String) throws -> ReadScore {
         guard let key = header.key else { throw ScoreTextError.missingHeader("key") }
         guard let position = header.position else { throw ScoreTextError.missingHeader("position") }
         guard let beatsPerMinute = header.beatsPerMinute else { throw ScoreTextError.missingHeader("tempo") }
@@ -48,6 +48,7 @@ struct ScoreReader {
         let played = play(written, on: Fingerings(tuning: tuning, key: harmonicaKey))
         return ReadScore(
             score: Score(
+                name: name,
                 key: key,
                 position: position,
                 beatsPerMinute: beatsPerMinute,

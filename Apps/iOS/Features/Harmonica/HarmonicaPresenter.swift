@@ -14,12 +14,14 @@ struct HarmonicaPresenter {
     private static let overdrawEffectLabel = "overdraw"
 
     private let locale: Locale
+    private let tunes: [String]
     private let holeLabels: [String]
 
     // MARK: - Public
 
-    init(locale: Locale) {
+    init(locale: Locale, tunes: [String]) {
         self.locale = locale
+        self.tunes = tunes
         holeLabels = Hole.allCases.map { $0.number.formatted(.number.locale(locale)) }
     }
 
@@ -92,7 +94,11 @@ struct HarmonicaPresenter {
     }
 
     private func demoState(_ isPlaying: Bool) -> DemoViewState {
-        DemoViewState(label: isPlaying ? Self.stopDemoLabel : Self.playDemoLabel)
+        DemoViewState(
+            label: isPlaying ? Self.stopDemoLabel : Self.playDemoLabel,
+            tunes: tunes,
+            isPlaying: isPlaying
+        )
     }
 
     private func keyState(_ key: HarmonicaKey) -> KeyViewState {

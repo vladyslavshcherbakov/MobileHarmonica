@@ -47,7 +47,7 @@ final class WhatAScorePlaysTests: XCTestCase {
     }
 
     func test_score_whenItIsPlayedInSecondPosition_callsForTheHarmonicaAFifthBelow() async {
-        let blues = Score(key: .g, position: .second, beatsPerMinute: 6000, events: [])
+        let blues = Score(name: "test", key: .g, position: .second, beatsPerMinute: 6000, events: [])
 
         let played = await play(blues)
 
@@ -55,7 +55,7 @@ final class WhatAScorePlaysTests: XCTestCase {
     }
 
     func test_score_whenItIsPlayedInFirstPosition_callsForTheHarmonicaItIsWrittenIn() async {
-        let tune = Score(key: .d, position: .first, beatsPerMinute: 6000, events: [])
+        let tune = Score(name: "test", key: .d, position: .first, beatsPerMinute: 6000, events: [])
 
         let played = await play(tune)
 
@@ -111,7 +111,7 @@ final class WhatAScorePlaysTests: XCTestCase {
 
     @discardableResult
     private func play(_ events: [ScoreEvent]) async -> [Harmonica] {
-        await play(Score(key: .c, position: .first, beatsPerMinute: 6000, events: events))
+        await play(Score(name: "test", key: .c, position: .first, beatsPerMinute: 6000, events: events))
     }
 
     @discardableResult

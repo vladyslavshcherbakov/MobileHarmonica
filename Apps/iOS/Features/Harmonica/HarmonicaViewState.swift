@@ -26,6 +26,8 @@ struct PlayingStyleViewState: Equatable {
 
 struct DemoViewState: Equatable {
     let label: String
+    let tunes: [String]
+    let isPlaying: Bool
 }
 
 // MARK: - ToneShapingViewState
