@@ -550,11 +550,18 @@ half at thirty degrees, and flips its sign with the interface orientation so tha
 screen's right edge down always closes. There is a slack of three degrees around level, because
 gravity is never exactly zero in a hand.
 
-**Vibrato** is one shared LFO at 5.5 Hz, and it moves two things: the pitch by 1.5 per cent,
+**Vibrato** is one shared LFO near 5.5 Hz, and it moves two things: the pitch by 1.5 per cent,
 about 26 cents, and the loudness by up to a quarter. A harmonica's vibrato is mostly the
 loudness pulsing; 51 cents of pitch and nothing else read as a siren rather than a note being
 played. The loudness only dips, never rises, so vibrato cannot spend the headroom the mixing
 leaves.
+
+**Its rate and depth wander**, because nobody holds 5.5 Hz. A second wave at 0.23 Hz moves the
+rate by eight per cent and the depth by a fifth, and it moves them against each other: faster
+is shallower, slower is deeper, which is how a vibrato breathes rather than how a machine
+repeats. It is a wave and not a random number, so the same phrase played twice sounds the same
+twice; a player whose vibrato wandered unpredictably would not be a player in control. It is
+worked out once a buffer, since 0.23 Hz moves by less than a per cent inside 20 ms.
 
 ## Concurrency contract
 

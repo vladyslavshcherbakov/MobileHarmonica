@@ -61,6 +61,11 @@ final class Oscillator {
         }
 
         rendering.bend(by: requestedBend.withLock { $0 })
+        let vibrato = rendering.driftedVibrato(
+            depth: requestedVibrato.withLock { $0 },
+            overFrames: frameCount,
+            sampleRate: sampleRate
+        )
         fill(
             frameCount: frameCount,
             amplitude: amplitude,
@@ -68,7 +73,7 @@ final class Oscillator {
                 sampleRate: sampleRate,
                 ramp: Self.gainRamp(crossfadeSeconds: rendering.crossfadeSeconds, sampleRate: sampleRate),
                 breathGain: requestedBreathGain.withLock { $0 },
-                vibrato: requestedVibrato.withLock { $0 },
+                vibrato: vibrato,
                 cup: Self.cupSettings(closed: requestedCup.withLock { $0 }, sampleRate: sampleRate)
             ),
             into: buffers,
@@ -158,8 +163,15 @@ private struct RenderSettings {
     let sampleRate: Double
     let ramp: GainRamp
     let breathGain: Double
-    let vibrato: Double
+    let vibrato: VibratoSettings
     let cup: CupSettings
+}
+
+// MARK: - VibratoSettings
+
+private struct VibratoSettings {
+    let hertz: Double
+    let depth: Double
 }
 
 // MARK: - CupSettings
@@ -204,6 +216,9 @@ private struct VoiceBank {
     static let vibratoHertz = 5.5
     static let vibratoPitchAtFullDepth = 0.015
     static let vibratoDipAtFullDepth = 0.25
+    static let vibratoDriftHertz = 0.23
+    static let vibratoRateDrift = 0.08
+    static let vibratoDepthDrift = 0.2
 
     var voices: [Voice] = []
     var breathGain = 0.0
@@ -211,6 +226,7 @@ private struct VoiceBank {
     var crossfadeSeconds = 0.02
     var voicesEverSounded = 0
     var cup = CupFilter()
+    var driftPhase = 0.0
 
     // MARK: - Public
 
@@ -241,10 +257,19 @@ private struct VoiceBank {
         }
     }
 
+    mutating func driftedVibrato(depth: Double, overFrames frameCount: Int, sampleRate: Double) -> VibratoSettings {
+        driftPhase = advanced(driftPhase, byCycles: Self.vibratoDriftHertz * Double(frameCount) / sampleRate)
+        let wandering = sin(driftPhase)
+        return VibratoSettings(
+            hertz: Self.vibratoHertz * (1 + Self.vibratoRateDrift * wandering),
+            depth: depth * (1 - Self.vibratoDepthDrift * (1 + wandering) / 2)
+        )
+    }
+
     mutating func nextSample(from frames: UnsafeBufferPointer<Float>, in settings: RenderSettings) -> Double {
         breathGain = ramped(breathGain, toward: settings.breathGain, by: settings.ramp)
         let scale = breathGain / airSpreadAcrossTheReeds
-        let vibrato = nextVibrato(sampleRate: settings.sampleRate, depth: settings.vibrato)
+        let vibrato = nextVibrato(sampleRate: settings.sampleRate, through: settings.vibrato)
 
         var mixed = 0.0
         for index in voices.indices {
@@ -261,6 +286,7 @@ private struct VoiceBank {
     mutating func absorbProgress(of rendered: VoiceBank) {
         breathGain = rendered.breathGain
         lfoPhase = rendered.lfoPhase
+        driftPhase = rendered.driftPhase
         cup = rendered.cup
         for index in voices.indices {
             voices[index].absorbProgress(of: rendered.voice(numbered: voices[index].number))
@@ -291,13 +317,12 @@ private struct VoiceBank {
         voices.append(Voice(wanted.tone, playing: wanted.recorded, number: voicesEverSounded))
     }
 
-    private mutating func nextVibrato(sampleRate: Double, depth: Double) -> Vibrato {
-        lfoPhase = (lfoPhase + radiansPerCycle * Self.vibratoHertz / sampleRate)
-            .truncatingRemainder(dividingBy: radiansPerCycle)
+    private mutating func nextVibrato(sampleRate: Double, through vibrato: VibratoSettings) -> Vibrato {
+        lfoPhase = advanced(lfoPhase, byCycles: vibrato.hertz / sampleRate)
         let swing = sin(lfoPhase)
         return Vibrato(
-            pitchRatio: 1 + depth * Self.vibratoPitchAtFullDepth * swing,
-            gain: 1 - depth * Self.vibratoDipAtFullDepth * (1 + swing) / 2
+            pitchRatio: 1 + vibrato.depth * Self.vibratoPitchAtFullDepth * swing,
+            gain: 1 - vibrato.depth * Self.vibratoDipAtFullDepth * (1 + swing) / 2
         )
     }
 
@@ -378,6 +403,10 @@ private struct Voice {
 // MARK: - Ramping
 
 private let radiansPerCycle = 2 * Double.pi
+
+private func advanced(_ phase: Double, byCycles cycles: Double) -> Double {
+    (phase + radiansPerCycle * cycles).truncatingRemainder(dividingBy: radiansPerCycle)
+}
 
 private func ramped(_ gain: Double, toward target: Double, by ramp: GainRamp) -> Double {
     gain < target ? min(target, gain + ramp.rising) : max(target, gain - ramp.falling)
