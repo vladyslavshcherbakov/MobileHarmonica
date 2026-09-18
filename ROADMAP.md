@@ -14,9 +14,10 @@ step needs the one before it.
 2. [What is shared](#what-is-shared)
 3. [Where the files live](#where-the-files-live)
 4. [Layer by layer](#layer-by-layer)
-5. [The page in Safari](#the-page-in-safari)
-6. [The steps](#the-steps)
-7. [Not in scope](#not-in-scope)
+5. [The presentation layer](#the-presentation-layer)
+6. [The page in Safari](#the-page-in-safari)
+7. [The steps](#the-steps)
+8. [Not in scope](#not-in-scope)
 
 ## Constraints
 
@@ -24,7 +25,8 @@ step needs the one before it.
 |---|---|
 | Browser | Safari on iPhone. Only that one |
 | Orientation | Landscape, both directions. A page cannot lock it, so it is asked for |
-| Language | TypeScript, no framework |
+| Language | TypeScript, compiled to ES modules, no bundler |
+| Framework | None. See [The presentation layer](#the-presentation-layer) |
 | Dependencies | None, the same as the app |
 | Reference | What WebKit implements, not what every browser agrees on |
 | Hosting | A static page, private while it is being tested |
@@ -108,6 +110,38 @@ know that hole 3 draw bends three and hole 4 draw bends one.
 
 The offline render tests port too: an `AudioWorkletProcessor` can be driven a buffer at a time
 outside a page, the same way `RenderedSound` drives the oscillator outside an app.
+
+## The presentation layer
+
+**No framework, because the layer a framework sells is already built.** `HarmonicaPresenter`
+returns a `HarmonicaViewState` of finished strings and flags, so all a view has to do is put that
+value into a dozen elements. There is no state to observe and nothing to reconcile: the state is
+one value, already assembled, and already deduplicated, since the view model never publishes one
+that equals the last. A virtual DOM diffing ten plates sixty times a second is the heaviest way
+to do the cheapest job in the project.
+
+**TypeScript rather than plain JavaScript**, because the domain is 1389 lines of values with
+invariants in them — semitones, fractions of travel, hole numbers, bend ranges — and types are
+the cheapest way not to lose one in the crossing. `tsc` is the whole build.
+
+**No bundler.** TypeScript to ES modules, which Safari loads itself. A stack trace names a file
+we wrote rather than a chunk, the inspector attached to the phone shows the same code that is on
+disk, and `AudioWorklet.addModule()` takes a module URL anyway.
+
+**DOM rather than canvas.** Canvas looked right at first, since this project decided against
+accessibility long ago and that is the usual argument for elements over pixels. It is still
+wrong here: the view state changes rarely, and the only thing moving at sixty frames a second is
+two or three finger circles, which are absolutely positioned elements moved by `transform` and
+handed to the compositor. Against that, elements give the layout, the text, `dvh` and
+`env(safe-area-inset-*)` for free, which is most of the requirement below, and a canvas would
+have every one of those written by hand.
+
+**What makes it replaceable is the seam, not the choice.** The presentation layer is
+`present(harmonica) -> ViewState` and `render(state)`, plus an adapter turning pointer events
+into `PositionOnHarmonica`. The renderer holds nothing but its element references and the last
+state it drew, which is what lets it be swapped for Lit, for Svelte, or for a canvas, without
+anything below it noticing. Keeping the renderer free of state is the rule that has to survive,
+whatever it is written with.
 
 ## The page in Safari
 
