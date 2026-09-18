@@ -1,5 +1,6 @@
 import SwiftUI
 
+@MainActor
 struct HarmonicaScreen: View {
     private static let zoneWidthFraction: CGFloat = 0.22
     private static let smallestZoneScale: CGFloat = 0.45
@@ -11,8 +12,8 @@ struct HarmonicaScreen: View {
 
     // MARK: - Public
 
-    init(viewModel: @autoclosure @escaping () -> HarmonicaViewModel) {
-        _viewModel = StateObject(wrappedValue: viewModel())
+    init(viewModel: @autoclosure @escaping @MainActor () -> HarmonicaViewModel) {
+        _viewModel = StateObject(wrappedValue: MainActor.assumeIsolated { viewModel() })
     }
 
     var body: some View {
@@ -76,7 +77,6 @@ struct HarmonicaScreen: View {
         zoneScale = min(Self.largestZoneScale, max(Self.smallestZoneScale, zoneScale * magnification))
     }
 
-    @MainActor
     private func prepareOrSilence(for phase: ScenePhase) async {
         switch phase {
         case .active:

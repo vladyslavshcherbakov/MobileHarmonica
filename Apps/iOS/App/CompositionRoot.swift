@@ -9,10 +9,12 @@ struct CompositionRoot {
         self.log = log
     }
 
+    @MainActor
     func harmonicaScreen() -> HarmonicaScreen {
         HarmonicaScreen(viewModel: self.harmonicaViewModel())
     }
 
+    @MainActor
     private func harmonicaViewModel() -> HarmonicaViewModel {
         let tuning = RichterTuning()
         let playHarmonica = PlayHarmonica(tuning: tuning, audioEngine: audioEngine, log: log)

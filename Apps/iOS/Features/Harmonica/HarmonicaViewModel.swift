@@ -1,5 +1,6 @@
 import Combine
 
+@MainActor
 final class HarmonicaViewModel: ObservableObject {
     @Published private(set) var state: HarmonicaViewState = .preparingSound
 
@@ -26,7 +27,6 @@ final class HarmonicaViewModel: ObservableObject {
         self.presenter = presenter
     }
 
-    @MainActor
     func prepareSound() async {
         do {
             let harmonica = try await playHarmonica.prepare()
@@ -45,7 +45,6 @@ final class HarmonicaViewModel: ObservableObject {
         show(playHarmonica.play(at: positions))
     }
 
-    @MainActor
     func followTheTilt() async {
         for await leaning in tilt.tiltToTheRight() {
             cupHands(to: CupDepth(clamping: leaning))
@@ -70,7 +69,7 @@ final class HarmonicaViewModel: ObservableObject {
 
         stopTheScore()
         let tune = tunes[index]
-        performance = Task { @MainActor [weak self] in
+        performance = Task { [weak self] in
             await self?.perform(tune)
         }
     }
@@ -106,7 +105,6 @@ final class HarmonicaViewModel: ObservableObject {
 
     // MARK: - Private
 
-    @MainActor
     private func perform(_ tune: Score) async {
         for await harmonica in playScore.play(tune) {
             show(harmonica)

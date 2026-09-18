@@ -594,18 +594,23 @@ Revisit if the audio glitches under load.
 `setCategory` and `setActive` can block while the session is active, which is the
 `AVAudioSession Hang Risk` warning.
 
-**Publishing.** View models and the coordinator are plain `ObservableObject`, not
-`@MainActor`. A `@MainActor` view model would need `MainActor.assumeIsolated` inside the
-`@autoclosure` that `@StateObject` takes, plus a bridge at the `Slider` binding and the
-`UIViewRepresentable` callback.
+**Publishing.** `HarmonicaViewModel` is `@MainActor`, and so is every view that speaks to it,
+so the compiler checks which thread publishes instead of a convention nobody can enforce. It
+costs nothing at run time: those calls all came from the main thread already, and the
+annotation only lets the compiler prove it. Before this, every `async` function that ended by
+publishing had to be marked by hand, and the rule held only as long as the next person read it.
 
-> The price: nothing checks which thread publishes. A nonisolated `async` function runs its
-> body on the cooperative pool, not the caller's actor, so **every `async` function that ends
-> by publishing must be marked `@MainActor` by hand**. That is why
-> `HarmonicaViewModel.prepareSound()` and `HarmonicaScreen.prepareOrSilence(for:)` carry it.
-> Every other caller of `show()` is synchronous and reached from a main-thread callback.
-> Marking the whole view model `@MainActor` hands the check to the compiler; do it the next
-> time this class grows an `async` method.
+Three seams had to say it out loud. `HarmonicaScreen.init` takes a `@MainActor` autoclosure and
+opens it with `MainActor.assumeIsolated` inside the one `@StateObject` takes, so the view model
+is still built lazily and now provably on the main actor. `TouchArea` declares both of its
+callbacks `@MainActor`, which is what `UIView` already is, so a touch reaches the view model
+with no hop. `CompositionRoot.harmonicaScreen()` is `@MainActor` because it builds one.
+
+What must stay off the main actor is preparing the sound. `PlayHarmonica.prepare()` is not
+isolated, so its body runs on the cooperative pool and the audio session is configured in a
+detached task inside that; awaiting it from `prepareSound()` suspends the main actor rather
+than blocking it. `AppCoordinator` stays a plain `ObservableObject`, because nothing reaches it
+from anywhere but a view.
 
 **Control precision.** `ControlPrecision` quantises intensity, bend and vibrato to a
 hundredth. One per cent of gain and three cents of bend are both below hearing, and without

@@ -1,10 +1,11 @@
 import SwiftUI
 
+@MainActor
 struct ToneShapingZone: View {
     private static let cornerRadius: CGFloat = 12
 
     let state: ToneShapingViewState
-    let pinched: (CGFloat) -> Void
+    let pinched: @MainActor (CGFloat) -> Void
     @ObservedObject var viewModel: HarmonicaViewModel
     @State private var touches: [FingerTouch] = []
 

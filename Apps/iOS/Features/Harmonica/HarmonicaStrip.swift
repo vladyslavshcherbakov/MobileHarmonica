@@ -1,5 +1,6 @@
 import SwiftUI
 
+@MainActor
 struct HarmonicaStrip: View {
     static let holeSpacing: CGFloat = 6
 

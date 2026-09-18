@@ -2,8 +2,8 @@ import SwiftUI
 import UIKit
 
 struct TouchArea: UIViewRepresentable {
-    let touchesChanged: ([FingerTouch]) -> Void
-    var pinched: ((CGFloat) -> Void)?
+    let touchesChanged: @MainActor ([FingerTouch]) -> Void
+    var pinched: (@MainActor (CGFloat) -> Void)?
 
     func makeUIView(context: Context) -> TouchTrackingView {
         TouchTrackingView(touchesChanged: touchesChanged, pinched: pinched)
@@ -25,12 +25,15 @@ struct FingerTouch: Equatable {
 // MARK: - TouchTrackingView
 
 final class TouchTrackingView: UIView {
-    var touchesChanged: ([FingerTouch]) -> Void
-    var pinched: ((CGFloat) -> Void)?
+    var touchesChanged: @MainActor ([FingerTouch]) -> Void
+    var pinched: (@MainActor (CGFloat) -> Void)?
 
     // MARK: - Public
 
-    init(touchesChanged: @escaping ([FingerTouch]) -> Void, pinched: ((CGFloat) -> Void)?) {
+    init(
+        touchesChanged: @escaping @MainActor ([FingerTouch]) -> Void,
+        pinched: (@MainActor (CGFloat) -> Void)?
+    ) {
         self.touchesChanged = touchesChanged
         self.pinched = pinched
         super.init(frame: .zero)
