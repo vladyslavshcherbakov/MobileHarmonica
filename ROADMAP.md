@@ -102,7 +102,52 @@ level. Press flat, press on the tip, press with two pads. If the value swings be
 dead and mouth width needs another input. `UITouch.force` is not an alternative: 3D Touch
 hardware ended with the iPhone XS.
 
-## 6. Smaller wishes
+## 6. Overblows and overdraws
+
+**What.** The other half of pitch shaping. A bend pulls the higher reed of a chamber down
+towards the lower one. An overbend does the opposite: it silences the reed that matches the
+airflow and forces the other one to sound in its opening mode, about a semitone **above** its
+own pitch. Blowing into a chamber whose blow reed is the lower one gives an overblow, which
+is holes 1 to 6; drawing where the draw reed is lower gives an overdraw, holes 7 to 10.
+
+| hole | blow | draw | overbend |
+|---|---|---|---|
+| 1 | C4 | D4 | overblow E♭4 |
+| 4 | C5 | D5 | overblow E♭5 |
+| 5 | E5 | F5 | overblow F♯5 |
+| 6 | G5 | A5 | overblow B♭5 |
+| 7 | C6 | B5 | overdraw C♯6 |
+| 9 | G6 | F6 | overdraw A♭6 |
+
+**Why.** Bend and overbend are complementary: on one hole in one breath direction exactly one
+of them exists, never both, because a bend needs the higher reed and an overbend the lower.
+So they share one axis with no conflict, and together they take the instrument from 8
+responsive reeds out of 20 to 18. Only hole 5 draw and hole 7 blow stay dead, where the two
+reeds are a semitone apart and neither move has room. The middle octave becomes fully
+chromatic: E♭5, F♯5 and B♭5 exist no other way, which is what a diatonic harp is missing when
+a tune leaves the key.
+
+**Where it goes.** The square's vertical axis, which is half unused today. Down from rest
+bends the pitch down, up from rest overbends it up, and on any given hole and breath only one
+half is live. The other half dims its label the way the bend label already dims.
+
+**The toggle the user asked for: smooth or snap.** On a real harmonica an overblow is not
+continuous. The reed does not slide up; the note pops over to the other reed once the player's
+setup lets it. Two behaviours, chosen by a control beside the `fingers` / `mouth` one:
+
+- **smooth** — the upper half of the axis raises the pitch continuously to +1 semitone, the
+  same feel as a bend. Easier to play, not an imitation of the technique.
+- **snap** — nothing happens until the finger passes a threshold, then the pitch jumps a
+  semitone and holds. Faithful, harder.
+
+**Undecided.** Where the second toggle lives, since the top bar already holds the key slider
+and the style control. Whether an overbend can be pushed past +1, as some players do. Whether
+`snap` should also model the silence a missed overblow gives instead of jumping cleanly.
+
+**Blocked on.** Nothing. The pitch arithmetic is one more multiplication on a synthesised
+tone, the same as a bend.
+
+## 7. Smaller wishes
 
 | Item | Note |
 |---|---|
@@ -110,7 +155,7 @@ hardware ended with the iPhone XS.
 | Remember the pinched zone size | It returns to its natural side on every launch. Keeping it means storage, which the project does not have |
 | Equal-loudness compensation | Draw sounds 1.0 to 1.6 dB louder than blow on holes 1 to 3 at the same amplitude, because the ear hears the higher note as louder. A real harmonica does this too, which is why blues lives on the draw notes. Decided against; recorded so it is not rediscovered as a bug |
 
-## 7. Engineering debt
+## 8. Engineering debt
 
 | Item | Note |
 |---|---|
