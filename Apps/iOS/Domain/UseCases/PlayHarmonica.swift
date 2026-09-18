@@ -11,6 +11,7 @@ final class PlayHarmonica {
     private var recordedMouthWidth = ""
     private var key: HarmonicaKey = .c
     private var style: PlayingStyle = .fingers
+    private var overbendStyle: OverbendStyle = .smooth
 
     // MARK: - Public
 
@@ -45,6 +46,14 @@ final class PlayHarmonica {
         self.style = style
         log.record("playing style changed to \(style)")
         return stopPlaying()
+    }
+
+    func changeOverbendStyle(to overbendStyle: OverbendStyle) -> Harmonica {
+        guard overbendStyle != self.overbendStyle else { return harmonica }
+
+        self.overbendStyle = overbendStyle
+        log.record("overbends changed to \(overbendStyle)")
+        return harmonica
     }
 
     func changeKey(to key: HarmonicaKey) -> Harmonica {
@@ -83,6 +92,7 @@ final class PlayHarmonica {
         Harmonica(
             key: key,
             style: style,
+            overbendStyle: overbendStyle,
             sounding: Dictionary(uniqueKeysWithValues: soundingReeds.map { ($0.hole, soundingReed(of: $0)) })
         )
     }

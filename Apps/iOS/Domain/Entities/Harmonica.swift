@@ -1,6 +1,7 @@
 struct Harmonica: Equatable {
     let key: HarmonicaKey
     let style: PlayingStyle
+    let overbendStyle: OverbendStyle
     let sounding: [Hole: SoundingReed]
 
     var soundingHoles: Set<Hole> {

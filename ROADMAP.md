@@ -131,18 +131,21 @@ a tune leaves the key.
 bends the pitch down, up from rest overbends it up, and on any given hole and breath only one
 half is live. The other half dims its label the way the bend label already dims.
 
-**The toggle the user asked for: smooth or snap.** On a real harmonica an overblow is not
-continuous. The reed does not slide up; the note pops over to the other reed once the player's
-setup lets it. Two behaviours, chosen by a control beside the `fingers` / `mouth` one:
+**The toggle is already built.** `OverbendStyle` runs from the segmented control in the top
+bar through `PlayHarmonica` to `Harmonica`, and nothing reads it yet, because on a real
+harmonica an overblow is not continuous: the reed does not slide up, the note pops over to the
+other reed once the player's setup lets it. The two behaviours it will choose between:
 
 - **smooth** — the upper half of the axis raises the pitch continuously to +1 semitone, the
   same feel as a bend. Easier to play, not an imitation of the technique.
 - **snap** — nothing happens until the finger passes a threshold, then the pitch jumps a
   semitone and holds. Faithful, harder.
 
-**Undecided.** Where the second toggle lives, since the top bar already holds the key slider
-and the style control. Whether an overbend can be pushed past +1, as some players do. Whether
-`snap` should also model the silence a missed overblow gives instead of jumping cleanly.
+**Undecided.** Whether the square's vertical axis moves its rest point to the middle, so down
+bends and up overbends and each keeps half the travel, or keeps rest at the top and full
+travel with the direction decided by the sounding reed, which means dragging down to raise an
+overbent pitch. Whether an overbend can be pushed past +1, as some players do. Whether `snap`
+should also model the silence a missed overblow gives instead of jumping cleanly.
 
 **Blocked on.** Nothing. The pitch arithmetic is one more multiplication on a synthesised
 tone, the same as a bend.

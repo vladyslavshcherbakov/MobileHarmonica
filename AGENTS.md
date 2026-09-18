@@ -134,6 +134,7 @@ shrill. Transposing preserves intervals, so bend ranges are unchanged in every k
 | Key | Slider in the top bar | Transposes every reed |
 | Zone size | Pinch on the square | Resizes it, trading width with the strip |
 | Playing style | Segmented control in the top bar | `fingers` or `mouth` |
+| Overbend style | Segmented control in the top bar | `smooth` or `snap`. Wired through and shown, but nothing reads it until overblows and overdraws exist. See ROADMAP item 6 |
 
 **Two playing styles.** `fingers` is the default and unchanged: one finger, one hole, as many
 fingers as the player has. `mouth` takes the topmost finger only and sounds every hole the

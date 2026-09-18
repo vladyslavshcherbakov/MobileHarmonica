@@ -6,7 +6,7 @@ struct HarmonicaScreen: View {
     private static let keyLabelWidth: CGFloat = 34
     private static let fingerCircleDiameter: CGFloat = 56
     private static let fingerCircleLineWidth: CGFloat = 3
-    private static let playingStyleWidth: CGFloat = 150
+    private static let styleControlWidth: CGFloat = 130
     private static let noteRowHeight: CGFloat = 30
     private static let zoneWidthFraction: CGFloat = 0.22
     private static let zoneCornerRadius: CGFloat = 12
@@ -108,7 +108,7 @@ struct HarmonicaScreen: View {
 
     private func playableHarmonica(_ playable: PlayableHarmonica) -> some View {
         VStack(spacing: 0) {
-            keyBar(playable.key, style: playable.style)
+            keyBar(playable)
             GeometryReader { geometry in
                 HStack(spacing: Self.holeSpacing) {
                     toneShapingZone(playable.toneShaping)
@@ -122,20 +122,21 @@ struct HarmonicaScreen: View {
         }
     }
 
-    private func keyBar(_ key: KeyViewState, style: PlayingStyleViewState) -> some View {
+    private func keyBar(_ playable: PlayableHarmonica) -> some View {
         HStack {
-            Text(key.label)
+            Text(playable.key.label)
                 .font(.headline)
                 .monospaced()
                 .foregroundStyle(.white)
                 .frame(width: Self.keyLabelWidth, alignment: .leading)
             Slider(
-                value: Binding(get: { key.position }, set: viewModel.changeKey(toPosition:)),
-                in: 0...key.highestPosition,
+                value: Binding(get: { playable.key.position }, set: viewModel.changeKey(toPosition:)),
+                in: 0...playable.key.highestPosition,
                 step: 1
             )
             .tint(.orange)
-            playingStyleControl(style)
+            playingStyleControl(playable.style)
+            overbendStyleControl(playable.overbendStyle)
         }
         .padding(.horizontal)
         .safeAreaPadding(.leading)
@@ -149,7 +150,17 @@ struct HarmonicaScreen: View {
         }
         .pickerStyle(.segmented)
         .labelsHidden()
-        .frame(width: Self.playingStyleWidth)
+        .frame(width: Self.styleControlWidth)
+    }
+
+    private func overbendStyleControl(_ style: OverbendStyleViewState) -> some View {
+        Picker("", selection: Binding(get: { style.isSnap }, set: viewModel.changeOverbendStyle(toSnap:))) {
+            Text(style.smoothLabel).tag(false)
+            Text(style.snapLabel).tag(true)
+        }
+        .pickerStyle(.segmented)
+        .labelsHidden()
+        .frame(width: Self.styleControlWidth)
     }
 
     private func holes(_ holes: [HoleViewState], isMouth: Bool) -> some View {

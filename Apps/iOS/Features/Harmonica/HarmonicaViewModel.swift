@@ -42,6 +42,12 @@ final class HarmonicaViewModel: ObservableObject {
         show(presenter.present(playHarmonica.changeStyle(to: isMouth ? .mouth : .fingers)))
     }
 
+    func changeOverbendStyle(toSnap isSnap: Bool) {
+        guard case .ready = state else { return }
+
+        show(presenter.present(playHarmonica.changeOverbendStyle(to: isSnap ? .snap : .smooth)))
+    }
+
     func shapeTone(bend: Double, vibrato: Double) {
         let harmonica = playHarmonica.shapeTone(
             bend: BendDepth(clamping: bend),
