@@ -1,199 +1,168 @@
 # Roadmap — the same instrument as a page
 
-The app becomes a web page on GitHub Pages, playable in Safari on an iPhone, and the two share
-the music rather than duplicating it. Current state and everything that already works are in
-[AGENTS.md](AGENTS.md), including its own [Not built](AGENTS.md#not-built) list, which is about
-the instrument and stays where it is.
+The app becomes a web page, playable in Safari on an iPhone, and the two platforms share what is
+genuinely shared instead of keeping two copies of it. Current state and everything that already
+works are in [AGENTS.md](AGENTS.md), including its own [Not built](AGENTS.md#not-built) list,
+which is about the instrument and stays where it is.
 
 Nothing here is scheduled. The order below is the order the work has to happen in, because each
 step needs the one before it.
 
 ## Contents
 
-1. [What transfers and what does not](#what-transfers-and-what-does-not)
-2. [Settle this before any code](#settle-this-before-any-code)
+1. [What is shared](#what-is-shared)
+2. [Where the files live](#where-the-files-live)
 3. [Layer by layer](#layer-by-layer)
-4. [The shared score format](#the-shared-score-format)
-5. [Where the files live](#where-the-files-live)
-6. [What Safari on an iPhone cannot do](#what-safari-on-an-iphone-cannot-do)
-7. [The steps](#the-steps)
+4. [The page in Safari](#the-page-in-safari)
+5. [The steps](#the-steps)
+6. [Not in scope](#not-in-scope)
 
-## What transfers and what does not
+## What is shared
 
-**The Swift does not run in a browser.** `Domain/` is 1389 lines and imports only Foundation,
-which is the cleanest it could be, and it is still Swift. Nothing about the layering changes
-that.
+**The music is data and belongs in one file per piece.** The four tunes are Swift today, which
+means porting them would mean writing each one twice in two languages and watching them drift.
+They become JSON, and each platform maps that JSON into its own model. A piece is written once
+and played by both.
 
-**SwiftWasm was considered and is not worth it.** It would carry `Domain/` across and nothing
-else: there is no AVFoundation and no CoreMotion in a browser, so `Audio/` and `Motion/` are
-rewritten either way, and there is no SwiftUI, so `Features/` is rewritten either way. That
-leaves a toolchain, a multi-megabyte download on a page that should open in a second, and a
-bridge crossed on every touch event, to save the smallest layer.
+**The rules are code, and the code is the specification.** `Domain/` says what a bend range is,
+what an overbend shifts by, how far a mouth can pull a chord, in the only form that cannot be
+vague: 1389 lines that already run and are already tested. The port is written by reading those
+files, not by remembering them. AGENTS is the history behind them — why each number is that
+number and what was tried before — and the tests are what must still be true afterwards. Code
+first, tests second, AGENTS for the reasons.
 
-**What transfers is the specification.** AGENTS.md says what every rule is and why, in numbers:
-the bend range is the interval between a hole's two reeds minus one, an overbend is that
-interval plus one, a reed speaks in 5 ms and stops in 20, the cup sweeps 2800 Hz to 600 Hz at a
-resonance of four, vibrato is 1.5 per cent of the pitch and a quarter of the loudness wandering
-by eight per cent and a fifth. A port that reads the same numbers off the same document is not
-a rewrite from memory.
-
-**And the tests transfer as names.** Every `test_subject_whenCondition_outcome` becomes the same
-sentence in TypeScript asserting the same number. `B4 pulled three semitones is A♭4, 415.30 Hz`
-is true in any language. That is the real return on having written them.
-
-**The music transfers as data**, which is what the JSON below is for.
-
-**The samples transfer as files**, which is the problem in the next section.
-
-## Settle this before any code
-
-**Publishing the samples on a public page is not the same question as bundling them in an app.**
-A page serves the WAV files to everyone who opens it, in a form a visitor can save. That is
-redistribution of a commercial sample library, and it is the one thing sample licences are
-written to forbid. The licence is still unread, which was survivable while the folder was empty
-in git and the files only ever reached one phone.
-
-Four ways out, and the answer decides the whole audio plan:
-
-| | What it costs |
-|---|---|
-| Record a harmonica ourselves | A harmonica, a microphone and an afternoon. 19 pitches, four seconds each. Ours to publish |
-| Find a set under a licence that allows it | Searching, and probably worse recordings |
-| Synthesise in the browser | No files at all, and the page loses everything phase 5 bought: the harmonics the cup needs, the timbre, the attack |
-| Ship the page silent until the visitor supplies files | Honest, and nobody will do it |
-
-The page is the reason this matters: if the answer is that the current library cannot be
-published, the web version needs its own sound before it needs anything else.
-
-## Layer by layer
-
-| Swift | Becomes | Size | Notes |
-|---|---|---|---|
-| `Domain/Entities/Instrument` | TypeScript, plain values | 10 files | Straight port. Every number stays the number |
-| `Domain/Entities/Playing` | TypeScript, plain values | 10 files | Straight port |
-| `Domain/Entities/Scores` | TypeScript plus JSON | 8 files | The four tunes stop being code. `Fingerings` and `Playability` port as they are |
-| `Domain/UseCases` | TypeScript | 2 files, 357 lines | `PlayHarmonica` and `PlayScore`. The only place with state |
-| `Domain/Protocols` | TypeScript interfaces | 4 files | |
-| `Audio/` | Web Audio, an `AudioWorkletProcessor` | Rewrite | The render loop is the same arithmetic; the plumbing is not |
-| `Motion/` | `devicemotion`, behind a permission prompt | Rewrite | |
-| `Features/Harmonica` | DOM, no framework | Rewrite | The view state and the presenter port; the views do not |
-| `App/` | One entry point | Rewrite | |
-| `Tests/` | The same names | Port | Nothing about what is asserted changes |
-
-The presenter is worth saying twice: `HarmonicaPresenter` turns a `Harmonica` into strings and
-flags, and that is language-independent work. Porting it keeps both platforms saying `overblow
-↑` and `(D5 bend)` in the same places, which is the kind of thing that otherwise drifts in a
-week.
-
-## The shared score format
-
-**JSON carries the music. It does not carry the playing.**
-
-What goes in is exactly what `Score`, `ScoreEvent` and `ScoreNote` hold now: a name, the key the
-music sounds in, the position it is played in, a tempo, and a list of events, each either a rest
-of so many beats or a note with its holes, its breath, its length, and whatever the player does
-to it — bent by so many semitones, arriving at so many, overbent, vibrato, slid from a hole,
-shaken with a hole.
-
-What stays in code, on both platforms, is every number about *how* a note is played: the 50 ms
-articulation gap, the 40 ms slide step, the 60 ms shake and the 10 ms bend step, the crossfades,
-the 5 ms a reed takes to speak, the cup and the vibrato. Those belong to the instrument and the
-player, not to the piece. The project already draws this line and should keep drawing it: time
-lives in the player.
-
-That is also the practical argument. Put the playing in the file and every score carries a copy
-of the instrument's behaviour, so improving the instrument means editing every piece, and the
-two platforms drift through data rather than through code, which is far harder to see.
-
-A note is written in **semitones**, not in axis travel, exactly as now. The reader asks the
-tuning for the reed's range and divides, so a piece never has to know that hole 3 draw bends
-three and hole 4 draw bends one.
-
-**The text format stays, on the iOS side, as the thing a person writes.** `.score` files are
-tabs with lengths and they are pleasant to type; JSON is not. `ScoreReader` keeps turning one
-into a `Score`, and gains one more exit: writing that `Score` out as JSON. So there is one
-format to share and one format to write, and the web only ever needs the first.
+**The samples are files and belong in one folder.** Both platforms load them the same way from
+the same place. They are not committed, exactly as now.
 
 ## Where the files live
 
 ```
 Resources/
-  Scores/       the four tunes as .json, committed
-  Samples/      the WAVs, not committed, subject to the licence question above
-Apps/iOS/       as now
+  Scores/       one .json per tune, committed
+  Samples/      the WAVs, not committed, dropped in by hand as now
+  index.json    what is in the two folders
+Apps/iOS/       the app, reading out of Resources/
+  Scores/       the .score text files a person writes, theirs, not shared
 Web/            the page, its TypeScript, its tests
 ```
 
-The iOS target reads both out of `Resources/` instead of out of `Apps/iOS/`, which is two lines
-in `project.yml` and one constant in `RecordedHarmonica`. `Apps/iOS/Scores/` keeps the text
-scores a person writes, because those are theirs and are not shared.
+**Why an index file.** iOS finds the samples with `Bundle.main.urls(forResourcesWithExtension:)`,
+which enumerates a directory. A browser cannot enumerate anything: it can only fetch a name it
+already knows. So the folder carries a small index of what is in it, and both platforms read
+that instead of one enumerating and the other guessing. One mechanism rather than two, which is
+the point of the shared folder.
 
-Converting the four tunes from Swift to JSON is a real trade and worth naming: a typo in a tune
-stops being a compile error and becomes a launch-time failure. It is still right, because the
-alternative is the same four pieces written twice in two languages, and those will not stay the
-same. `ScoreReader` already proves that reading a score at launch works.
+**The text score format stays on the iOS side**, because `.score` files are tabs a person types
+and JSON is not pleasant to type. `ScoreReader` keeps turning one into a `Score` and gains one
+more exit: writing that `Score` out as JSON, so something typed as a tab can be shared.
 
-## What Safari on an iPhone cannot do
+**What JSON holds and what it does not.** It holds the music: a name, the key the music sounds
+in, the position it is played in, a tempo, and a list of events, each a rest of so many beats or
+a note with its holes, its breath, its length, and what the player does to it — bent by so many
+semitones, arriving at so many, overbent, vibrato, slid from a hole, shaken with a hole. That is
+exactly what `Score`, `ScoreEvent` and `ScoreNote` hold now.
 
-None of these are reasons not to do it. They are the differences the page has to be designed
-around rather than discover.
+It does not hold how any of that is played: the 50 ms articulation gap, the 40 ms slide step, the
+60 ms shake and 10 ms bend step, the crossfades, the 5 ms a reed takes to speak, the 30 cycles it
+rings down over, the cup and the vibrato. Those belong to the instrument and the player, and the
+project already draws that line: time lives in the player. Put them in the file and every piece
+carries a copy of the instrument's behaviour, so improving the instrument means editing every
+piece, and the two platforms drift through data rather than through code, which is far harder to
+see.
 
-- **It cannot lock the orientation.** No page can. The best available is noticing portrait and
-  asking the visitor to turn the phone.
-- **Sound needs a tap first.** An `AudioContext` starts suspended and only resumes inside a
-  gesture, so the page opens with something to press.
-- **Tilt needs a tap and a prompt.** `DeviceMotionEvent.requestPermission()` must be called from
-  a gesture and only works over HTTPS, which Pages is. Until it is granted, the cup stays open
-  and the instrument is still complete.
-- **The silent switch can mute it.** Web Audio on iOS goes through a channel the hardware switch
-  can silence, which no permission fixes.
-- **The contact width may not exist.** `Touch.radiusX` reads 1 where the hardware reports a
-  point, and whether an iPhone reports more is exactly the measurement never taken natively
-  either. So the page ships with one note per finger working for certain, and the two width
-  styles appear only if the number moves.
-- **Latency is worse.** A worklet on iOS runs at a few milliseconds' buffer, against
-  `AVAudioEngine`'s better; playable, not identical.
+A bend is written in **semitones**, not in axis travel, exactly as now, so a piece never has to
+know that hole 3 draw bends three and hole 4 draw bends one.
+
+## Layer by layer
+
+| Swift | Becomes | Size | Notes |
+|---|---|---|---|
+| `Domain/Entities/Instrument` | TypeScript, plain values | 10 files | Read and rewritten line for line. Every number stays the number |
+| `Domain/Entities/Playing` | TypeScript, plain values | 10 files | Same |
+| `Domain/Entities/Scores` | TypeScript plus the JSON | 8 files | The four tunes stop being code. `Fingerings` and `Playability` port as they are |
+| `Domain/UseCases` | TypeScript | 2 files, 357 lines | `PlayHarmonica` and `PlayScore`. The only place with state |
+| `Domain/Protocols` | TypeScript interfaces | 4 files | |
+| `Audio/` | Web Audio, an `AudioWorkletProcessor` | Rewrite | The render arithmetic is the same; the plumbing is not |
+| `Motion/` | `devicemotion`, behind its permission prompt | Rewrite | |
+| `Features/Harmonica` | DOM, no framework | Rewrite of the views; the view state and the presenter port | Keeping the presenter is what keeps both platforms saying `overblow ↑` and `(D5 bend)` in the same places |
+| `App/` | One entry point | Rewrite | |
+| `Tests/` | The same names, the same numbers | Port | `B4 pulled three semitones is A♭4, 415.30 Hz` is true in any language |
+
+The offline render tests port too: an `AudioWorkletProcessor` can be driven a buffer at a time
+outside a page, the same way `RenderedSound` drives the oscillator outside an app.
+
+## The page in Safari
+
+**The interface fills exactly what is visible, in either landscape.** The orientation cannot be
+locked by any page, but the phone still turns, and when it does the instrument has to occupy the
+visible area one to one: no scrolling, no rubber banding, no toolbar eating the bottom of the
+strip, no gap where the notch is. That means `dvh` rather than `vh`, the visual viewport rather
+than the layout viewport, `env(safe-area-inset-*)` doing what `safeAreaPadding` does on iOS, and
+a relayout on both `resize` and `orientationchange`. In portrait the page says to turn the phone,
+because a ten hole strip across a portrait screen is not an instrument.
+
+**Sound starts on a tap.** An `AudioContext` begins suspended and resumes only inside a gesture,
+so the page opens with something to press. The same tap can ask for motion.
+
+**Tilt needs a prompt.** `DeviceMotionEvent.requestPermission()` must be called from a gesture and
+only over HTTPS. Until it is granted the cup stays open and the instrument is complete without it.
+
+**The contact width is a measurement, not a search.** `Touch.radiusX` exists in the standard but
+is not Baseline, and where the hardware reports a point it reads 1. Whether an iPhone reports
+more is exactly the question never answered natively either, where `UITouch.majorRadius` has been
+logged and never read. One page that prints the number answers it for both. Until then the page
+ships with one note per finger, which needs no width at all, and the two width styles arrive when
+the number does.
 
 ## The steps
 
 Each one ends somewhere that runs.
 
-**0. Answers, not code.** Settle the licence. Put a throwaway page on Pages that prints
-`touch.radiusX` and the tilt reading, and press it with a flat finger, a fingertip and two pads.
-Both answers change what the later steps build.
+**0. One measurement.** A throwaway page that prints `touch.radiusX`, `radiusY` and the tilt
+reading. Press it flat, on the tip, and with two pads. This answers the width question for the
+app as well.
 
-**1. One copy of the music.** Create `Resources/`, move the samples folder, write the four tunes
-as JSON, teach `Score` to read them, delete the four Swift files, point `project.yml` and
-`RecordedHarmonica.folder` at the new place, and add the JSON exit to `ScoreReader`. Touches
-`BundledScores`, `CompositionRoot`, `RecordedHarmonica`, `Score`, the four tune files,
-`ScoreReader`, `project.yml`, and both READMEs. No test changes its expectation:
-`WhatAScorePlaysTests` builds its own scores in code and `WhatAWrittenScoreBecomesTests` reads
-from a string, so both are untouched. That is the evidence this step is a refactor and not a
-behaviour change. The app stays green and identical.
+**1. One copy of the music.** Create `Resources/`, move `Samples/` into it, write the four tunes
+as JSON, write the index, teach `Score` to read a tune from JSON, delete the four Swift tune
+files, point `project.yml` and `RecordedHarmonica` at the new folder, and add the JSON exit to
+`ScoreReader`. Touches `BundledScores`, `CompositionRoot`, `RecordedHarmonica`, `Score`,
+`BluesStrain`, `SlowDrag`, `HammerSong`, `FoxChase`, `ScoreReader`, `project.yml` and both
+READMEs. No test changes its expectation: `WhatAScorePlaysTests` builds its own scores in code
+and `WhatAWrittenScoreBecomesTests` reads from a string, so neither is touched. That is the
+evidence this step is a refactor and not a change in behaviour. The app stays green and plays
+identically.
 
-**2. A page that draws the instrument.** `Web/`, TypeScript with no framework, a Pages workflow,
-and the strip and the square drawn at the right proportions in landscape. No sound, no touches.
+A typo in a tune stops being a compile error and becomes a launch failure, which is the price of
+not writing each piece twice. `ScoreReader` already proves reading a score at launch works.
 
-**3. The domain, test for test.** Port `Instrument`, `Playing`, `Scores` and the two use cases,
-with the Swift test names carried across and the same numbers asserted. This is the step that
+**2. A page that draws the instrument.** `Web/`, TypeScript, no framework, and the strip and the
+square at the right proportions, filling the visible area in both landscapes and saying to turn
+the phone in portrait. No sound, no touches.
+
+**3. The domain, test for test.** Port `Instrument`, `Playing`, `Scores` and the two use cases by
+reading the Swift, with the test names carried across and the same numbers asserted. This step
 either proves the layering was worth it or shows where it leaked.
 
-**4. Sound.** An `AudioWorkletProcessor` holding the voice bank: the sample read with linear
-interpolation, the 5 ms attack against the change's own fall, the air spread across at most four
-reeds, the bend as one multiplication, the vibrato and its wander, the cup as a state variable
-filter. The offline render tests port too, because a worklet can be run offline the same way.
+**4. Sound.** An `AudioWorkletProcessor` holding the voice bank: the recording read with linear
+interpolation, the 5 ms attack against the change's own fall, the ring down over 30 cycles, the
+air spread across at most four reeds, the bend as one multiplication, the vibrato and its wander,
+the cup as a state variable filter. Samples loaded from the shared folder through the index.
 
-**5. Touches.** Pointer events into `PositionOnHarmonica`, the three playing styles, the square,
-the note row, the plates. At the end of this step the page is an instrument.
+**5. Touches.** Pointer events into `PositionOnHarmonica`, the playing styles the measurement
+allows, the square, the note row, the plates. At the end of this step the page is an instrument.
 
-**6. The tunes.** `PlayScore` driving the same instrument from the JSON, and the menu.
+**6. The tunes.** `PlayScore` driving that instrument from the shared JSON, and the menu.
 
 **7. Tilt.** The permission gate, the lean, the cup bar.
 
-**8. The differences.** The portrait notice, the tap that starts the sound, and whatever step 0
-said about the radius.
-
 ## Not in scope
 
-Feature parity beyond the instrument: no `.score` text reader on the web, no offline install, no
-saving anything. The page is the instrument and the four tunes, which is what the app is.
+No `.score` text reader on the web, no offline install, no saving anything, and no handling of a
+phone call or the silent switch: they are corner cases and the page is not a product. Compiling
+the Swift domain to WebAssembly is not on the table either — the audio, the motion and the views
+would be rewritten for the browser regardless, so it would carry only the layer that is cheapest
+to port, at the price of a toolchain and a multi-megabyte download.
+
+If the page is ever made public rather than kept private for testing, the samples become a
+question of their own: serving a commercial library from a public URL is not the same thing as
+loading it from a folder on your own machine.
