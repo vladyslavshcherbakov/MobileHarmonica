@@ -10,12 +10,30 @@ step needs the one before it.
 
 ## Contents
 
-1. [What is shared](#what-is-shared)
-2. [Where the files live](#where-the-files-live)
-3. [Layer by layer](#layer-by-layer)
-4. [The page in Safari](#the-page-in-safari)
-5. [The steps](#the-steps)
-6. [Not in scope](#not-in-scope)
+1. [Constraints](#constraints)
+2. [What is shared](#what-is-shared)
+3. [Where the files live](#where-the-files-live)
+4. [Layer by layer](#layer-by-layer)
+5. [The page in Safari](#the-page-in-safari)
+6. [The steps](#the-steps)
+7. [Not in scope](#not-in-scope)
+
+## Constraints
+
+| | |
+|---|---|
+| Browser | Safari on iPhone. Only that one |
+| Orientation | Landscape, both directions. A page cannot lock it, so it is asked for |
+| Language | TypeScript, no framework |
+| Dependencies | None, the same as the app |
+| Reference | What WebKit implements, not what every browser agrees on |
+| Hosting | A static page, private while it is being tested |
+
+**One browser is a decision, not a shortcut.** Building for Safari alone means WebKit's API is
+the API: anything it ships is available, prefixed or not, with no fallback to write and no
+polyfill to carry. It also means a cross-browser support table is the wrong question to ask.
+"Not supported in some widely used browsers" says nothing about whether this phone does it, and
+the only thing that answers that is the phone.
 
 ## What is shared
 
@@ -107,12 +125,16 @@ so the page opens with something to press. The same tap can ask for motion.
 **Tilt needs a prompt.** `DeviceMotionEvent.requestPermission()` must be called from a gesture and
 only over HTTPS. Until it is granted the cup stays open and the instrument is complete without it.
 
-**The contact width is a measurement, not a search.** `Touch.radiusX` exists in the standard but
-is not Baseline, and where the hardware reports a point it reads 1. Whether an iPhone reports
-more is exactly the question never answered natively either, where `UITouch.majorRadius` has been
-logged and never read. One page that prints the number answers it for both. Until then the page
-ships with one note per finger, which needs no width at all, and the two width styles arrive when
-the number does.
+**The contact width is a measurement, not a search.** What Safari puts on a `Touch` is the
+question, and no compatibility table answers it: where the hardware reports a point rather than
+an area, `radiusX` reads 1 whatever the standard says. This is the same question never answered
+natively either, where `UITouch.majorRadius` has been logged since the day it was added and never
+once read. One page printing the number answers it for both at the same time. Until it does, the
+page ships with one note per finger, which needs no width at all, and the two width styles arrive
+when the number does.
+
+`Touch.force` is not the way round it, for the same reason it is not on the app: the hardware
+that varied it ended with the iPhone XS.
 
 ## The steps
 
