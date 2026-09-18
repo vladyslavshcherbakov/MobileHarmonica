@@ -4,7 +4,7 @@ struct KeyBar: View {
     static let height: CGFloat = 44
 
     private static let keyLabelWidth: CGFloat = 34
-    private static let styleControlWidth: CGFloat = 104
+    private static let styleControlWidth: CGFloat = 180
     private static let demoButtonWidth: CGFloat = 64
 
     let playable: PlayableHarmonica
@@ -49,6 +49,7 @@ struct KeyBar: View {
                 Button(choice.name) { viewModel.changeStyle(to: choice.id) }
             }
         }
+        .lineLimit(1)
         .buttonStyle(.bordered)
         .tint(.orange)
         .frame(width: Self.styleControlWidth)

@@ -198,8 +198,9 @@ ever has to be decoded. The fourth combination, one finger and one note, is an i
 plays no chords, so it is not offered.
 
 The control is a menu rather than a segmented control, because the whole point is that the
-names are sentences and a segment is too narrow for one. The button shows the pair it stands
-for, `5 × many` for fingers by notes.
+names are sentences and a segment is too narrow for one. The button shows the name of the style
+that is on, word for word as the menu lists it: a button that abbreviated what the menu spelled
+out gave the same style two names and left the reader matching them up.
 
 The radius is taken literally, with no multiplier, and it is deliberately on trial: at the
 natural square size a hole is about 66 points and a fingertip reports something like 8 to 30,

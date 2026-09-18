@@ -93,14 +93,14 @@ struct HarmonicaPresenter {
 
     private func styleState(_ style: PlayingStyle) -> PlayingStyleViewState {
         PlayingStyleViewState(
-            label: Self.shortName(of: Self.choice(of: style)),
+            label: Self.name(of: Self.choice(of: style)),
             choices: PlayingStyle.allCases.map(Self.choiceState(of:))
         )
     }
 
     private static func choiceState(of style: PlayingStyle) -> PlayingStyleChoiceViewState {
         let chosen = choice(of: style)
-        return PlayingStyleChoiceViewState(id: chosen, name: fullName(of: chosen))
+        return PlayingStyleChoiceViewState(id: chosen, name: name(of: chosen))
     }
 
     private static func choice(of style: PlayingStyle) -> PlayingStyleChoice {
@@ -111,19 +111,11 @@ struct HarmonicaPresenter {
         }
     }
 
-    private static func shortName(of choice: PlayingStyleChoice) -> String {
+    private static func name(of choice: PlayingStyleChoice) -> String {
         switch choice {
-        case .severalFingersSeveralNotes: "5 × many"
-        case .severalFingersOneNote: "5 × 1"
-        case .oneFingerSeveralNotes: "1 × many"
-        }
-    }
-
-    private static func fullName(of choice: PlayingStyleChoice) -> String {
-        switch choice {
-        case .severalFingersSeveralNotes: "Several fingers, several notes each"
-        case .severalFingersOneNote: "Several fingers, one note each"
-        case .oneFingerSeveralNotes: "One finger, several notes"
+        case .severalFingersSeveralNotes: "Many fingers, many notes"
+        case .severalFingersOneNote: "Many fingers, one note"
+        case .oneFingerSeveralNotes: "One finger, many notes"
         }
     }
 
