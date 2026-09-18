@@ -184,6 +184,13 @@ overbend is not: nothing below half travel, the whole overbend above it. An over
 slide in on the instrument, it pops once the reed goes over, so there is no continuous version
 to offer.
 
+What is not instant is the player reshaping the mouth, roughly 50 to 150 ms by the rate of
+vowel transitions in speech. That time is already modelled: it is how long the thumb takes to
+travel up the axis, and the note stays plain the whole way, exactly as it does until the tract
+passes its critical point. What follows is one reed dying while another catches, which is the
+50 ms crossfade, not a pitch glide: two different reeds sound, so the pitch never visits the
+notes in between.
+
 A `smooth` mode that slid into the overbend was built and removed. It was justified as easier
 to play and it is not: to land the overbend's real pitch it needs the thumb parked at the very
 top, while the threshold only needs the thumb pushed past halfway. All it added was an upward
@@ -250,10 +257,9 @@ target gain and the semitones it can bend.
 
 | Call | Frequency | Effect |
 |---|---|---|
-| `soundTones(_:)` | On reed change | Drops the target gain of unwanted voices, raises new ones over 20 ms |
+| `soundTones(_:as:)` | On reed change | Drops the target gain of unwanted voices, raises new ones over the change's crossfade |
 | `changeIntensity(to:)` | Every touch move | One number in its own lock |
 | `changeBend(to:)` | Every touch move | One number in its own lock |
-| `changeOverbend(to:)` | Every touch move | One number in its own lock |
 | `changeVibrato(to:)` | Every touch move | One number in its own lock |
 | `silence()` | Lift | Fades every voice |
 
@@ -261,17 +267,30 @@ target gain and the semitones it can bend.
 pitches changes rarely. Routing them through the voice bank would rewrite the voice array on
 nearly every buffer for a number that is one `Double` wide.
 
-**Crossfade, not overlap.** 20 ms linear gain, enough to remove the click at a hole boundary.
-It is not a model of the instrument: a real mouth covers both holes for a moment and both
-sound at full volume. See [Known limits](#known-limits).
+**Crossfade, not overlap.** Linear gain, and the caller says which kind of change it is,
+because the two take different times. `.slide` is 20 ms, enough to remove the click at a hole
+boundary and short enough that a fast run is not smeared. `.newReed` is 50 ms, for an overbend
+engaging or releasing, where one reed really does hand over to another. The domain names the
+event and the audio layer owns the milliseconds.
+
+The slide is not a model of the instrument: a real mouth covers both holes for a moment and
+both sound at full volume. See [Known limits](#known-limits).
 
 **Mixing.** The sum is divided by the total gain of the sounding voices, then by the breath
 gain, so ten notes cannot clip and one note is as loud as it was.
 
-**Bend and overbend** are one multiplication by `2^((overbendable × overbend − bendable × bend)/12)`,
-applied per voice once per buffer. One of the two terms is always zero, because a reed has
-either a bend range or an overbend range. Cheaper than a sample, which has to be dragged off
-its recorded pitch.
+**Bend** is one multiplication by `2^(-semitones/12)`, applied per voice once per buffer.
+Cheaper than a sample, which has to be dragged off its recorded pitch.
+
+**The overbend is not a parameter.** It changes which reed sounds, so it goes through
+`soundTones` as a different pitch and crossfades, the same event as moving to another hole.
+The engine never hears the word: the domain computes the overbent pitch and sends it as a tone
+with no bend range, because an overblow cannot then be bent down.
+
+It was a parameter first, a ratio stepped from 1 to `2^(semitones/12)` on one voice. That is
+a pitch teleport with no amplitude transition, more abrupt than anything the instrument does.
+Removing `smooth` is what made the better shape available: with only a threshold left, the
+overbend engages rarely rather than on every touch move, so it belongs with the rare calls.
 
 **Vibrato** is one shared LFO at 5.5 Hz reaching 3 per cent of the frequency, about 51 cents.
 

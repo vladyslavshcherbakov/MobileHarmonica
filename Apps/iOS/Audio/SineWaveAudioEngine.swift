@@ -2,6 +2,8 @@ import AVFoundation
 
 final class SineWaveAudioEngine: AudioEngineProtocol {
     private static let amplitude: Float = 0.25
+    private static let slideCrossfadeSeconds = 0.02
+    private static let newReedCrossfadeSeconds = 0.05
 
     private let engine = AVAudioEngine()
     private let oscillator = Oscillator()
@@ -25,8 +27,8 @@ final class SineWaveAudioEngine: AudioEngineProtocol {
         }
     }
 
-    func soundTones(_ tones: [Tone]) {
-        oscillator.sound(tones.map(Self.sounding))
+    func soundTones(_ tones: [Tone], as change: ToneChange) {
+        oscillator.sound(tones.map(Self.sounding), over: Self.crossfadeSeconds(for: change))
     }
 
     func changeIntensity(to intensity: BreathIntensity) {
@@ -35,10 +37,6 @@ final class SineWaveAudioEngine: AudioEngineProtocol {
 
     func changeBend(to depth: BendDepth) {
         oscillator.changeBend(to: depth.fraction)
-    }
-
-    func changeOverbend(to depth: OverbendDepth) {
-        oscillator.changeOverbend(to: depth.fraction)
     }
 
     func changeVibrato(to depth: VibratoDepth) {
@@ -51,11 +49,17 @@ final class SineWaveAudioEngine: AudioEngineProtocol {
 
     // MARK: - Private
 
+    private static func crossfadeSeconds(for change: ToneChange) -> Double {
+        switch change {
+        case .slide: slideCrossfadeSeconds
+        case .newReed: newReedCrossfadeSeconds
+        }
+    }
+
     private static func sounding(_ tone: Tone) -> SoundingTone {
         SoundingTone(
             hertz: tone.pitch.converted(to: .hertz).value,
-            bendableSemitones: tone.bendableSemitones,
-            overbendableSemitones: tone.overbendableSemitones
+            bendableSemitones: tone.bendableSemitones
         )
     }
 

@@ -3,14 +3,6 @@ import Foundation
 struct RichterTuning {
     // MARK: - Public
 
-    func tone(for reed: Reed, in key: HarmonicaKey) -> Tone {
-        Tone(
-            pitch: note(for: reed, in: key).pitch,
-            bendableSemitones: bendableSemitones(for: reed),
-            overbendableSemitones: overbendableSemitones(for: reed)
-        )
-    }
-
     func note(for reed: Reed, in key: HarmonicaKey) -> MIDINote {
         note(for: reed).transposed(by: key.semitonesFromC)
     }

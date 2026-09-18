@@ -35,7 +35,7 @@ final class PlayHarmonica {
         recordMouthWidth(of: sounding)
         guard reeds != soundingReeds else { return harmonica }
 
-        sound(reeds)
+        sound(reeds, as: .slide)
         return harmonica
     }
 
@@ -52,19 +52,22 @@ final class PlayHarmonica {
         log.record("key changed to \(key), \(key.semitonesFromC) semitones from C")
         guard !soundingReeds.isEmpty else { return harmonica }
 
-        sound(soundingReeds)
+        sound(soundingReeds, as: .slide)
         return harmonica
     }
 
     func shapeTone(_ shaping: PitchShaping, vibrato: VibratoDepth) -> Harmonica {
         guard shaping != self.shaping || vibrato != self.vibrato else { return harmonica }
 
+        let wasOverbent = overbend
         self.shaping = shaping
         self.vibrato = vibrato
         log.recordSample("bend \(rounded(bend.fraction)) of \(rounded(bendableSemitones)) semitones, overbend \(rounded(overbend.fraction)) of \(rounded(overbendableSemitones)) semitones, vibrato \(rounded(vibrato.fraction))")
         audioEngine.changeBend(to: bend)
-        audioEngine.changeOverbend(to: overbend)
         audioEngine.changeVibrato(to: vibrato)
+        guard overbend != wasOverbent, !soundingReeds.isEmpty else { return harmonica }
+
+        sound(soundingReeds, as: .newReed)
         return harmonica
     }
 
@@ -152,16 +155,15 @@ final class PlayHarmonica {
         log.recordSample("mouth \(width) holes wide")
     }
 
-    private func sound(_ reeds: [Reed]) {
-        let tones = reeds.map { tuning.tone(for: $0, in: key) }
-        audioEngine.soundTones(tones)
+    private func sound(_ reeds: [Reed], as change: ToneChange) {
+        audioEngine.soundTones(reeds.map { soundingReed(of: $0).tone }, as: change)
         soundingReeds = reeds
         log.record("sounding \(describe(reeds)) in key \(key)")
     }
 
     private func describe(_ reeds: [Reed]) -> String {
         reeds
-            .map { "hole \($0.hole.number) \($0.breath) \(rounded(tuning.tone(for: $0, in: key).pitch.converted(to: .hertz).value)) Hz" }
+            .map { "hole \($0.hole.number) \($0.breath) \(rounded(soundingReed(of: $0).tone.pitch.converted(to: .hertz).value)) Hz" }
             .joined(separator: ", ")
     }
 

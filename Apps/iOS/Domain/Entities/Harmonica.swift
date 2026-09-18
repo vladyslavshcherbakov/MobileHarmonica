@@ -26,6 +26,12 @@ struct SoundingReed: Equatable {
     let bend: BendDepth
     let overbend: OverbendDepth
 
+    var tone: Tone {
+        isOverbent
+            ? Tone(pitch: pitch.pitch, bendableSemitones: 0)
+            : Tone(pitch: unbent.pitch, bendableSemitones: bendableSemitones)
+    }
+
     var pitch: MIDINote {
         unbent.transposed(by: Int(shiftedSemitones.rounded()))
     }
