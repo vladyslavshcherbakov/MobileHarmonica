@@ -36,13 +36,13 @@ final class WhatTheOscillatorPlaysTests: XCTestCase {
         XCTAssertGreaterThan(louder, 1.5, "three reeds move about the square root of three times the air")
     }
 
-    func test_cup_whenTheHandsShut_keepTheBandTheyRingAtAndLetGoOfTheRest() {
-        let atTheRingingBand = cupped(hertz: 600)
-        let twoOctavesAbove = cupped(hertz: 2400)
+    func test_cup_whenTheHandsShut_takeTheTopOffTheSound() {
+        let low = cupped(hertz: 600)
+        let high = cupped(hertz: 2400)
 
-        let kept = RenderedSound.loudness(of: atTheRingingBand) / RenderedSound.loudness(of: twoOctavesAbove)
+        let kept = RenderedSound.loudness(of: low) / RenderedSound.loudness(of: high)
 
-        XCTAssertGreaterThan(kept, 5, "shut hands ring near 600 Hz, which is what makes a wah a vowel")
+        XCTAssertGreaterThan(kept, 2, "shut hands pass 800 Hz and hold back what is above it")
     }
 
     func test_release_whenTheMouthComesOff_ringsOnAfterATonguedStopHasGone() {

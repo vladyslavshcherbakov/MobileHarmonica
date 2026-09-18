@@ -539,20 +539,19 @@ a pitch teleport with no amplitude transition, more abrupt than anything the ins
 Removing `smooth` is what made the better shape available: with only a threshold left, the
 overbend engages rarely rather than on every touch move, so it belongs with the rare calls.
 
-**Cupped hands are a cavity that rings, not only a lid.** Hands closed around a harmonica trap
-a pocket of air, and a pocket of air has a frequency it wants to sound at, the way a bottle
-does. So the hands do two things at once: they keep the high partials from getting out, and
-they push forward whatever band the pocket favours. Closing the hands narrows the gap between
-them, which slides that band downwards, and the band sliding is what the ear hears as a vowel.
-That is the whole of a wah, and a lid alone cannot make one: it gives bright to dull, which is
-a tone control.
+**Cupped hands are one low pass on the mix.** Hands closed around a harmonica are a cavity that
+eats the high partials, so closing them darkens the note rather than changing its pitch. One
+pole is enough for that, and it costs one multiply and one add per sample: the cutoff sweeps
+exponentially from 20 kHz open, where nothing is audibly touched, down to 800 Hz shut, which
+keeps every fundamental on the instrument and takes the harmonics off. The coefficient is worked
+out once a buffer, so nothing transcendental runs per sample.
 
-So the cup is a resonant low pass, a state variable filter whose corner sweeps exponentially
-from 2800 Hz barely cupped to 600 Hz shut, with a resonance of four. Its output is mixed
-against the dry sound by how closed the hands are, so open hands pass the instrument through
-untouched and there is nothing to bypass. The peak is scaled back by the resonance, so the
-loudest the cup can be is the sound it was given: cupping focuses and quietens, as it does on
-the instrument, and it can never spend the headroom the mixing leaves.
+A resonant version was built and taken out. A real cup rings as well as closing, and sweeping
+that resonance down is what makes a wah a vowel rather than a tone control, which is why it
+looked like the better model. On this instrument it sounded worse: normalising the peak by the
+resonance meant closing the hands mostly dropped the level, so a wah came out as the harmonica
+going quiet and boxy instead of speaking. The lid is what the instrument has until something
+fixes that.
 
 High notes are muffled harder than low ones, which is not a bug to fix: a real cup is a fixed
 size, so what it takes off a note depends on where that note's partials sit.
@@ -738,7 +737,7 @@ Nothing here is scheduled, and none of it is in the way. What each one waits on 
 | **A score that cannot be played is not refused.** `Playability` reports the leaps and the unreachable pitches; nothing acts on the report | A decision about what refusing should do |
 | **The clock.** Notes are placed with `Task.sleep`, which drifts a few milliseconds. Inside a note the stepping already counts from the note's start, so only note to note drifts | Wanting music rather than a demo. The fix is the audio clock |
 | **An overbend pushed past its own pitch.** Players bend an overblow further up once it pops; here the axis stops at the pop and the travel above the threshold does nothing | Deciding it is worth the engine contract. The pop is an additive shift that differs per reed, while the axis fraction is shared, so one multiplication per voice stops being enough |
-| **A resonance that opens as well as closes.** The cup's resonance is fixed at four, where a real cup rings harder the more it shuts | Hearing whether it matters |
+| **A cup that rings as well as closes.** A real cup lifts a band as it shuts and slides it down, which is what makes a wah a vowel. Built once as a state variable filter and taken out again: normalising its peak turned closing the hands into a drop in level rather than a vowel | Working out how to keep the peak without losing the level, and hearing that it beats the plain lid |
 | **Vibrato rate as a control.** Slow and wide against fast and narrow are different sounds, and the rate only wanders on its own | A free control. Leaning the phone left is the one place left: it is clamped to nothing today |
 | **Remembering the pinched square.** It returns to its natural side on every launch | Storage, which the project has none of |
 
