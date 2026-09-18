@@ -51,7 +51,9 @@ until they are copied in. See the README there.
 ```
 Apps/iOS/
   App/          entry point and composition root
-  Domain/       Entities, Protocols, UseCases. Imports Foundation only
+  Domain/       Protocols, UseCases, and Entities split by subject:
+                Instrument/ the harmonica itself, Playing/ what a finger does,
+                Scores/ written music. Imports Foundation only
   Audio/        AudioEngineProtocol implementation, and Samples/ for the WAV files
   Scores/       text scores the user writes, read at launch, not committed
   Features/     one folder per feature: view state, presenter, view model, views
@@ -67,6 +69,16 @@ own Info.plist through `GENERATE_INFOPLIST_FILE`; without one Xcode refuses to s
 
 One app, so no modules. Every folder is written as if it were one: public on the boundary,
 imports pointing inward.
+
+`Entities/` is sub-foldered because it passed twenty files, well past the fifteen where the
+folder rules say sub-folders start. The split is by subject, not by role: the role is already
+the folder above it.
+
+**The screen is four views, not one.** `HarmonicaScreen` assembles and owns the lifecycle;
+`KeyBar`, `HarmonicaStrip` and `ToneShapingZone` each draw one thing and keep their own touch
+state, which is where it belongs since nothing outside them reads it. `FingerCircles` is
+shared by the strip and the square. Only the pinch and the zone's size stay with the screen,
+because the size is a frame the screen sets.
 
 ## Architecture
 
