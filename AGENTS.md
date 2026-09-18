@@ -251,6 +251,18 @@ It is a hole rather than a flag because a flag cannot say where to start. A slid
 first note of a piece, or between two notes on the same hole, would have nowhere to come from
 and would quietly do nothing.
 
+**A shake and a released bend are one note that changes while it lasts.** `shakenWith` names
+the hole the mouth rocks to and back, and `bendEndsAtSemitones` where the bend arrives by the
+end, so a scoop is a note that starts bent and lands plain. Either one makes `PlayScore` step
+through the note in 60 ms slices instead of sounding it once, setting the shaping and the
+holes at each slice; a note with neither is still one call.
+
+A shake is not a slide. A slide is a transition, passing each hole once in one direction and
+consuming the front of the note it arrives at. A shake is an ornament that rocks between two
+holes for the whole note and arrives nowhere. Written as a chain of slides it would be
+sixteen events, each re-attacking and each cut short for articulation, which is a burst of
+staccato rather than a warble.
+
 A score says a bend in **semitones**, not in axis travel, because a score should not know that
 hole 3 draw bends three semitones and hole 4 draw bends one. `PlayScore` asks `RichterTuning`
 for the range and divides. Each note is cut short by up to 50 ms so the next one re-attacks;

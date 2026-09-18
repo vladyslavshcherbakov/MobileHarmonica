@@ -3,6 +3,7 @@ import Foundation
 final class PlayScore {
     private static let articulationSeconds = 0.05
     private static let slideStepSeconds = 0.04
+    private static let expressionStepSeconds = 0.06
 
     private let tuning: RichterTuning
     private let harmonica: PlayHarmonica
@@ -76,26 +77,52 @@ final class PlayScore {
         into continuation: AsyncStream<Harmonica>.Continuation
     ) async {
         let gap = min(Self.articulationSeconds, seconds / 4)
-        continuation.yield(harmonica.shapeTone(shaping(for: note), vibrato: VibratoDepth(clamping: note.vibrato)))
-        continuation.yield(harmonica.play(at: Self.positions(of: note)))
-        await wait(seconds - gap)
+        let sounding = seconds - gap
+        let steps = Self.steps(of: note, within: sounding)
+        for step in 0..<steps {
+            continuation.yield(
+                harmonica.shapeTone(
+                    shaping(for: note, at: Self.fraction(step, of: steps)),
+                    vibrato: VibratoDepth(clamping: note.vibrato)
+                )
+            )
+            continuation.yield(harmonica.play(at: Self.positions(of: note, at: step)))
+            await wait(sounding / Double(steps))
+        }
         continuation.yield(harmonica.stopPlaying())
         await wait(gap)
+    }
+
+    private static func steps(of note: ScoreNote, within seconds: Double) -> Int {
+        guard note.shakenWith != nil || note.bendEndsAtSemitones != nil else { return 1 }
+
+        return max(1, Int(seconds / expressionStepSeconds))
+    }
+
+    private static func fraction(_ step: Int, of steps: Int) -> Double {
+        steps > 1 ? Double(step) / Double(steps - 1) : 0
     }
 
     private func wait(_ seconds: Double) async {
         try? await Task.sleep(for: .seconds(max(0, seconds)))
     }
 
-    private func shaping(for note: ScoreNote) -> PitchShaping {
+    private func shaping(for note: ScoreNote, at fraction: Double) -> PitchShaping {
         guard !note.isOverbent else { return PitchShaping(clamping: 1) }
 
+        let semitones = Self.bend(of: note, at: fraction)
         let range = note.holes
             .map { tuning.bendableSemitones(for: Reed(hole: $0, breath: note.breath)) }
             .max() ?? 0
-        guard note.bentBySemitones > 0, range > 0 else { return .rest }
+        guard semitones > 0, range > 0 else { return .rest }
 
-        return PitchShaping(clamping: -note.bentBySemitones / range)
+        return PitchShaping(clamping: -semitones / range)
+    }
+
+    private static func bend(of note: ScoreNote, at fraction: Double) -> Double {
+        guard let ending = note.bendEndsAtSemitones else { return note.bentBySemitones }
+
+        return note.bentBySemitones + (ending - note.bentBySemitones) * fraction
     }
 
     private static func passingHoles(of note: ScoreNote) -> [Hole] {
@@ -105,6 +132,12 @@ final class PlayScore {
             ? Array(from.number..<arriving.number)
             : Array((arriving.number + 1...from.number).reversed())
         return numbers.compactMap(Hole.init(rawValue:))
+    }
+
+    private static func positions(of note: ScoreNote, at step: Int) -> [PositionOnHarmonica] {
+        guard let shaken = note.shakenWith, !step.isMultiple(of: 2) else { return positions(of: note) }
+
+        return [position(of: shaken, breathing: note.breath)]
     }
 
     private static func positions(of note: ScoreNote) -> [PositionOnHarmonica] {

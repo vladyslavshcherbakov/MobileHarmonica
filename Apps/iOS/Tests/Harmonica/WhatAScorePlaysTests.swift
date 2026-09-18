@@ -82,6 +82,31 @@ final class WhatAScorePlaysTests: XCTestCase {
         XCTAssertEqual(engine.soundedTones.count, 1)
     }
 
+    func test_score_whenANoteIsShaken_rocksBetweenTheTwoHoles() async {
+        await play([.note(ScoreNote(holes: [.four], breath: .draw, beats: 1, shakenWith: .five))])
+
+        let hertz = engine.soundedTones.compactMap { $0.first?.pitch.converted(to: .hertz).value }
+        XCTAssertGreaterThan(hertz.count, 2, "a shaken note re-sounds on every swing")
+        XCTAssertEqual(hertz.first ?? 0, 587.33, accuracy: 0.5, "hole 4 draws D5")
+        XCTAssertEqual(hertz.dropFirst().first ?? 0, 698.46, accuracy: 0.5, "hole 5 draws F5")
+    }
+
+    func test_score_whenABendIsReleased_walksTheBendBackToNothing() async {
+        await play([
+            .note(ScoreNote(holes: [.three], breath: .draw, beats: 1, bentBySemitones: 2, bendEndsAtSemitones: 0))
+        ])
+
+        let bends = engine.bends.map(\.fraction)
+        XCTAssertEqual(bends.first ?? 0, 0.67, accuracy: 0.02, "two of the three semitones hole 3 draw bends")
+        XCTAssertEqual(bends.last ?? 1, 0, accuracy: 0.02)
+    }
+
+    func test_score_whenANoteIsPlain_soundsItOnce() async {
+        await play([.note(ScoreNote(holes: [.four], breath: .draw, beats: 1))])
+
+        XCTAssertEqual(engine.soundedTones.count, 1, "no expression means no stepping")
+    }
+
     // MARK: - Helpers
 
     @discardableResult

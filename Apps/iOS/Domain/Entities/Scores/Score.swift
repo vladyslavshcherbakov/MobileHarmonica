@@ -37,4 +37,6 @@ struct ScoreNote: Equatable {
     var isOverbent = false
     var vibrato = 0.0
     var slideFrom: Hole?
+    var shakenWith: Hole?
+    var bendEndsAtSemitones: Double?
 }
