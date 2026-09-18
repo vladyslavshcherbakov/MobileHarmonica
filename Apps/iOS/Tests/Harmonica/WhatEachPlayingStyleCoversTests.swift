@@ -76,7 +76,11 @@ final class WhatEachPlayingStyleCoversTests: XCTestCase {
 
         _ = harmonica.play(at: [contact(at: 0.29, covering: 0.02, above: -0.3)])
 
-        XCTAssertEqual(engine.soundedTones.last?.map(\.bendableSemitones), [3, 1])
+        XCTAssertEqual(
+            engine.soundedTones.last?.map { $0.pitch.converted(to: .hertz).value.rounded() },
+            [494, 587],
+            "holes 3 and 4 draw B4 and D5, where blowing them would be G4 and C5"
+        )
     }
 
     func test_playingStyle_whenSwitchedWhileAHoleSounds_silencesIt() {
