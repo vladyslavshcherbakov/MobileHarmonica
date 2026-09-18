@@ -1,7 +1,7 @@
 struct PitchShaping: Equatable {
     static let rest = PitchShaping(clamping: 0)
 
-    private static let snapThreshold = 0.5
+    private static let overbendThreshold = 0.5
 
     let fraction: Double
 
@@ -15,10 +15,7 @@ struct PitchShaping: Equatable {
         BendDepth(clamping: -fraction)
     }
 
-    func overbend(_ style: OverbendStyle) -> OverbendDepth {
-        switch style {
-        case .smooth: OverbendDepth(clamping: fraction)
-        case .snap: OverbendDepth(clamping: fraction < Self.snapThreshold ? 0 : 1)
-        }
+    var overbend: OverbendDepth {
+        OverbendDepth(clamping: fraction < Self.overbendThreshold ? 0 : 1)
     }
 }

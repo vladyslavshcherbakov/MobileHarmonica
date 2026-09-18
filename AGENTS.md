@@ -148,7 +148,6 @@ shrill. Transposing preserves intervals, so bend ranges are unchanged in every k
 | Key | Slider in the top bar | Transposes every reed |
 | Zone size | Pinch on the square | Resizes it, trading width with the strip |
 | Playing style | Segmented control in the top bar | `fingers` or `mouth` |
-| Overbend style | Segmented control in the top bar | `smooth` slides into the overbend, `snap` pops to it at half travel |
 
 **Two playing styles.** `fingers` is the default and unchanged: one finger, one hole, as many
 fingers as the player has. `mouth` takes the topmost finger only and sounds every hole the
@@ -179,12 +178,21 @@ hole in one breath direction exactly one half is live, so the other half's label
 half keeps half the travel; the square is pinch-resizable, so travel is recoverable and the
 convention that up is higher is not.
 
-`PitchShaping` is the signed fraction the axis gives, −1 at the bottom and +1 at the top. It
-splits itself into a `BendDepth` and an `OverbendDepth`, and the split is where `OverbendStyle`
-lands: `smooth` passes the fraction straight through, `snap` sends nothing below half travel
-and the whole overbend above it. Neither is faithful on its own. A real overblow does not
-slide in, so `smooth` is an invention for playability; a real overblow can then be bent
-further up, which `snap` does not yet do. See ROADMAP item 6.
+`PitchShaping` is the signed fraction the axis gives, −1 at the bottom and +1 at the top, and
+it splits itself into a `BendDepth` and an `OverbendDepth`. The bend is continuous, the
+overbend is not: nothing below half travel, the whole overbend above it. An overblow does not
+slide in on the instrument, it pops once the reed goes over, so there is no continuous version
+to offer.
+
+A `smooth` mode that slid into the overbend was built and removed. It was justified as easier
+to play and it is not: to land the overbend's real pitch it needs the thumb parked at the very
+top, while the threshold only needs the thumb pushed past halfway. All it added was an upward
+pitch slide the instrument does not have, and the upward slide that does exist, releasing a
+bend, is already on the lower half.
+
+The threshold has a second job: it is a deadband around rest. Without it a thumb resting just
+above the middle would flicker the note between plain and overbent. Travel above the threshold
+does nothing, and that is where the stretch of ROADMAP item 6 would go.
 
 An overbend shifts every sounding reed at once, each by its own range, the same rule the bend
 already follows. One mouth cannot overblow a chord on the instrument, but a second rule for
@@ -364,8 +372,8 @@ and hole 4's blow are both C5 and are indistinguishable here; on a harmonica the
 Waits for the samples of phase 5, same as the bend.
 
 **An overbend cannot be pushed past its own pitch.** Players bend an overblow further up
-after it pops. Here the axis stops at the overbend, so the upper travel above the snap
-threshold does nothing. ROADMAP item 6.
+after it pops. Here the axis stops at the overbend, so the travel above the threshold does
+nothing. ROADMAP item 6.
 
 **No wah.** A resonant filter sweeping a sine has no harmonics to emphasise, so it cannot be
 heard before the samples of phase 5.

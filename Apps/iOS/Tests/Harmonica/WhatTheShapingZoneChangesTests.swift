@@ -16,30 +16,20 @@ final class WhatTheShapingZoneChangesTests: XCTestCase {
         XCTAssertEqual(engine.vibratos.last?.fraction, 0.75)
     }
 
-    func test_shapingZone_whenTheFingerGoesAboveTheMiddle_overbendsInsteadOfBending() {
+    func test_shapingZone_whenTheFingerIsJustAboveTheMiddle_leavesThePitchAlone() {
         let harmonica = harmonica()
-
-        _ = harmonica.shapeTone(PitchShaping(clamping: 0.25), vibrato: .off)
-
-        XCTAssertEqual(engine.bends.last?.fraction, 0)
-        XCTAssertEqual(engine.overbends.last?.fraction, 0.25)
-    }
-
-    func test_shapingZone_whenSnapping_holdsTheOverbendBackUntilTheThreshold() {
-        let harmonica = harmonica()
-        _ = harmonica.changeOverbendStyle(to: .snap)
 
         _ = harmonica.shapeTone(PitchShaping(clamping: 0.4), vibrato: .off)
 
         XCTAssertEqual(engine.overbends.last?.fraction, 0)
     }
 
-    func test_shapingZone_whenSnapping_jumpsAllTheWayPastTheThreshold() {
+    func test_shapingZone_whenTheFingerPassesTheOverbendThreshold_jumpsAllTheWayToIt() {
         let harmonica = harmonica()
-        _ = harmonica.changeOverbendStyle(to: .snap)
 
         _ = harmonica.shapeTone(PitchShaping(clamping: 0.6), vibrato: .off)
 
+        XCTAssertEqual(engine.bends.last?.fraction, 0)
         XCTAssertEqual(engine.overbends.last?.fraction, 1)
     }
 

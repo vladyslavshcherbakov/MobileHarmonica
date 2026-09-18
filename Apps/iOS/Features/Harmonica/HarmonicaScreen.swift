@@ -6,7 +6,7 @@ struct HarmonicaScreen: View {
     private static let keyLabelWidth: CGFloat = 34
     private static let fingerCircleDiameter: CGFloat = 56
     private static let fingerCircleLineWidth: CGFloat = 3
-    private static let styleControlWidth: CGFloat = 130
+    private static let styleControlWidth: CGFloat = 150
     private static let noteRowHeight: CGFloat = 30
     private static let zoneWidthFraction: CGFloat = 0.22
     private static let zoneCornerRadius: CGFloat = 12
@@ -140,7 +140,6 @@ struct HarmonicaScreen: View {
             )
             .tint(.orange)
             playingStyleControl(playable.style)
-            overbendStyleControl(playable.overbendStyle)
         }
         .padding(.horizontal)
         .safeAreaPadding(.leading)
@@ -151,16 +150,6 @@ struct HarmonicaScreen: View {
         Picker("", selection: Binding(get: { style.isMouth }, set: viewModel.changeStyle(toMouth:))) {
             Text(style.fingersLabel).tag(false)
             Text(style.mouthLabel).tag(true)
-        }
-        .pickerStyle(.segmented)
-        .labelsHidden()
-        .frame(width: Self.styleControlWidth)
-    }
-
-    private func overbendStyleControl(_ style: OverbendStyleViewState) -> some View {
-        Picker("", selection: Binding(get: { style.isSnap }, set: viewModel.changeOverbendStyle(toSnap:))) {
-            Text(style.smoothLabel).tag(false)
-            Text(style.snapLabel).tag(true)
         }
         .pickerStyle(.segmented)
         .labelsHidden()

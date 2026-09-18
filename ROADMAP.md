@@ -105,14 +105,14 @@ hardware ended with the iPhone XS.
 ## 6. Overblows and overdraws
 
 **Built.** The square's vertical axis rests in the middle, down bends and up overbends, and
-`OverbendStyle` chooses whether the overbend slides in or pops at half travel. What is left is
-the stretch below.
+the overbend pops at half travel rather than sliding in, because that is what the reed does.
+What is left is the stretch below.
 
 **What is left.** On the instrument an overblow can be bent further up once it has popped.
-Here the axis stops at the overbend itself, so in `snap` the travel above the threshold does
-nothing. Adding it means the engine can no longer reach the shift with one multiplication per
-voice, because the pop is an additive constant that differs per reed while the axis fraction
-is shared. Worth doing only if the missing semitone is audible in practice.
+Here the axis stops at the overbend itself, so the travel above the threshold does nothing.
+Adding it means the engine can no longer reach the shift with one multiplication per voice,
+because the pop is an additive constant that differs per reed while the axis fraction is
+shared. Worth doing only if the missing semitone is audible in practice.
 
 **What.** The other half of pitch shaping. A bend pulls the higher reed of a chamber down
 towards the lower one. An overbend does the opposite: it silences the reed that matches the
@@ -141,21 +141,8 @@ a tune leaves the key.
 bends the pitch down, up from rest overbends it up, and on any given hole and breath only one
 half is live. The other half dims its label the way the bend label already dims.
 
-**The toggle is already built.** `OverbendStyle` runs from the segmented control in the top
-bar through `PlayHarmonica` to `Harmonica`, and nothing reads it yet, because on a real
-harmonica an overblow is not continuous: the reed does not slide up, the note pops over to the
-other reed once the player's setup lets it. The two behaviours it will choose between:
-
-- **smooth** — the upper half of the axis raises the pitch continuously to +1 semitone, the
-  same feel as a bend. Easier to play, not an imitation of the technique.
-- **snap** — nothing happens until the finger passes a threshold, then the pitch jumps a
-  semitone and holds. Faithful, harder.
-
-**Undecided.** Whether the square's vertical axis moves its rest point to the middle, so down
-bends and up overbends and each keeps half the travel, or keeps rest at the top and full
-travel with the direction decided by the sounding reed, which means dragging down to raise an
-overbent pitch. Whether an overbend can be pushed past +1, as some players do. Whether `snap`
-should also model the silence a missed overblow gives instead of jumping cleanly.
+**Undecided.** Whether a missed overblow should be modelled: on the instrument it gives a
+choke or a squeal, not the plain note, and here the threshold always lands cleanly.
 
 **Blocked on.** Nothing for the stretch either, beyond deciding it is worth the engine
 contract it costs.

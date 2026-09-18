@@ -7,8 +7,6 @@ struct HarmonicaPresenter {
     private static let vibratoLabel = "vibrato →"
     private static let fingersLabel = "fingers"
     private static let mouthLabel = "mouth"
-    private static let smoothLabel = "smooth"
-    private static let snapLabel = "snap"
     private static let bendEffectLabel = "bend"
     private static let overblowEffectLabel = "overblow"
     private static let overdrawEffectLabel = "overdraw"
@@ -30,7 +28,6 @@ struct HarmonicaPresenter {
                 holes: holes(of: harmonica),
                 key: keyState(harmonica.key),
                 style: styleState(harmonica.style),
-                overbendStyle: overbendStyleState(harmonica.overbendStyle),
                 toneShaping: toneShaping(harmonica)
             )
         )
@@ -89,14 +86,6 @@ struct HarmonicaPresenter {
             fingersLabel: Self.fingersLabel,
             mouthLabel: Self.mouthLabel,
             isMouth: style == .mouth
-        )
-    }
-
-    private func overbendStyleState(_ style: OverbendStyle) -> OverbendStyleViewState {
-        OverbendStyleViewState(
-            smoothLabel: Self.smoothLabel,
-            snapLabel: Self.snapLabel,
-            isSnap: style == .snap
         )
     }
 
