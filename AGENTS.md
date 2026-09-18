@@ -434,7 +434,7 @@ until phase 5, and the change was one line: a table read with linear interpolati
 | `changeBend(to:)` | Every touch move | One number in its own lock |
 | `changeVibrato(to:)` | Every touch move | One number in its own lock |
 | `cupHands(to:)` | Every lean of the phone | One number in its own lock |
-| `silence()` | Lift | Fades every voice |
+| `silence()` | Lift | Fades every voice over the time a reed takes to stop |
 
 **Why the split.** Continuous parameters change on every touch event while the set of
 pitches changes rarely. Routing them through the voice bank would rewrite the voice array on
@@ -447,6 +447,11 @@ crossfade the caller named: `.slide` is 20 ms, enough to remove the click at a h
 short enough that a fast run is not smeared, and `.newReed` is 50 ms, for an overbend engaging
 or releasing, where one reed really does hand over to another. The domain names the event and
 the audio layer owns the milliseconds.
+
+Letting go has its own 20 ms rather than the last change's, because how long a released reed
+takes to stop is not a property of what was played before it. It used to borrow whatever
+`crossfadeSeconds` held, so a note released after an overbend faded over 50 ms and the same
+note released after a slide over 20.
 
 Rise and fall being different is what makes a slide physical: the arriving hole is at full
 volume 5 ms in while the leaving one is still dying, so both sound together for a moment, which

@@ -3,6 +3,7 @@ import os
 
 final class Oscillator {
     private static let reedSpeaksInSeconds = 0.005
+    private static let reedStopsInSeconds = 0.02
     private static let openCupHertz = 2800.0
     private static let closedCupHertz = 600.0
     private static let cupResonance = 4.0
@@ -44,7 +45,7 @@ final class Oscillator {
     }
 
     func silence() {
-        voices.withLock { $0.silence() }
+        voices.withLock { $0.silence(over: Self.reedStopsInSeconds) }
     }
 
     func render(
@@ -227,7 +228,8 @@ private struct VoiceBank {
         }
     }
 
-    mutating func silence() {
+    mutating func silence(over seconds: Double) {
+        crossfadeSeconds = seconds
         for index in voices.indices {
             voices[index].targetGain = 0
         }
