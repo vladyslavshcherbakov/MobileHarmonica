@@ -2,6 +2,7 @@ import Foundation
 
 final class PlayScore {
     private static let articulationSeconds = 0.05
+    private static let slideStepSeconds = 0.04
 
     private let tuning: RichterTuning
     private let harmonica: PlayHarmonica
@@ -48,6 +49,32 @@ final class PlayScore {
             return
         }
 
+        let slid = await slide(into: note, within: seconds, into: continuation)
+        await sound(note, for: seconds - slid, into: continuation)
+    }
+
+    private func slide(
+        into note: ScoreNote,
+        within seconds: Double,
+        into continuation: AsyncStream<Harmonica>.Continuation
+    ) async -> Double {
+        let passing = Self.passingHoles(of: note)
+        guard !passing.isEmpty else { return 0 }
+
+        let step = min(Self.slideStepSeconds, seconds / 2 / Double(passing.count))
+        continuation.yield(harmonica.shapeTone(.rest, vibrato: .off))
+        for hole in passing {
+            continuation.yield(harmonica.play(at: [Self.position(of: hole, breathing: note.breath)]))
+            await wait(step)
+        }
+        return step * Double(passing.count)
+    }
+
+    private func sound(
+        _ note: ScoreNote,
+        for seconds: Double,
+        into continuation: AsyncStream<Harmonica>.Continuation
+    ) async {
         let gap = min(Self.articulationSeconds, seconds / 4)
         continuation.yield(harmonica.shapeTone(shaping(for: note), vibrato: VibratoDepth(clamping: note.vibrato)))
         continuation.yield(harmonica.play(at: Self.positions(of: note)))
@@ -71,12 +98,23 @@ final class PlayScore {
         return PitchShaping(clamping: -note.bentBySemitones / range)
     }
 
+    private static func passingHoles(of note: ScoreNote) -> [Hole] {
+        guard let from = note.slideFrom, let arriving = note.holes.first, from != arriving else { return [] }
+
+        let numbers = from.number < arriving.number
+            ? Array(from.number..<arriving.number)
+            : Array((arriving.number + 1...from.number).reversed())
+        return numbers.compactMap(Hole.init(rawValue:))
+    }
+
     private static func positions(of note: ScoreNote) -> [PositionOnHarmonica] {
-        note.holes.map {
-            PositionOnHarmonica(
-                fractionFromLeftEdge: (Double($0.number) - 0.5) / Double(Hole.allCases.count),
-                fractionAboveCentreLine: note.breath == .blow ? 0.5 : -0.5
-            )
-        }
+        note.holes.map { position(of: $0, breathing: note.breath) }
+    }
+
+    private static func position(of hole: Hole, breathing breath: Breath) -> PositionOnHarmonica {
+        PositionOnHarmonica(
+            fractionFromLeftEdge: (Double(hole.number) - 0.5) / Double(Hole.allCases.count),
+            fractionAboveCentreLine: breath == .blow ? 0.5 : -0.5
+        )
     }
 }

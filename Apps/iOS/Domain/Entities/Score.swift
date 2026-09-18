@@ -36,4 +36,5 @@ struct ScoreNote: Equatable {
     var bentBySemitones = 0.0
     var isOverbent = false
     var vibrato = 0.0
+    var slideFrom: Hole?
 }

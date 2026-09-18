@@ -229,6 +229,16 @@ how the instrument is actually played: the chords are the rhythm and the single 
 melody, in the same phrase. `PlayScore` puts down one synthetic finger per hole, all at the
 same height, so the breath rule sees what it would see from a mouth.
 
+**A slide is a run of holes, not a pitch glide.** A mouth dragging across the strip sounds
+every hole it passes, so `ScoreNote.slideFrom` names where the slide starts and `PlayScore`
+expands it into those holes, each about 40 ms, taking its time from the front of the note it
+arrives at. The engine is not told: a slide is several changes over time, and time lives in
+the player.
+
+It is a hole rather than a flag because a flag cannot say where to start. A slide on the
+first note of a piece, or between two notes on the same hole, would have nowhere to come from
+and would quietly do nothing.
+
 A score says a bend in **semitones**, not in axis travel, because a score should not know that
 hole 3 draw bends three semitones and hole 4 draw bends one. `PlayScore` asks `RichterTuning`
 for the range and divides. Each note is cut short by up to 50 ms so the next one re-attacks;

@@ -62,6 +62,26 @@ final class WhatAScorePlaysTests: XCTestCase {
         XCTAssertEqual(played.first?.key, .d)
     }
 
+    func test_score_whenANoteSlidesUpFromAnotherHole_soundsTheHolesOnTheWay() async {
+        await play([.note(ScoreNote(holes: [.four], breath: .draw, beats: 1, slideFrom: .one))])
+
+        XCTAssertEqual(engine.soundedTones.count, 4, "holes 1, 2 and 3 pass before hole 4 arrives")
+        XCTAssertEqual(hertzOfTheLastTone(), 587.33, accuracy: 0.5, "hole 4 draws D5")
+    }
+
+    func test_score_whenANoteSlidesDownFromAnotherHole_passesTheHolesInReverse() async {
+        await play([.note(ScoreNote(holes: [.one], breath: .draw, beats: 1, slideFrom: .three))])
+
+        XCTAssertEqual(engine.soundedTones.count, 3)
+        XCTAssertEqual(hertzOfTheFirstTone(), 493.88, accuracy: 0.5, "hole 3 draws B4 first")
+    }
+
+    func test_score_whenTheSlideStartsWhereTheNoteIs_soundsOnlyTheNote() async {
+        await play([.note(ScoreNote(holes: [.four], breath: .draw, beats: 1, slideFrom: .four))])
+
+        XCTAssertEqual(engine.soundedTones.count, 1)
+    }
+
     // MARK: - Helpers
 
     @discardableResult
