@@ -13,6 +13,7 @@ struct HoleView: View {
             .accessibilityElement()
             .accessibilityIdentifier("harmonica.hole.\(state.id)")
             .accessibilityLabel(state.label)
+            .accessibilityValue(state.note)
     }
 
     private var breathHalves: LinearGradient {

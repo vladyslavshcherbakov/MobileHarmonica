@@ -85,6 +85,17 @@ assembles everything else. `MobileHarmonicaApp` builds the real leaves and hands
 a test assembles the app's own graph with doubles in their place rather than a second
 assembly that drifts.
 
+**One value out.** Every action on `PlayHarmonica` returns the whole `Harmonica`: the key,
+the style, and a `SoundingReed` per sounding hole carrying the reed's own pitch, how far it
+can bend and how far it is bent. What the player hears is derived from those three, never
+stored beside them, so the note on screen cannot disagree with the reed behind it. The view
+model passes that one value to the presenter and assembles nothing.
+
+The shape before this returned the sounding holes and left the view model to read the key,
+the style and a `bendableSemitones` off the use case afterwards. Nothing bound the four
+together, `bendableSemitones` was a view question answered by the domain, and every new thing
+the screen showed added a parameter.
+
 **Why one use case.** `PlayHarmonica` covers playing, changing key and shaping the tone,
 because all three read and write one piece of state: which reeds are sounding now.
 `changeKey` re-sounds them, `shapeTone` needs their bend range. Split into three and all
@@ -136,6 +147,17 @@ so a contact covers well under one hole and reaches two only by straddling a bou
 things measure it. The finger circle is drawn at the reported radius in `mouth` style instead
 of the fixed 56 points, and `PlayHarmonica` logs the width in hole widths at debug level,
 deduplicated to a hundredth. Decide the multiplier from those numbers, not from an estimate.
+
+**The note row.** Two lines above each plate, 30 points tall, taken off the plates rather
+than off the square. A hole that is sounding names its note, rounded to the nearest semitone,
+and under it, when something shifted the pitch, the reed it started from and what shifted it:
+`C♯5` over `(D5 bend)`. A hole that is silent names nothing, so the row is as quiet as the
+playing.
+
+The key is not an effect, so the reed in brackets is the reed in the current key: in D the
+first hole blows D4 and the bracket says D4. Vibrato is not an effect either, for a different
+reason. It does move the frequency, by about 51 cents, but it moves it back and forth around
+the reed, so there is no steady note to round.
 
 **One breath for the whole instrument.** One mouth gives one airflow, so the topmost finger
 decides direction and intensity for every sounding hole. The boundary belongs to blow.

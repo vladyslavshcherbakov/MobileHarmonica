@@ -16,8 +16,8 @@ final class HarmonicaViewModel: ObservableObject {
     @MainActor
     func prepareSound() async {
         do {
-            try await playHarmonica.prepare()
-            show(presented(soundingHoles: []))
+            let harmonica = try await playHarmonica.prepare()
+            show(presenter.present(harmonica))
         } catch {
             show(presenter.presentSoundUnavailable())
         }
@@ -26,47 +26,44 @@ final class HarmonicaViewModel: ObservableObject {
     func play(at positions: [PositionOnHarmonica]) {
         guard case .ready = state else { return }
 
-        show(presented(soundingHoles: playHarmonica.play(at: positions)))
+        show(presenter.present(playHarmonica.play(at: positions)))
     }
 
     func changeKey(toPosition position: Double) {
         guard case .ready = state else { return }
 
         let key = HarmonicaKey(nearestPosition: Int(position.rounded()))
-        show(presented(soundingHoles: playHarmonica.changeKey(to: key)))
+        show(presenter.present(playHarmonica.changeKey(to: key)))
     }
 
     func changeStyle(toMouth isMouth: Bool) {
         guard case .ready = state else { return }
 
-        show(presented(soundingHoles: playHarmonica.changeStyle(to: isMouth ? .mouth : .fingers)))
+        show(presenter.present(playHarmonica.changeStyle(to: isMouth ? .mouth : .fingers)))
     }
 
     func shapeTone(bend: Double, vibrato: Double) {
-        playHarmonica.shapeTone(bend: BendDepth(clamping: bend), vibrato: VibratoDepth(clamping: vibrato))
+        let harmonica = playHarmonica.shapeTone(
+            bend: BendDepth(clamping: bend),
+            vibrato: VibratoDepth(clamping: vibrato)
+        )
+        guard case .ready = state else { return }
+
+        show(presenter.present(harmonica))
     }
 
     func stopShapingTone() {
-        playHarmonica.shapeTone(bend: .unbent, vibrato: .off)
+        shapeTone(bend: 0, vibrato: 0)
     }
 
     func stopPlaying() {
-        playHarmonica.stopPlaying()
+        let harmonica = playHarmonica.stopPlaying()
         guard case .ready = state else { return }
 
-        show(presented(soundingHoles: []))
+        show(presenter.present(harmonica))
     }
 
     // MARK: - Private
-
-    private func presented(soundingHoles: Set<Hole>) -> HarmonicaViewState {
-        presenter.present(
-            soundingHoles: soundingHoles,
-            key: playHarmonica.key,
-            style: playHarmonica.style,
-            bendableSemitones: playHarmonica.bendableSemitones
-        )
-    }
 
     private func show(_ updated: HarmonicaViewState) {
         guard updated != state else { return }

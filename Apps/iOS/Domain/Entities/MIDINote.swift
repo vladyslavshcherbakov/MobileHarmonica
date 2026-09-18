@@ -23,7 +23,7 @@ struct MIDINote: Equatable {
 
     private static let concertPitch = Measurement(value: 440, unit: UnitFrequency.hertz)
     private static let concertPitchNumber = 69
-    private static let semitonesPerOctave = 12.0
+    private static let semitonesPerOctave = 12
 
     let number: Int
 
@@ -34,7 +34,15 @@ struct MIDINote: Equatable {
     }
 
     var pitch: Measurement<UnitFrequency> {
-        Self.concertPitch * pow(2, semitonesFromConcertPitch / Self.semitonesPerOctave)
+        Self.concertPitch * pow(2, semitonesFromConcertPitch / Double(Self.semitonesPerOctave))
+    }
+
+    var semitonesAboveC: Int {
+        number % Self.semitonesPerOctave
+    }
+
+    var octave: Int {
+        number / Self.semitonesPerOctave - 1
     }
 
     // MARK: - Private

@@ -35,6 +35,8 @@ struct ToneShapingViewState: Equatable {
 struct HoleViewState: Equatable, Identifiable {
     let id: Int
     let label: String
+    let note: String
+    let effect: String
     let isSounding: Bool
 }
 

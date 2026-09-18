@@ -7,27 +7,26 @@ struct HarmonicaPresenter {
     private static let playingStyleLabel = "Playing style"
     private static let fingersLabel = "fingers"
     private static let mouthLabel = "mouth"
+    private static let bendEffectLabel = "bend"
+    private static let noteNames = ["C", "D♭", "D", "E♭", "E", "F", "G♭", "G", "A♭", "A", "B♭", "B"]
 
+    private let locale: Locale
     private let holeLabels: [String]
 
     // MARK: - Public
 
     init(locale: Locale) {
+        self.locale = locale
         holeLabels = Hole.allCases.map { $0.number.formatted(.number.locale(locale)) }
     }
 
-    func present(
-        soundingHoles: Set<Hole>,
-        key: HarmonicaKey,
-        style: PlayingStyle,
-        bendableSemitones: Double
-    ) -> HarmonicaViewState {
+    func present(_ harmonica: Harmonica) -> HarmonicaViewState {
         .ready(
             PlayableHarmonica(
-                holes: holes(soundingHoles: soundingHoles),
-                key: keyState(key),
-                style: styleState(style),
-                toneShaping: toneShaping(bendableSemitones: bendableSemitones)
+                holes: holes(of: harmonica),
+                key: keyState(harmonica.key),
+                style: styleState(harmonica.style),
+                toneShaping: toneShaping(canBend: harmonica.canBend)
             )
         )
     }
@@ -38,17 +37,37 @@ struct HarmonicaPresenter {
 
     // MARK: - Private
 
-    private func holes(soundingHoles: Set<Hole>) -> [HoleViewState] {
+    private func holes(of harmonica: Harmonica) -> [HoleViewState] {
         zip(Hole.allCases, holeLabels).map { hole, label in
-            HoleViewState(id: hole.number, label: label, isSounding: soundingHoles.contains(hole))
+            holeState(hole, label: label, sounding: harmonica.sounding[hole])
         }
     }
 
-    private func toneShaping(bendableSemitones: Double) -> ToneShapingViewState {
+    private func holeState(_ hole: Hole, label: String, sounding: SoundingReed?) -> HoleViewState {
+        HoleViewState(
+            id: hole.number,
+            label: label,
+            note: sounding.map { name(of: $0.pitch) } ?? "",
+            effect: sounding.map(effect(shaping:)) ?? "",
+            isSounding: sounding != nil
+        )
+    }
+
+    private func effect(shaping reed: SoundingReed) -> String {
+        guard reed.isBent else { return "" }
+
+        return "(\(name(of: reed.unbent)) \(Self.bendEffectLabel))"
+    }
+
+    private func name(of note: MIDINote) -> String {
+        Self.noteNames[note.semitonesAboveC] + note.octave.formatted(.number.locale(locale))
+    }
+
+    private func toneShaping(canBend: Bool) -> ToneShapingViewState {
         ToneShapingViewState(
             bendLabel: Self.bendLabel,
             vibratoLabel: Self.vibratoLabel,
-            bendIsAvailable: bendableSemitones > 0
+            bendIsAvailable: canBend
         )
     }
 

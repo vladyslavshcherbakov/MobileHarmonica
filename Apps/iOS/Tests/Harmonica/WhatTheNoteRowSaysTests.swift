@@ -1,0 +1,80 @@
+import Foundation
+import XCTest
+@testable import MobileHarmonica
+
+final class WhatTheNoteRowSaysTests: XCTestCase {
+    private let engine = RecordingAudioEngine()
+    private let presenter = HarmonicaPresenter(locale: Locale(identifier: "en_US_POSIX"))
+
+    // MARK: - Tests
+
+    func test_noteRow_whenNoHoleSounds_namesNothing() {
+        let harmonica = harmonica()
+
+        let state = presenter.present(harmonica.play(at: []))
+
+        XCTAssertEqual(hole(4, of: state)?.note, "")
+        XCTAssertEqual(hole(4, of: state)?.effect, "")
+    }
+
+    func test_noteRow_whenTheFingerIsAboveTheLine_namesTheBlowReed() {
+        let harmonica = harmonica()
+
+        let state = presenter.present(harmonica.play(at: [finger(at: 0.35, above: 0.2)]))
+
+        XCTAssertEqual(hole(4, of: state)?.note, "C5")
+    }
+
+    func test_noteRow_whenTheFingerIsBelowTheLine_namesTheDrawReed() {
+        let harmonica = harmonica()
+
+        let state = presenter.present(harmonica.play(at: [finger(at: 0.35, above: -0.3)]))
+
+        XCTAssertEqual(hole(4, of: state)?.note, "D5")
+    }
+
+    func test_noteRow_whenTheDrawReedIsBentToItsLimit_namesTheBentNoteAndTheReedBehindIt() {
+        let harmonica = harmonica()
+        _ = harmonica.play(at: [finger(at: 0.35, above: -0.3)])
+
+        let state = presenter.present(harmonica.shapeTone(bend: BendDepth(clamping: 1), vibrato: .off))
+
+        XCTAssertEqual(hole(4, of: state)?.note, "D♭5")
+        XCTAssertEqual(hole(4, of: state)?.effect, "(D5 bend)")
+    }
+
+    func test_noteRow_whenTheBendRoundsToNoSemitone_namesOnlyTheNote() {
+        let harmonica = harmonica()
+        _ = harmonica.play(at: [finger(at: 0.25, above: -0.3)])
+
+        let state = presenter.present(harmonica.shapeTone(bend: BendDepth(clamping: 0.1), vibrato: .off))
+
+        XCTAssertEqual(hole(3, of: state)?.note, "B4")
+        XCTAssertEqual(hole(3, of: state)?.effect, "")
+    }
+
+    func test_noteRow_whenTheKeyIsD_namesTheReedInThatKey() {
+        let harmonica = harmonica()
+        _ = harmonica.play(at: [finger(at: 0.05, above: 0.2)])
+
+        let state = presenter.present(harmonica.changeKey(to: .d))
+
+        XCTAssertEqual(hole(1, of: state)?.note, "D4")
+    }
+
+    // MARK: - Helpers
+
+    private func harmonica() -> PlayHarmonica {
+        PlayHarmonica(tuning: RichterTuning(), audioEngine: engine, log: SilentLog())
+    }
+
+    private func finger(at fromLeftEdge: Double, above centreLine: Double) -> PositionOnHarmonica {
+        PositionOnHarmonica(fractionFromLeftEdge: fromLeftEdge, fractionAboveCentreLine: centreLine)
+    }
+
+    private func hole(_ number: Int, of state: HarmonicaViewState) -> HoleViewState? {
+        guard case .ready(let playable) = state else { return nil }
+
+        return playable.holes.first { $0.id == number }
+    }
+}

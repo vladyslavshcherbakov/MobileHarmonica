@@ -7,6 +7,7 @@ struct HarmonicaScreen: View {
     private static let fingerCircleDiameter: CGFloat = 56
     private static let fingerCircleLineWidth: CGFloat = 3
     private static let playingStyleWidth: CGFloat = 150
+    private static let noteRowHeight: CGFloat = 30
     private static let zoneWidthFraction: CGFloat = 0.22
     private static let zoneCornerRadius: CGFloat = 12
     private static let smallestZoneScale: CGFloat = 0.45
@@ -157,17 +158,44 @@ struct HarmonicaScreen: View {
     }
 
     private func holes(_ holes: [HoleViewState], isMouth: Bool) -> some View {
-        GeometryReader { geometry in
-            HStack(spacing: Self.holeSpacing) {
-                ForEach(holes) { hole in
-                    HoleView(state: hole)
+        VStack(spacing: 0) {
+            noteRow(holes)
+            GeometryReader { geometry in
+                HStack(spacing: Self.holeSpacing) {
+                    ForEach(holes) { hole in
+                        HoleView(state: hole)
+                    }
                 }
+                .overlay {
+                    circles(Self.fingerMarks(at: fingerTouches, across: geometry.size, isMouth: isMouth))
+                }
+                .overlay { holesTouchArea(across: geometry.size) }
             }
-            .overlay {
-                circles(Self.fingerMarks(at: fingerTouches, across: geometry.size, isMouth: isMouth))
-            }
-            .overlay { holesTouchArea(across: geometry.size) }
         }
+    }
+
+    private func noteRow(_ holes: [HoleViewState]) -> some View {
+        HStack(spacing: Self.holeSpacing) {
+            ForEach(holes) { hole in
+                soundingNote(hole)
+            }
+        }
+        .frame(height: Self.noteRowHeight)
+        .accessibilityHidden(true)
+    }
+
+    private func soundingNote(_ hole: HoleViewState) -> some View {
+        VStack(spacing: 0) {
+            Text(hole.note)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.white)
+            Text(hole.effect)
+                .font(.caption2)
+                .foregroundStyle(Color(white: 0.5))
+        }
+        .lineLimit(1)
+        .minimumScaleFactor(0.6)
+        .frame(maxWidth: .infinity)
     }
 
     private func toneShapingZone(_ state: ToneShapingViewState) -> some View {

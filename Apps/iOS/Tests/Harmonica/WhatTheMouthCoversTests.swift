@@ -9,7 +9,7 @@ final class WhatTheMouthCoversTests: XCTestCase {
     func test_mouth_whenTheContactIsNarrowerThanAHole_soundsOneHole() {
         let harmonica = mouth()
 
-        let sounding = harmonica.play(at: [contact(at: 0.25, covering: 0.02, above: 0.2)])
+        let sounding = harmonica.play(at: [contact(at: 0.25, covering: 0.02, above: 0.2)]).soundingHoles
 
         XCTAssertEqual(sounding, [.three])
     }
@@ -17,7 +17,7 @@ final class WhatTheMouthCoversTests: XCTestCase {
     func test_mouth_whenTheContactCrossesAHoleBoundary_soundsBothHoles() {
         let harmonica = mouth()
 
-        let sounding = harmonica.play(at: [contact(at: 0.29, covering: 0.02, above: 0.2)])
+        let sounding = harmonica.play(at: [contact(at: 0.29, covering: 0.02, above: 0.2)]).soundingHoles
 
         XCTAssertEqual(sounding, [.three, .four])
     }
@@ -25,7 +25,7 @@ final class WhatTheMouthCoversTests: XCTestCase {
     func test_mouth_whenTheContactSpansThreeHoles_soundsAllThree() {
         let harmonica = mouth()
 
-        let sounding = harmonica.play(at: [contact(at: 0.25, covering: 0.06, above: 0.2)])
+        let sounding = harmonica.play(at: [contact(at: 0.25, covering: 0.06, above: 0.2)]).soundingHoles
 
         XCTAssertEqual(sounding, [.two, .three, .four])
     }
@@ -44,7 +44,7 @@ final class WhatTheMouthCoversTests: XCTestCase {
         let sounding = harmonica.play(at: [
             contact(at: 0.05, covering: 0.02, above: 0.2),
             contact(at: 0.45, covering: 0.02, above: -0.3)
-        ])
+        ]).soundingHoles
 
         XCTAssertEqual(sounding, [.one])
     }
@@ -52,7 +52,7 @@ final class WhatTheMouthCoversTests: XCTestCase {
     func test_fingers_whenTheContactIsWide_stillSoundsOneHolePerFinger() {
         let harmonica = harmonica()
 
-        let sounding = harmonica.play(at: [contact(at: 0.25, covering: 0.06, above: 0.2)])
+        let sounding = harmonica.play(at: [contact(at: 0.25, covering: 0.06, above: 0.2)]).soundingHoles
 
         XCTAssertEqual(sounding, [.three])
     }
@@ -61,7 +61,7 @@ final class WhatTheMouthCoversTests: XCTestCase {
         let harmonica = harmonica()
         _ = harmonica.play(at: [contact(at: 0.25, covering: 0.02, above: 0.2)])
 
-        let sounding = harmonica.changeStyle(to: .mouth)
+        let sounding = harmonica.changeStyle(to: .mouth).soundingHoles
 
         XCTAssertEqual(sounding, [])
         XCTAssertEqual(engine.silencings, 1)

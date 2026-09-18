@@ -9,9 +9,8 @@ final class PlayHarmonica {
     private var bend: BendDepth = .unbent
     private var vibrato: VibratoDepth = .off
     private var recordedMouthWidth = ""
-
-    private(set) var key: HarmonicaKey = .c
-    private(set) var style: PlayingStyle = .fingers
+    private var key: HarmonicaKey = .c
+    private var style: PlayingStyle = .fingers
 
     // MARK: - Public
 
@@ -21,72 +20,83 @@ final class PlayHarmonica {
         self.log = log
     }
 
-    func prepare() async throws {
+    func prepare() async throws -> Harmonica {
         try await audioEngine.prepare()
         log.record("harmonica ready in key \(key)")
+        return harmonica
     }
 
-    func play(at positions: [PositionOnHarmonica]) -> Set<Hole> {
+    func play(at positions: [PositionOnHarmonica]) -> Harmonica {
         let sounding = positions.filter(\.isOnTheHarmonica)
         let reeds = reedsUnder(sounding)
-        guard !reeds.isEmpty, let intensity = intensityOf(sounding) else {
-            stopPlaying()
-            return []
-        }
+        guard !reeds.isEmpty, let intensity = intensityOf(sounding) else { return stopPlaying() }
 
         applyBreathIntensity(intensity)
         recordMouthWidth(of: sounding)
-        guard reeds != soundingReeds else { return soundingHoles }
+        guard reeds != soundingReeds else { return harmonica }
 
         sound(reeds)
-        return soundingHoles
+        return harmonica
     }
 
-    func changeStyle(to style: PlayingStyle) -> Set<Hole> {
-        guard style != self.style else { return soundingHoles }
+    func changeStyle(to style: PlayingStyle) -> Harmonica {
+        guard style != self.style else { return harmonica }
 
         self.style = style
         log.record("playing style changed to \(style)")
-        stopPlaying()
-        return []
+        return stopPlaying()
     }
 
-    func changeKey(to key: HarmonicaKey) -> Set<Hole> {
+    func changeKey(to key: HarmonicaKey) -> Harmonica {
         self.key = key
         log.record("key changed to \(key), \(key.semitonesFromC) semitones from C")
-        guard !soundingReeds.isEmpty else { return [] }
+        guard !soundingReeds.isEmpty else { return harmonica }
 
         sound(soundingReeds)
-        return soundingHoles
+        return harmonica
     }
 
-    func shapeTone(bend: BendDepth, vibrato: VibratoDepth) {
-        guard bend != self.bend || vibrato != self.vibrato else { return }
+    func shapeTone(bend: BendDepth, vibrato: VibratoDepth) -> Harmonica {
+        guard bend != self.bend || vibrato != self.vibrato else { return harmonica }
 
         self.bend = bend
         self.vibrato = vibrato
         log.recordSample("bend \(rounded(bend.fraction)) of \(rounded(bendableSemitones)) semitones, vibrato \(rounded(vibrato.fraction))")
         audioEngine.changeBend(to: bend)
         audioEngine.changeVibrato(to: vibrato)
+        return harmonica
     }
 
-    func stopPlaying() {
-        guard !soundingReeds.isEmpty else { return }
+    func stopPlaying() -> Harmonica {
+        guard !soundingReeds.isEmpty else { return harmonica }
 
         audioEngine.silence()
         log.record("silent, \(describe(soundingReeds)) released")
         soundingReeds = []
         soundingIntensity = nil
+        return harmonica
     }
 
     // MARK: - Private
 
-    private var soundingHoles: Set<Hole> {
-        Set(soundingReeds.map(\.hole))
+    private var harmonica: Harmonica {
+        Harmonica(
+            key: key,
+            style: style,
+            sounding: Dictionary(uniqueKeysWithValues: soundingReeds.map { ($0.hole, soundingReed(of: $0)) })
+        )
     }
 
-    var bendableSemitones: Double {
-        soundingReeds.map { tuning.tone(for: $0, in: key).bendableSemitones }.max() ?? 0
+    private var bendableSemitones: Double {
+        soundingReeds.map(tuning.bendableSemitones(for:)).max() ?? 0
+    }
+
+    private func soundingReed(of reed: Reed) -> SoundingReed {
+        SoundingReed(
+            unbent: tuning.note(for: reed, in: key),
+            bendableSemitones: tuning.bendableSemitones(for: reed),
+            bend: bend
+        )
     }
 
     private func intensityOf(_ positions: [PositionOnHarmonica]) -> BreathIntensity? {

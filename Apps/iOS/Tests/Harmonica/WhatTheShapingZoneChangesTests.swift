@@ -9,7 +9,7 @@ final class WhatTheShapingZoneChangesTests: XCTestCase {
     func test_shapingZone_whenTheFingerMoves_sendsTheNewBendAndVibrato() {
         let harmonica = harmonica()
 
-        harmonica.shapeTone(bend: BendDepth(clamping: 0.25), vibrato: VibratoDepth(clamping: 0.75))
+        _ = harmonica.shapeTone(bend: BendDepth(clamping: 0.25), vibrato: VibratoDepth(clamping: 0.75))
 
         XCTAssertEqual(engine.bends.last?.fraction, 0.25)
         XCTAssertEqual(engine.vibratos.last?.fraction, 0.75)
@@ -17,9 +17,9 @@ final class WhatTheShapingZoneChangesTests: XCTestCase {
 
     func test_shapingZone_whenTheFingerStaysStill_sendsNothingTwice() {
         let harmonica = harmonica()
-        harmonica.shapeTone(bend: BendDepth(clamping: 0.5), vibrato: VibratoDepth(clamping: 0.5))
+        _ = harmonica.shapeTone(bend: BendDepth(clamping: 0.5), vibrato: VibratoDepth(clamping: 0.5))
 
-        harmonica.shapeTone(bend: BendDepth(clamping: 0.5), vibrato: VibratoDepth(clamping: 0.5))
+        _ = harmonica.shapeTone(bend: BendDepth(clamping: 0.5), vibrato: VibratoDepth(clamping: 0.5))
 
         XCTAssertEqual(engine.bends.count, 1)
     }
