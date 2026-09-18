@@ -38,7 +38,7 @@ final class HarmonicaViewModel: ObservableObject {
     func changeKey(toPosition position: Double) {
         guard case .ready = state else { return }
 
-        let key = HarmonicaKey(nearestPosition: Int(position.rounded()))
+        let key = HarmonicaKey(nearestSliderPosition: Int(position.rounded()))
         show(playHarmonica.changeKey(to: key))
     }
 

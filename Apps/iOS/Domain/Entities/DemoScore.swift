@@ -1,5 +1,5 @@
 extension Score {
-    static let demo = Score(key: .c, beatsPerMinute: 96, events: twelveBarBlues)
+    static let demo = Score(key: .g, position: .second, beatsPerMinute: 96, events: twelveBarBlues)
 
     private static let twelveBarBlues: [ScoreEvent] =
         chuggedBar + chuggedBar + openingRiff + heldTonic

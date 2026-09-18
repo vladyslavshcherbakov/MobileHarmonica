@@ -25,8 +25,8 @@ final class PlayScore {
     // MARK: - Private
 
     private func perform(_ score: Score, into continuation: AsyncStream<Harmonica>.Continuation) async {
-        log.record("score started, \(score.events.count) events at \(score.beatsPerMinute) bpm in key \(score.key)")
-        continuation.yield(harmonica.changeKey(to: score.key))
+        log.record("score started in \(score.key), \(score.position) position, calling for a harmonica in \(score.harmonicaKey)")
+        continuation.yield(harmonica.changeKey(to: score.harmonicaKey))
         for event in score.events where !Task.isCancelled {
             await perform(event, secondsPerBeat: score.secondsPerBeat, into: continuation)
         }

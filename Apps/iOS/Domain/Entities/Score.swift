@@ -1,7 +1,12 @@
 struct Score: Equatable {
     let key: HarmonicaKey
+    let position: HarmonicaPosition
     let beatsPerMinute: Double
     let events: [ScoreEvent]
+
+    var harmonicaKey: HarmonicaKey {
+        HarmonicaKey(transposedBy: key.semitonesFromC - position.semitonesAboveTheHarmonica)
+    }
 
     var secondsPerBeat: Double {
         60 / beatsPerMinute

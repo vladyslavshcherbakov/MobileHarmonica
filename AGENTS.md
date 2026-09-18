@@ -137,6 +137,16 @@ than holding a second table.
 **Key slider.** Twelve keys, G (−5 semitones) to F♯ (+6), C in the middle so neither end is
 shrill. Transposing preserves intervals, so bend ranges are unchanged in every key.
 
+It picks **which harmonica is in your hands**, not what key you are playing in. A harmonica in
+C played in second position sounds in G. `HarmonicaPosition` holds how far above the
+instrument the music sits: none for first position, a fifth for second, a whole tone for
+third. A `Score` names the key **the music sounds in** and the position it is played in, and
+derives the harmonica it needs, so a blues in G written in second position calls for a
+harmonica in C and moves the slider there when it starts.
+
+`HarmonicaKey.sliderPosition` is where a key sits on the slider and has nothing to do with
+`HarmonicaPosition`. The two were both called position until a score needed both at once.
+
 ## Interaction model
 
 | Control | Input | Effect |
@@ -224,11 +234,12 @@ for the range and divides. Each note is cut short by up to 50 ms so the next one
 without that gap two of the same note in a row would be one long note, because `play(at:)`
 sees the same reeds and does not re-sound.
 
-`Score.demo` is a twelve bar blues chorus in second position, 48 beats at 96, with a shuffled
-train chug on holes 1 and 2, the I, IV and V chords on holes 1 to 3 and 4 to 6, the bent third
-draw, a held second draw under vibrato and the hole 6 overblow in the upper fill. It is
-written out of the idiom rather than transcribed from a recording, because a published tab is
-someone's transcription of someone's composition.
+`Score.demo` is a twelve bar blues chorus **in G, second position**, which calls for the
+harmonica in C: 48 beats at 96, with a shuffled train chug on holes 1 and 2, the I, IV and V
+chords on holes 1 to 3 and 4 to 6, the bent third draw as the blue third, a held second draw
+under vibrato and the hole 6 overblow in the upper fill. It is written out of the idiom rather
+than transcribed from a recording, because a published tab is someone's transcription of
+someone's composition.
 
 A live finger stops the score, since both drive one instrument. Timing is `Task.sleep`, whose
 jitter is a few milliseconds: fine for a demo, not for music. See ROADMAP item 3.

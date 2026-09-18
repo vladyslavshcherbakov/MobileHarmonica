@@ -13,17 +13,22 @@ enum HarmonicaKey: Int, CaseIterable {
     case fSharp = 6
 
     static let lowest = HarmonicaKey.g
-    static let highestPosition = HarmonicaKey.allCases.count - 1
+    static let highestSliderPosition = HarmonicaKey.allCases.count - 1
 
-    init(nearestPosition position: Int) {
-        self = Self.allCases[min(Self.highestPosition, max(0, position))]
+    init(nearestSliderPosition position: Int) {
+        self = Self.allCases[min(Self.highestSliderPosition, max(0, position))]
+    }
+
+    init(transposedBy semitones: Int) {
+        let semitonesAboveTheLowest = semitones - Self.lowest.rawValue
+        self = Self.allCases[(semitonesAboveTheLowest % 12 + 12) % 12]
     }
 
     var semitonesFromC: Int {
         rawValue
     }
 
-    var position: Int {
+    var sliderPosition: Int {
         rawValue - Self.lowest.rawValue
     }
 }

@@ -99,8 +99,8 @@ struct HarmonicaPresenter {
     private func keyState(_ key: HarmonicaKey) -> KeyViewState {
         KeyViewState(
             label: label(for: key),
-            position: Double(key.position),
-            highestPosition: Double(HarmonicaKey.highestPosition)
+            position: Double(key.sliderPosition),
+            highestPosition: Double(HarmonicaKey.highestSliderPosition)
         )
     }
 
