@@ -49,6 +49,22 @@ final class WhatTheShapingZoneChangesTests: XCTestCase {
         XCTAssertEqual(engine.hertzOfTheLastTone, 392.00, accuracy: 0.5, "hole 3 blows G4")
     }
 
+    func test_bend_whenAChordSounds_pullsEveryReedAsFarAsTheShallowestChamber() {
+        let harmonica = harmonica()
+        _ = harmonica.changeStyle(to: .notes)
+
+        _ = harmonica.play(at: [
+            PositionOnHarmonica(fractionFromLeftEdge: 0.25, fractionAboveCentreLine: -0.3),
+            PositionOnHarmonica(fractionFromLeftEdge: 0.35, fractionAboveCentreLine: -0.3)
+        ])
+
+        XCTAssertEqual(
+            engine.soundedTones.last?.map(\.bendableSemitones),
+            [1, 1],
+            "hole 3 draw bends three alone, hole 4 draw one, and one mouth pulls them together"
+        )
+    }
+
     func test_shapingZone_whenTheFingerStaysStill_sendsNothingTwice() {
         let harmonica = harmonica()
         _ = harmonica.shapeTone(PitchShaping(clamping: -0.5), vibrato: VibratoDepth(clamping: 0.5))

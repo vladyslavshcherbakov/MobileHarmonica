@@ -11,7 +11,29 @@ final class WhatTheOscillatorPlaysTests: XCTestCase {
         let frequencies = (0..<20).map { _ in RenderedSound.frequency(of: oscillator) }
 
         let spread = frequencies.max()! - frequencies.min()!
-        XCTAssertGreaterThan(spread, 5, "440 Hz swung by 3 per cent covers 26 Hz, so it cannot be flat")
+        XCTAssertGreaterThan(spread, 5, "440 Hz swung by 1.5 per cent covers 13 Hz, so it cannot be flat")
+    }
+
+    func test_vibrato_whenAtFullDepth_alsoPulsesTheLoudness() {
+        let oscillator = sounding(hertz: 440)
+        oscillator.changeVibrato(to: 1)
+
+        let levels = (0..<20).map { _ in RenderedSound.loudness(of: oscillator) }
+
+        XCTAssertGreaterThan(levels.max()! / levels.min()!, 1.15, "a vibrato pulses the note, not only its pitch")
+    }
+
+    func test_chord_whenThreeReedsSoundTogether_isLouderThanOneReedAlone() {
+        let one = sounding(hertz: 440)
+        let three = sounding([
+            SoundingTone(hertz: 440, bendableSemitones: 0),
+            SoundingTone(hertz: 550, bendableSemitones: 0),
+            SoundingTone(hertz: 660, bendableSemitones: 0)
+        ])
+
+        let louder = RenderedSound.loudness(of: three) / RenderedSound.loudness(of: one)
+
+        XCTAssertGreaterThan(louder, 1.5, "three reeds move about the square root of three times the air")
     }
 
     func test_vibrato_whenOff_holdsThePitchSteady() {
@@ -55,8 +77,12 @@ final class WhatTheOscillatorPlaysTests: XCTestCase {
     // MARK: - Helpers
 
     private func sounding(hertz: Double, bendableSemitones: Double = 0) -> Oscillator {
+        sounding([SoundingTone(hertz: hertz, bendableSemitones: bendableSemitones)])
+    }
+
+    private func sounding(_ tones: [SoundingTone]) -> Oscillator {
         let oscillator = Oscillator(samples: SineSamples.bank())
-        oscillator.sound([SoundingTone(hertz: hertz, bendableSemitones: bendableSemitones)], over: 0.02)
+        oscillator.sound(tones, over: 0.02)
         oscillator.changeBreathGain(to: 1)
         RenderedSound.settle(oscillator)
         return oscillator

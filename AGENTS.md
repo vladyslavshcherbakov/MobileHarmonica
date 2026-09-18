@@ -233,9 +233,11 @@ The threshold has a second job: it is a deadband around rest. Without it a thumb
 above the middle would flicker the note between plain and overbent. Travel above the threshold
 does nothing, and that is where the stretch of ROADMAP item 6 would go.
 
-An overbend shifts every sounding reed at once, each by its own range, the same rule the bend
-already follows. One mouth cannot overblow a chord on the instrument, but a second rule for
-chords would be a second rule for nothing.
+An overbend shifts every sounding reed at once, each by its own range, which is not the rule
+the bend follows. A bend is one vocal tract pulling on whatever is under it, so every reed
+moves together and the shallowest chamber sets the limit. An overbend is a reed changing which
+mode it sounds in, so each chamber lands where its own two reeds put it. One mouth cannot
+overblow a chord on the instrument anyway.
 
 **The demo plays itself through the instrument, not around it.** `PlayScore` names holes and a
 breath and puts them through `PlayHarmonica.play(_:breathing:)`. Nothing about the tuning, the
@@ -396,14 +398,18 @@ until phase 5, and the change was one line: a table read with linear interpolati
 pitches changes rarely. Routing them through the voice bank would rewrite the voice array on
 nearly every buffer for a number that is one `Double` wide.
 
-**Crossfade, not overlap.** Linear gain, and the caller says which kind of change it is,
-because the two take different times. `.slide` is 20 ms, enough to remove the click at a hole
-boundary and short enough that a fast run is not smeared. `.newReed` is 50 ms, for an overbend
-engaging or releasing, where one reed really does hand over to another. The domain names the
-event and the audio layer owns the milliseconds.
+**A reed speaks fast and dies at the pace of the change.** The rise is 5 ms whatever else is
+happening, because that is how long a reed takes to speak and the recording already carries its
+own attack; fading it in over the whole crossfade blunted every articulation. The fall is the
+crossfade the caller named: `.slide` is 20 ms, enough to remove the click at a hole boundary and
+short enough that a fast run is not smeared, and `.newReed` is 50 ms, for an overbend engaging
+or releasing, where one reed really does hand over to another. The domain names the event and
+the audio layer owns the milliseconds.
 
-The slide is not a model of the instrument: a real mouth covers both holes for a moment and
-both sound at full volume. See [Known limits](#known-limits).
+Rise and fall being different is what makes a slide physical: the arriving hole is at full
+volume 5 ms in while the leaving one is still dying, so both sound together for a moment, which
+is what a mouth dragging across the strip actually does. It used to be a true crossfade, one
+reed's gain trading against the other's, which is a dissolve and not a mouth.
 
 **The recordings.** `RecordedHarmonica` reads every WAV in the bundle's `Samples` folder at
 `prepare()`, mixes each to mono and appends it to one contiguous `[Float]`, so nothing is
@@ -428,11 +434,27 @@ mapping, and frames past second 4 are never loaded. A note plays from frame 0, s
 recorded attack, then repeats that window for as long as the finger is down. A file too short
 to hold the window throws and names itself.
 
-**Mixing.** The sum is divided by the total gain of the sounding voices, then by the breath
-gain, so ten notes cannot clip and one note is as loud as it was.
+**Mixing.** One mouth gives one breath, and up to about four chambers it is enough for all of
+them: the voices are summed and scaled only by the breath gain, so a chord really is louder
+than one note, by the square root of the reeds sounding. Past four the sum is divided down, so
+a hand covering all ten holes is held at the loudness of four.
+
+That bound is what keeps it from clipping. Four reeds at full scale and perfectly in phase
+reach 4, the output amplitude is 0.25, and the product is exactly full scale; real recordings
+peak below full scale and different pitches never align, so the headroom is never spent.
+
+It used to divide by the total gain instead, so a chord of three sounded each note at a third
+and the whole chord no louder than one note. Every tune here is built on chords, and they all
+sounded far away.
 
 **Bend** is one multiplication by `2^(-semitones/12)`, applied per voice once per buffer.
 Cheaper than a sample, which has to be dragged off its recorded pitch.
+
+**One mouth pulls every sounding reed by the same amount**, and the shallowest chamber decides
+how far, because that is the one that runs out first. `PlayHarmonica` takes the smallest bend
+range among the sounding reeds and gives it to every tone, so a chord bends as a chord. Before
+this each reed bent by its own range, and holes 3 and 4 drawn together at full bend turned a
+minor third into a fourth.
 
 **The overbend is not a parameter.** It changes which reed sounds, so it goes through
 `soundTones` as a different pitch and crossfades, the same event as moving to another hole.
@@ -444,7 +466,11 @@ a pitch teleport with no amplitude transition, more abrupt than anything the ins
 Removing `smooth` is what made the better shape available: with only a threshold left, the
 overbend engages rarely rather than on every touch move, so it belongs with the rare calls.
 
-**Vibrato** is one shared LFO at 5.5 Hz reaching 3 per cent of the frequency, about 51 cents.
+**Vibrato** is one shared LFO at 5.5 Hz, and it moves two things: the pitch by 1.5 per cent,
+about 26 cents, and the loudness by up to a quarter. A harmonica's vibrato is mostly the
+loudness pulsing; 51 cents of pitch and nothing else read as a siren rather than a note being
+played. The loudness only dips, never rises, so vibrato cannot spend the headroom the mixing
+leaves.
 
 ## Concurrency contract
 
@@ -520,7 +546,7 @@ Files are named for the promise, not the type.
 Sound is the one guarantee no screen can show, so it is checked where it is visible: on the
 real `Oscillator`, rendered offline into an `AudioBufferList` by `RenderedSound`, with pitch
 read back from rising zero crossings. Thresholds are chosen so the reader can do the
-arithmetic: 440 Hz swung by 3 per cent covers 26 Hz, so a spread over 5 Hz is vibrato and
+arithmetic: 440 Hz swung by 1.5 per cent covers 13 Hz, so a spread over 5 Hz is vibrato and
 under 2 Hz is the estimator wandering; B4 pulled three semitones is A♭4, 415.30 Hz.
 
 Everything else drives the app's own graph with the leaves swapped.
@@ -534,8 +560,15 @@ that is what the drawn circle and the debug line are for. `UITouch.force` is not
 3D Touch hardware ended with the iPhone XS.
 
 **No blend between neighbours.** A covered hole sounds at full volume and an uncovered one is
-silent, with nothing in between. This is also why the horizontal crossfade is not physical: a
-real slide overlaps, it does not fade.
+silent, with nothing in between. The slide across a boundary does overlap now, since a reed
+rises faster than the one it replaces falls, but how much of a hole is covered still changes
+nothing.
+
+**A pitch two chords share does not re-articulate.** Voices are matched by frequency, which is
+what lets the render thread merge its progress back, so a pitch that survives a change keeps
+its loop position instead of speaking again. Only G4 is in both breaths of a C harmonica, at
+hole 3 blown and hole 2 drawn, so it takes a chord spanning those holes reversing its breath.
+Fixing it needs two voices at one pitch, which is exactly the invariant the merge relies on.
 
 **Blow and draw sound the same.** The library records 19 distinct pitches, not 20 reeds, so
 nothing separates a blow reed from a draw reed. The screen still says which breath is

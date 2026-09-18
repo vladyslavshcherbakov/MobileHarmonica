@@ -2,6 +2,8 @@ import AVFoundation
 import os
 
 final class Oscillator {
+    private static let reedSpeaksInSeconds = 0.005
+
     private let samples: SampleBank
     private let voices = OSAllocatedUnfairLock(initialState: VoiceBank())
     private let requestedBreathGain = OSAllocatedUnfairLock(initialState: 0.0)
@@ -83,13 +85,13 @@ final class Oscillator {
         into buffers: UnsafeMutableAudioBufferListPointer,
         from rendering: inout VoiceBank
     ) {
-        let gainStep = Self.gainStep(crossfadeSeconds: rendering.crossfadeSeconds, sampleRate: sampleRate)
+        let ramp = Self.gainRamp(crossfadeSeconds: rendering.crossfadeSeconds, sampleRate: sampleRate)
         samples.frames.withUnsafeBufferPointer { frames in
             for frame in 0..<frameCount {
                 let value = rendering.nextSample(
                     from: frames,
                     sampleRate: sampleRate,
-                    gainStep: gainStep,
+                    ramp: ramp,
                     targetBreathGain: breathGain,
                     vibrato: vibrato
                 )
@@ -98,8 +100,15 @@ final class Oscillator {
         }
     }
 
-    private static func gainStep(crossfadeSeconds: Double, sampleRate: Double) -> Double {
-        1 / (crossfadeSeconds * sampleRate)
+    private static func gainRamp(crossfadeSeconds: Double, sampleRate: Double) -> GainRamp {
+        GainRamp(
+            rising: gainStep(seconds: reedSpeaksInSeconds, sampleRate: sampleRate),
+            falling: gainStep(seconds: crossfadeSeconds, sampleRate: sampleRate)
+        )
+    }
+
+    private static func gainStep(seconds: Double, sampleRate: Double) -> Double {
+        1 / (seconds * sampleRate)
     }
 
     /// The bank can be re-sounded while the buffer is being filled, so the rendered copy is
@@ -128,11 +137,27 @@ struct SoundingTone: Equatable {
 
 private typealias PlayableTone = (tone: SoundingTone, recorded: RecordedNote)
 
+// MARK: - GainRamp
+
+private struct GainRamp {
+    let rising: Double
+    let falling: Double
+}
+
+// MARK: - Vibrato
+
+private struct Vibrato {
+    let pitchRatio: Double
+    let gain: Double
+}
+
 // MARK: - VoiceBank
 
 private struct VoiceBank {
+    static let reedsOneMouthCovers = 4.0
     static let vibratoHertz = 5.5
-    static let vibratoRatioAtFullDepth = 0.03
+    static let vibratoPitchAtFullDepth = 0.015
+    static let vibratoDipAtFullDepth = 0.25
 
     var voices: [Voice] = []
     var breathGain = 0.0
@@ -170,24 +195,24 @@ private struct VoiceBank {
     mutating func nextSample(
         from frames: UnsafeBufferPointer<Float>,
         sampleRate: Double,
-        gainStep: Double,
+        ramp: GainRamp,
         targetBreathGain: Double,
-        vibrato: Double
+        vibrato depth: Double
     ) -> Double {
-        breathGain = ramp(breathGain, toward: targetBreathGain, by: gainStep)
-        let scale = breathGain / max(1, soundingGain)
-        let vibratoRatio = nextVibratoRatio(sampleRate: sampleRate, depth: vibrato)
+        breathGain = ramped(breathGain, toward: targetBreathGain, by: ramp)
+        let scale = breathGain / airSpreadAcrossTheReeds
+        let vibrato = nextVibrato(sampleRate: sampleRate, depth: depth)
 
         var mixed = 0.0
         for index in voices.indices {
             mixed += voices[index].nextSample(
                 from: frames,
                 sampleRate: sampleRate,
-                gainStep: gainStep,
-                vibratoRatio: vibratoRatio
+                ramp: ramp,
+                pitchRatio: vibrato.pitchRatio
             )
         }
-        return mixed * scale
+        return mixed * scale * vibrato.gain
     }
 
     mutating func absorbProgress(of rendered: VoiceBank) {
@@ -201,6 +226,10 @@ private struct VoiceBank {
 
     // MARK: - Private
 
+    private var airSpreadAcrossTheReeds: Double {
+        max(1, soundingGain / Self.reedsOneMouthCovers)
+    }
+
     private var soundingGain: Double {
         voices.reduce(0) { $0 + $1.gain }
     }
@@ -209,10 +238,14 @@ private struct VoiceBank {
         voices.first { $0.hertz == hertz }
     }
 
-    private mutating func nextVibratoRatio(sampleRate: Double, depth: Double) -> Double {
+    private mutating func nextVibrato(sampleRate: Double, depth: Double) -> Vibrato {
         lfoPhase = (lfoPhase + radiansPerCycle * Self.vibratoHertz / sampleRate)
             .truncatingRemainder(dividingBy: radiansPerCycle)
-        return 1 + depth * Self.vibratoRatioAtFullDepth * sin(lfoPhase)
+        let swing = sin(lfoPhase)
+        return Vibrato(
+            pitchRatio: 1 + depth * Self.vibratoPitchAtFullDepth * swing,
+            gain: 1 - depth * Self.vibratoDipAtFullDepth * (1 + swing) / 2
+        )
     }
 
     private func isRising(atHertz hertz: Double) -> Bool {
@@ -256,13 +289,13 @@ private struct Voice {
     mutating func nextSample(
         from frames: UnsafeBufferPointer<Float>,
         sampleRate: Double,
-        gainStep: Double,
-        vibratoRatio: Double
+        ramp: GainRamp,
+        pitchRatio: Double
     ) -> Double {
         let value = Double(interpolated(from: frames)) * gain
-        position += positionIncrement(sampleRate: sampleRate, vibratoRatio: vibratoRatio)
+        position += positionIncrement(sampleRate: sampleRate, pitchRatio: pitchRatio)
         wrapIntoTheLoop()
-        gain = ramp(gain, toward: targetGain, by: gainStep)
+        gain = ramped(gain, toward: targetGain, by: ramp)
         return value
     }
 
@@ -275,8 +308,8 @@ private struct Voice {
         return here + (next - here) * Float(position - Double(frame))
     }
 
-    private func positionIncrement(sampleRate: Double, vibratoRatio: Double) -> Double {
-        hertz * bendRatio * vibratoRatio / recorded.rootHertz * recorded.sampleRate / sampleRate
+    private func positionIncrement(sampleRate: Double, pitchRatio: Double) -> Double {
+        hertz * bendRatio * pitchRatio / recorded.rootHertz * recorded.sampleRate / sampleRate
     }
 
     private mutating func wrapIntoTheLoop() {
@@ -291,6 +324,6 @@ private struct Voice {
 
 private let radiansPerCycle = 2 * Double.pi
 
-private func ramp(_ gain: Double, toward target: Double, by step: Double) -> Double {
-    gain < target ? min(target, gain + step) : max(target, gain - step)
+private func ramped(_ gain: Double, toward target: Double, by ramp: GainRamp) -> Double {
+    gain < target ? min(target, gain + ramp.rising) : max(target, gain - ramp.falling)
 }

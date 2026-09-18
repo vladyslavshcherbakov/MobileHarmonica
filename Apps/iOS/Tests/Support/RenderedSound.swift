@@ -9,6 +9,10 @@ struct RenderedSound {
         risingEdgeFrequency(in: buffer(from: oscillator))
     }
 
+    static func loudness(of oscillator: Oscillator) -> Double {
+        rootMeanSquare(of: buffer(from: oscillator))
+    }
+
     static func settle(_ oscillator: Oscillator) {
         render(3, from: oscillator)
     }
@@ -38,6 +42,11 @@ struct RenderedSound {
             )
         }
         return samples
+    }
+
+    private static func rootMeanSquare(of samples: [Float]) -> Double {
+        let squares = samples.reduce(0.0) { $0 + Double($1) * Double($1) }
+        return (squares / Double(samples.count)).squareRoot()
     }
 
     private static func risingEdgeFrequency(in samples: [Float]) -> Double {

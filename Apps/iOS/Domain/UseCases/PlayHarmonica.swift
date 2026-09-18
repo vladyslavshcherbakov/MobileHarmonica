@@ -71,7 +71,7 @@ final class PlayHarmonica {
         let wasOverbent = overbend
         self.shaping = shaping
         self.vibrato = vibrato
-        log.recordSample("bend \(rounded(bend.fraction)) of \(rounded(bendableSemitones)) semitones, overbend \(rounded(overbend.fraction)) of \(rounded(overbendableSemitones)) semitones, vibrato \(rounded(vibrato.fraction))")
+        log.recordSample("bend \(rounded(bend.fraction)) of \(rounded(semitonesTheMouthCanPull)) semitones, overbend \(rounded(overbend.fraction)) of \(rounded(overbendableSemitones)) semitones, vibrato \(rounded(vibrato.fraction))")
         audioEngine.changeBend(to: bend)
         audioEngine.changeVibrato(to: vibrato)
         guard overbend != wasOverbent, !soundingReeds.isEmpty else { return harmonica }
@@ -108,8 +108,8 @@ final class PlayHarmonica {
         shaping.overbend
     }
 
-    private var bendableSemitones: Double {
-        soundingReeds.map(tuning.bendableSemitones(for:)).max() ?? 0
+    private var semitonesTheMouthCanPull: Double {
+        soundingReeds.map(tuning.bendableSemitones(for:)).min() ?? 0
     }
 
     private var overbendableSemitones: Double {
@@ -120,7 +120,7 @@ final class PlayHarmonica {
         SoundingReed(
             breath: reed.breath,
             unbent: tuning.note(for: reed, in: key),
-            bendableSemitones: tuning.bendableSemitones(for: reed),
+            bendableSemitones: semitonesTheMouthCanPull,
             overbendableSemitones: tuning.overbendableSemitones(for: reed),
             bend: bend,
             overbend: overbend
@@ -172,8 +172,8 @@ final class PlayHarmonica {
     }
 
     private func sound(_ reeds: [Reed], as change: ToneChange) {
-        audioEngine.soundTones(reeds.map { soundingReed(of: $0).tone }, as: change)
         soundingReeds = reeds
+        audioEngine.soundTones(reeds.map { soundingReed(of: $0).tone }, as: change)
         log.record("sounding \(describe(reeds)) in key \(key)")
     }
 
