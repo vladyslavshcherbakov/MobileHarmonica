@@ -6,7 +6,8 @@ struct RichterTuning {
     func tone(for reed: Reed, in key: HarmonicaKey) -> Tone {
         Tone(
             pitch: note(for: reed, in: key).pitch,
-            bendableSemitones: bendableSemitones(for: reed)
+            bendableSemitones: bendableSemitones(for: reed),
+            overbendableSemitones: overbendableSemitones(for: reed)
         )
     }
 
@@ -20,6 +21,14 @@ struct RichterTuning {
         guard bending > neighbour else { return 0 }
 
         return Double(bending - neighbour - 1)
+    }
+
+    func overbendableSemitones(for reed: Reed) -> Double {
+        let sounding = note(for: reed).number
+        let neighbour = note(for: Reed(hole: reed.hole, breath: reed.breath.reversed)).number
+        guard sounding < neighbour else { return 0 }
+
+        return Double(neighbour - sounding + 1)
     }
 
     // MARK: - Private

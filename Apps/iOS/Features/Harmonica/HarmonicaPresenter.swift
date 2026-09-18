@@ -2,6 +2,7 @@ import Foundation
 
 struct HarmonicaPresenter {
     private static let soundUnavailableText = "Sound is unavailable."
+    private static let overbendLabel = "overbend ↑"
     private static let bendLabel = "bend ↓"
     private static let vibratoLabel = "vibrato →"
     private static let fingersLabel = "fingers"
@@ -9,6 +10,8 @@ struct HarmonicaPresenter {
     private static let smoothLabel = "smooth"
     private static let snapLabel = "snap"
     private static let bendEffectLabel = "bend"
+    private static let overblowEffectLabel = "overblow"
+    private static let overdrawEffectLabel = "overdraw"
     private static let noteNames = ["C", "D♭", "D", "E♭", "E", "F", "G♭", "G", "A♭", "A", "B♭", "B"]
 
     private let locale: Locale
@@ -28,7 +31,7 @@ struct HarmonicaPresenter {
                 key: keyState(harmonica.key),
                 style: styleState(harmonica.style),
                 overbendStyle: overbendStyleState(harmonica.overbendStyle),
-                toneShaping: toneShaping(canBend: harmonica.canBend)
+                toneShaping: toneShaping(harmonica)
             )
         )
     }
@@ -56,20 +59,28 @@ struct HarmonicaPresenter {
     }
 
     private func effect(shaping reed: SoundingReed) -> String {
-        guard reed.isBent else { return "" }
+        guard reed.isShifted else { return "" }
 
-        return "(\(name(of: reed.unbent)) \(Self.bendEffectLabel))"
+        return "(\(name(of: reed.unbent)) \(effectName(shaping: reed)))"
+    }
+
+    private func effectName(shaping reed: SoundingReed) -> String {
+        guard reed.isOverbent else { return Self.bendEffectLabel }
+
+        return reed.breath == .blow ? Self.overblowEffectLabel : Self.overdrawEffectLabel
     }
 
     private func name(of note: MIDINote) -> String {
         Self.noteNames[note.semitonesAboveC] + note.octave.formatted(.number.locale(locale))
     }
 
-    private func toneShaping(canBend: Bool) -> ToneShapingViewState {
+    private func toneShaping(_ harmonica: Harmonica) -> ToneShapingViewState {
         ToneShapingViewState(
+            overbendLabel: Self.overbendLabel,
             bendLabel: Self.bendLabel,
             vibratoLabel: Self.vibratoLabel,
-            bendIsAvailable: canBend
+            overbendIsAvailable: harmonica.canOverbend,
+            bendIsAvailable: harmonica.canBend
         )
     }
 

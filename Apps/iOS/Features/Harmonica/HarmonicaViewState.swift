@@ -33,8 +33,10 @@ struct OverbendStyleViewState: Equatable {
 // MARK: - ToneShapingViewState
 
 struct ToneShapingViewState: Equatable {
+    let overbendLabel: String
     let bendLabel: String
     let vibratoLabel: String
+    let overbendIsAvailable: Bool
     let bendIsAvailable: Bool
 }
 

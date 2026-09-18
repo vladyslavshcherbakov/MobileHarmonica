@@ -3,6 +3,7 @@ protocol AudioEngineProtocol: AnyObject {
     func soundTones(_ tones: [Tone])
     func changeIntensity(to intensity: BreathIntensity)
     func changeBend(to depth: BendDepth)
+    func changeOverbend(to depth: OverbendDepth)
     func changeVibrato(to depth: VibratoDepth)
     func silence()
 }

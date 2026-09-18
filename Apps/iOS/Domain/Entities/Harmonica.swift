@@ -11,28 +11,43 @@ struct Harmonica: Equatable {
     var canBend: Bool {
         sounding.values.contains(where: \.canBend)
     }
+
+    var canOverbend: Bool {
+        sounding.values.contains(where: \.canOverbend)
+    }
 }
 
 // MARK: - SoundingReed
 
 struct SoundingReed: Equatable {
+    let breath: Breath
     let unbent: MIDINote
     let bendableSemitones: Double
+    let overbendableSemitones: Double
     let bend: BendDepth
+    let overbend: OverbendDepth
 
     var pitch: MIDINote {
-        unbent.transposed(by: -bentSemitones)
+        unbent.transposed(by: Int(shiftedSemitones.rounded()))
     }
 
-    var isBent: Bool {
-        bentSemitones != 0
+    var isShifted: Bool {
+        pitch != unbent
+    }
+
+    var isOverbent: Bool {
+        pitch.number > unbent.number
     }
 
     var canBend: Bool {
         bendableSemitones > 0
     }
 
-    private var bentSemitones: Int {
-        Int((bendableSemitones * bend.fraction).rounded())
+    var canOverbend: Bool {
+        overbendableSemitones > 0
+    }
+
+    private var shiftedSemitones: Double {
+        overbendableSemitones * overbend.fraction - bendableSemitones * bend.fraction
     }
 }

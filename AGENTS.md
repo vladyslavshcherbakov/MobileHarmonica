@@ -111,13 +111,26 @@ Ten hole diatonic, Richter tuning, key of C at slider position 5.
 | blow | C4 | E4 | G4 | C5 | E5 | G5 | C6 | E6 | G6 | C7 |
 | draw | D4 | G4 | B4 | D5 | F5 | A5 | B5 | D6 | F6 | A6 |
 | bend | −1 draw | −2 draw | −3 draw | −1 draw | none | −1 draw | none | −1 blow | −1 blow | −2 blow |
+| overbend | +3 blow | +4 blow | +5 blow | +3 blow | +2 blow | +3 blow | +2 draw | +3 draw | +3 draw | +4 draw |
 
 From hole 7 up the draw reed is lower than the blow reed. That is the real layout, not a bug.
 
 **Bend.** Not a note of its own: the sounding reed is pulled down towards the other reed of
 the same hole and stops a semitone short, so the range is the interval between the two reeds
-minus one. `RichterTuning` derives it from the two reeds rather than holding a second table.
-Eight of the twenty reeds bend.
+minus one. Eight of the twenty reeds bend.
+
+**Overbend.** The opposite move, and the complement: the reed matching the airflow is
+silenced and the other one sounds in its opening mode, a semitone above its own pitch. It is
+available exactly where a bend is not, because a bend needs the higher reed of a chamber and
+an overbend the lower. Blowing into a chamber whose blow reed is lower gives an **overblow**,
+holes 1 to 6; drawing where the draw reed is lower gives an **overdraw**, holes 7 to 10. The
+shift from the sounding reed is the interval between the reeds plus one, so it runs from two
+semitones to five, not a fixed amount.
+
+Together they leave 18 of the 20 reeds responsive. Hole 5 draw and hole 7 blow stay dead:
+their reeds are a semitone apart, so the bend range is zero and they are the higher reed, so
+there is no overbend either. `RichterTuning` derives both ranges from the two reeds rather
+than holding a second table.
 
 **Key slider.** Twelve keys, G (−5 semitones) to F♯ (+6), C in the middle so neither end is
 shrill. Transposing preserves intervals, so bend ranges are unchanged in every key.
@@ -129,12 +142,13 @@ shrill. Transposing preserves intervals, so bend ranges are unchanged in every k
 | Hole | Finger x on the strip, right of the square | Sounds that hole. In `fingers` style every finger sounds its own; in `mouth` style only the topmost plays, and it sounds every hole its contact circle touches |
 | Breath direction | y of the **topmost** finger | On or above the centre line blows, below draws |
 | Breath intensity | \|y\| of the same finger | 0.2 on the line to 1.0 at the edge |
-| Bend | Finger y in the square | 0 at the top to the reed's full range at the bottom |
+| Bend | Finger y below the middle of the square | 0 at the middle to the reed's full range at the bottom |
+| Overbend | Finger y above the middle of the square | 0 at the middle to the reed's full shift at the top |
 | Vibrato | Finger x in the square | 0 at the left to 51 cents at the right |
 | Key | Slider in the top bar | Transposes every reed |
 | Zone size | Pinch on the square | Resizes it, trading width with the strip |
 | Playing style | Segmented control in the top bar | `fingers` or `mouth` |
-| Overbend style | Segmented control in the top bar | `smooth` or `snap`. Wired through and shown, but nothing reads it until overblows and overdraws exist. See ROADMAP item 6 |
+| Overbend style | Segmented control in the top bar | `smooth` slides into the overbend, `snap` pops to it at half travel |
 
 **Two playing styles.** `fingers` is the default and unchanged: one finger, one hole, as many
 fingers as the player has. `mouth` takes the topmost finger only and sounds every hole the
@@ -159,6 +173,22 @@ The key is not an effect, so the reed in brackets is the reed in the current key
 first hole blows D4 and the bracket says D4. Vibrato is not an effect either, for a different
 reason. It does move the frequency, by about 51 cents, but it moves it back and forth around
 the reed, so there is no steady note to round.
+
+**The square's vertical axis rests in the middle.** Down bends, up overbends, and on any one
+hole in one breath direction exactly one half is live, so the other half's label dims. Each
+half keeps half the travel; the square is pinch-resizable, so travel is recoverable and the
+convention that up is higher is not.
+
+`PitchShaping` is the signed fraction the axis gives, −1 at the bottom and +1 at the top. It
+splits itself into a `BendDepth` and an `OverbendDepth`, and the split is where `OverbendStyle`
+lands: `smooth` passes the fraction straight through, `snap` sends nothing below half travel
+and the whole overbend above it. Neither is faithful on its own. A real overblow does not
+slide in, so `smooth` is an invention for playability; a real overblow can then be bent
+further up, which `snap` does not yet do. See ROADMAP item 6.
+
+An overbend shifts every sounding reed at once, each by its own range, the same rule the bend
+already follows. One mouth cannot overblow a chord on the instrument, but a second rule for
+chords would be a second rule for nothing.
 
 **One breath for the whole instrument.** One mouth gives one airflow, so the topmost finger
 decides direction and intensity for every sounding hole. The boundary belongs to blow.
@@ -215,6 +245,7 @@ target gain and the semitones it can bend.
 | `soundTones(_:)` | On reed change | Drops the target gain of unwanted voices, raises new ones over 20 ms |
 | `changeIntensity(to:)` | Every touch move | One number in its own lock |
 | `changeBend(to:)` | Every touch move | One number in its own lock |
+| `changeOverbend(to:)` | Every touch move | One number in its own lock |
 | `changeVibrato(to:)` | Every touch move | One number in its own lock |
 | `silence()` | Lift | Fades every voice |
 
@@ -229,8 +260,10 @@ sound at full volume. See [Known limits](#known-limits).
 **Mixing.** The sum is divided by the total gain of the sounding voices, then by the breath
 gain, so ten notes cannot clip and one note is as loud as it was.
 
-**Bend** is one multiplication by `2^(-semitones/12)`, applied per voice once per buffer.
-Cheaper than a sample, which has to be dragged off its recorded pitch.
+**Bend and overbend** are one multiplication by `2^((overbendable × overbend − bendable × bend)/12)`,
+applied per voice once per buffer. One of the two terms is always zero, because a reed has
+either a bend range or an overbend range. Cheaper than a sample, which has to be dragged off
+its recorded pitch.
 
 **Vibrato** is one shared LFO at 5.5 Hz reaching 3 per cent of the frequency, about 51 cents.
 
@@ -324,6 +357,15 @@ that is what the drawn circle and the debug line are for. `UITouch.force` is not
 **No blend between neighbours.** A covered hole sounds at full volume and an uncovered one is
 silent, with nothing in between. This is also why the horizontal crossfade is not physical: a
 real slide overlaps, it does not fade.
+
+**An overbend sounds like a sine at the right pitch.** On the instrument an overblow has its
+own timbre, thinner and strained, and a sine has nothing to carry that with. Hole 3's overblow
+and hole 4's blow are both C5 and are indistinguishable here; on a harmonica they are not.
+Waits for the samples of phase 5, same as the bend.
+
+**An overbend cannot be pushed past its own pitch.** Players bend an overblow further up
+after it pops. Here the axis stops at the overbend, so the upper travel above the snap
+threshold does nothing. ROADMAP item 6.
 
 **No wah.** A resonant filter sweeping a sine has no harmonics to emphasise, so it cannot be
 heard before the samples of phase 5.

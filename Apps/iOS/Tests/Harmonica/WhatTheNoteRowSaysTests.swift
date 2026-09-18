@@ -37,17 +37,37 @@ final class WhatTheNoteRowSaysTests: XCTestCase {
         let harmonica = harmonica()
         _ = harmonica.play(at: [finger(at: 0.35, above: -0.3)])
 
-        let state = presenter.present(harmonica.shapeTone(bend: BendDepth(clamping: 1), vibrato: .off))
+        let state = presenter.present(harmonica.shapeTone(PitchShaping(clamping: -1), vibrato: .off))
 
         XCTAssertEqual(hole(4, of: state)?.note, "D♭5")
         XCTAssertEqual(hole(4, of: state)?.effect, "(D5 bend)")
+    }
+
+    func test_noteRow_whenTheBlowReedIsOverbent_namesTheOverblow() {
+        let harmonica = harmonica()
+        _ = harmonica.play(at: [finger(at: 0.25, above: 0.2)])
+
+        let state = presenter.present(harmonica.shapeTone(PitchShaping(clamping: 1), vibrato: .off))
+
+        XCTAssertEqual(hole(3, of: state)?.note, "C5")
+        XCTAssertEqual(hole(3, of: state)?.effect, "(G4 overblow)")
+    }
+
+    func test_noteRow_whenTheDrawReedIsOverbent_namesTheOverdraw() {
+        let harmonica = harmonica()
+        _ = harmonica.play(at: [finger(at: 0.85, above: -0.3)])
+
+        let state = presenter.present(harmonica.shapeTone(PitchShaping(clamping: 1), vibrato: .off))
+
+        XCTAssertEqual(hole(9, of: state)?.note, "A♭6")
+        XCTAssertEqual(hole(9, of: state)?.effect, "(F6 overdraw)")
     }
 
     func test_noteRow_whenTheBendRoundsToNoSemitone_namesOnlyTheNote() {
         let harmonica = harmonica()
         _ = harmonica.play(at: [finger(at: 0.25, above: -0.3)])
 
-        let state = presenter.present(harmonica.shapeTone(bend: BendDepth(clamping: 0.1), vibrato: .off))
+        let state = presenter.present(harmonica.shapeTone(PitchShaping(clamping: -0.1), vibrato: .off))
 
         XCTAssertEqual(hole(3, of: state)?.note, "B4")
         XCTAssertEqual(hole(3, of: state)?.effect, "")

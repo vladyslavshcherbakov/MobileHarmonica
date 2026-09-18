@@ -6,7 +6,7 @@ final class PlayHarmonica {
     private let log: LogProtocol
     private var soundingReeds: [Reed] = []
     private var soundingIntensity: BreathIntensity?
-    private var bend: BendDepth = .unbent
+    private var shaping: PitchShaping = .rest
     private var vibrato: VibratoDepth = .off
     private var recordedMouthWidth = ""
     private var key: HarmonicaKey = .c
@@ -53,6 +53,7 @@ final class PlayHarmonica {
 
         self.overbendStyle = overbendStyle
         log.record("overbends changed to \(overbendStyle)")
+        audioEngine.changeOverbend(to: overbend)
         return harmonica
     }
 
@@ -65,13 +66,14 @@ final class PlayHarmonica {
         return harmonica
     }
 
-    func shapeTone(bend: BendDepth, vibrato: VibratoDepth) -> Harmonica {
-        guard bend != self.bend || vibrato != self.vibrato else { return harmonica }
+    func shapeTone(_ shaping: PitchShaping, vibrato: VibratoDepth) -> Harmonica {
+        guard shaping != self.shaping || vibrato != self.vibrato else { return harmonica }
 
-        self.bend = bend
+        self.shaping = shaping
         self.vibrato = vibrato
-        log.recordSample("bend \(rounded(bend.fraction)) of \(rounded(bendableSemitones)) semitones, vibrato \(rounded(vibrato.fraction))")
+        log.recordSample("bend \(rounded(bend.fraction)) of \(rounded(bendableSemitones)) semitones, overbend \(rounded(overbend.fraction)) of \(rounded(overbendableSemitones)) semitones, vibrato \(rounded(vibrato.fraction))")
         audioEngine.changeBend(to: bend)
+        audioEngine.changeOverbend(to: overbend)
         audioEngine.changeVibrato(to: vibrato)
         return harmonica
     }
@@ -97,15 +99,30 @@ final class PlayHarmonica {
         )
     }
 
+    private var bend: BendDepth {
+        shaping.bend
+    }
+
+    private var overbend: OverbendDepth {
+        shaping.overbend(overbendStyle)
+    }
+
     private var bendableSemitones: Double {
         soundingReeds.map(tuning.bendableSemitones(for:)).max() ?? 0
     }
 
+    private var overbendableSemitones: Double {
+        soundingReeds.map(tuning.overbendableSemitones(for:)).max() ?? 0
+    }
+
     private func soundingReed(of reed: Reed) -> SoundingReed {
         SoundingReed(
+            breath: reed.breath,
             unbent: tuning.note(for: reed, in: key),
             bendableSemitones: tuning.bendableSemitones(for: reed),
-            bend: bend
+            overbendableSemitones: tuning.overbendableSemitones(for: reed),
+            bend: bend,
+            overbend: overbend
         )
     }
 

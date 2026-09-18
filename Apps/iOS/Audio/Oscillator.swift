@@ -7,6 +7,7 @@ final class Oscillator {
     private let bank = OSAllocatedUnfairLock(initialState: VoiceBank())
     private let requestedBreathGain = OSAllocatedUnfairLock(initialState: 0.0)
     private let requestedBend = OSAllocatedUnfairLock(initialState: 0.0)
+    private let requestedOverbend = OSAllocatedUnfairLock(initialState: 0.0)
     private let requestedVibrato = OSAllocatedUnfairLock(initialState: 0.0)
 
     // MARK: - Public
@@ -21,6 +22,10 @@ final class Oscillator {
 
     func changeBend(to fraction: Double) {
         requestedBend.withLock { $0 = fraction }
+    }
+
+    func changeOverbend(to fraction: Double) {
+        requestedOverbend.withLock { $0 = fraction }
     }
 
     func changeVibrato(to fraction: Double) {
@@ -43,7 +48,10 @@ final class Oscillator {
             return
         }
 
-        rendering.bend(by: requestedBend.withLock { $0 })
+        rendering.shape(
+            bend: requestedBend.withLock { $0 },
+            overbend: requestedOverbend.withLock { $0 }
+        )
         fill(
             frameCount: frameCount,
             sampleRate: sampleRate,
@@ -109,6 +117,7 @@ final class Oscillator {
 struct SoundingTone: Equatable {
     let hertz: Double
     let bendableSemitones: Double
+    let overbendableSemitones: Double
 }
 
 // MARK: - VoiceBank
@@ -142,9 +151,9 @@ private struct VoiceBank {
         }
     }
 
-    mutating func bend(by fraction: Double) {
+    mutating func shape(bend: Double, overbend: Double) {
         for index in voices.indices {
-            voices[index].bend(by: fraction)
+            voices[index].shape(bend: bend, overbend: overbend)
         }
     }
 
@@ -204,23 +213,25 @@ private struct VoiceBank {
 private struct Voice {
     let hertz: Double
     let bendableSemitones: Double
+    let overbendableSemitones: Double
 
     var phase = 0.0
     var gain = 0.0
     var targetGain = 1.0
-    var bendRatio = 1.0
+    var shiftRatio = 1.0
 
     init(_ tone: SoundingTone) {
         hertz = tone.hertz
         bendableSemitones = tone.bendableSemitones
+        overbendableSemitones = tone.overbendableSemitones
     }
 
     var isSilent: Bool {
         gain <= 0 && targetGain <= 0
     }
 
-    mutating func bend(by fraction: Double) {
-        bendRatio = pow(2, -bendableSemitones * fraction / 12)
+    mutating func shape(bend: Double, overbend: Double) {
+        shiftRatio = pow(2, (overbendableSemitones * overbend - bendableSemitones * bend) / 12)
     }
 
     /// A voice the render pass did not hold has either just been added to the bank or has
@@ -239,7 +250,7 @@ private struct Voice {
     }
 
     private func phaseIncrement(sampleRate: Double, vibratoRatio: Double) -> Double {
-        radiansPerCycle * hertz * bendRatio * vibratoRatio / sampleRate
+        radiansPerCycle * hertz * shiftRatio * vibratoRatio / sampleRate
     }
 }
 

@@ -104,6 +104,16 @@ hardware ended with the iPhone XS.
 
 ## 6. Overblows and overdraws
 
+**Built.** The square's vertical axis rests in the middle, down bends and up overbends, and
+`OverbendStyle` chooses whether the overbend slides in or pops at half travel. What is left is
+the stretch below.
+
+**What is left.** On the instrument an overblow can be bent further up once it has popped.
+Here the axis stops at the overbend itself, so in `snap` the travel above the threshold does
+nothing. Adding it means the engine can no longer reach the shift with one multiplication per
+voice, because the pop is an additive constant that differs per reed while the axis fraction
+is shared. Worth doing only if the missing semitone is audible in practice.
+
 **What.** The other half of pitch shaping. A bend pulls the higher reed of a chamber down
 towards the lower one. An overbend does the opposite: it silences the reed that matches the
 airflow and forces the other one to sound in its opening mode, about a semitone **above** its
@@ -147,8 +157,8 @@ travel with the direction decided by the sounding reed, which means dragging dow
 overbent pitch. Whether an overbend can be pushed past +1, as some players do. Whether `snap`
 should also model the silence a missed overblow gives instead of jumping cleanly.
 
-**Blocked on.** Nothing. The pitch arithmetic is one more multiplication on a synthesised
-tone, the same as a bend.
+**Blocked on.** Nothing for the stretch either, beyond deciding it is worth the engine
+contract it costs.
 
 ## 7. Smaller wishes
 

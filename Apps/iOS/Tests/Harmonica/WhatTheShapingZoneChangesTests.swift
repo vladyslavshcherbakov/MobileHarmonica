@@ -6,20 +6,48 @@ final class WhatTheShapingZoneChangesTests: XCTestCase {
 
     // MARK: - Tests
 
-    func test_shapingZone_whenTheFingerMoves_sendsTheNewBendAndVibrato() {
+    func test_shapingZone_whenTheFingerGoesBelowTheMiddle_sendsTheNewBendAndVibrato() {
         let harmonica = harmonica()
 
-        _ = harmonica.shapeTone(bend: BendDepth(clamping: 0.25), vibrato: VibratoDepth(clamping: 0.75))
+        _ = harmonica.shapeTone(PitchShaping(clamping: -0.25), vibrato: VibratoDepth(clamping: 0.75))
 
         XCTAssertEqual(engine.bends.last?.fraction, 0.25)
+        XCTAssertEqual(engine.overbends.last?.fraction, 0)
         XCTAssertEqual(engine.vibratos.last?.fraction, 0.75)
+    }
+
+    func test_shapingZone_whenTheFingerGoesAboveTheMiddle_overbendsInsteadOfBending() {
+        let harmonica = harmonica()
+
+        _ = harmonica.shapeTone(PitchShaping(clamping: 0.25), vibrato: .off)
+
+        XCTAssertEqual(engine.bends.last?.fraction, 0)
+        XCTAssertEqual(engine.overbends.last?.fraction, 0.25)
+    }
+
+    func test_shapingZone_whenSnapping_holdsTheOverbendBackUntilTheThreshold() {
+        let harmonica = harmonica()
+        _ = harmonica.changeOverbendStyle(to: .snap)
+
+        _ = harmonica.shapeTone(PitchShaping(clamping: 0.4), vibrato: .off)
+
+        XCTAssertEqual(engine.overbends.last?.fraction, 0)
+    }
+
+    func test_shapingZone_whenSnapping_jumpsAllTheWayPastTheThreshold() {
+        let harmonica = harmonica()
+        _ = harmonica.changeOverbendStyle(to: .snap)
+
+        _ = harmonica.shapeTone(PitchShaping(clamping: 0.6), vibrato: .off)
+
+        XCTAssertEqual(engine.overbends.last?.fraction, 1)
     }
 
     func test_shapingZone_whenTheFingerStaysStill_sendsNothingTwice() {
         let harmonica = harmonica()
-        _ = harmonica.shapeTone(bend: BendDepth(clamping: 0.5), vibrato: VibratoDepth(clamping: 0.5))
+        _ = harmonica.shapeTone(PitchShaping(clamping: -0.5), vibrato: VibratoDepth(clamping: 0.5))
 
-        _ = harmonica.shapeTone(bend: BendDepth(clamping: 0.5), vibrato: VibratoDepth(clamping: 0.5))
+        _ = harmonica.shapeTone(PitchShaping(clamping: -0.5), vibrato: VibratoDepth(clamping: 0.5))
 
         XCTAssertEqual(engine.bends.count, 1)
     }

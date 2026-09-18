@@ -31,6 +31,14 @@ final class WhatTheOscillatorPlaysTests: XCTestCase {
         XCTAssertEqual(RenderedSound.frequency(of: oscillator), 415.30, accuracy: 4)
     }
 
+    func test_overbend_whenFullyPushedOnAFiveSemitoneReed_landsFiveSemitonesHigher() {
+        let oscillator = sounding(hertz: 392.00, overbendableSemitones: 5)
+
+        oscillator.changeOverbend(to: 1)
+
+        XCTAssertEqual(RenderedSound.frequency(of: oscillator), 523.25, accuracy: 4)
+    }
+
     func test_bend_whenTheReedCannotBend_leavesThePitchWhereItWas() {
         let oscillator = sounding(hertz: 698.46, bendableSemitones: 0)
 
@@ -41,9 +49,19 @@ final class WhatTheOscillatorPlaysTests: XCTestCase {
 
     // MARK: - Helpers
 
-    private func sounding(hertz: Double, bendableSemitones: Double) -> Oscillator {
+    private func sounding(
+        hertz: Double,
+        bendableSemitones: Double = 0,
+        overbendableSemitones: Double = 0
+    ) -> Oscillator {
         let oscillator = Oscillator()
-        oscillator.sound([SoundingTone(hertz: hertz, bendableSemitones: bendableSemitones)])
+        oscillator.sound([
+            SoundingTone(
+                hertz: hertz,
+                bendableSemitones: bendableSemitones,
+                overbendableSemitones: overbendableSemitones
+            )
+        ])
         oscillator.changeBreathGain(to: 1)
         RenderedSound.settle(oscillator)
         return oscillator

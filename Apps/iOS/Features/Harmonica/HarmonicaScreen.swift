@@ -37,6 +37,10 @@ struct HarmonicaScreen: View {
 
     // MARK: - Private
 
+    private static func labelShade(isAvailable: Bool) -> Color {
+        isAvailable ? Color(white: 0.55) : Color(white: 0.3)
+    }
+
     private static func zoneSide(in size: CGSize, scaledBy scale: CGFloat) -> CGFloat {
         min(size.height, min(size.height, size.width * Self.zoneWidthFraction) * scale)
     }
@@ -207,22 +211,30 @@ struct HarmonicaScreen: View {
         GeometryReader { geometry in
             RoundedRectangle(cornerRadius: Self.zoneCornerRadius)
                 .fill(Color(white: 0.13))
-                .overlay(alignment: .leading) { zoneLabels(state) }
+                .overlay(alignment: .leading) { pitchLabels(state) }
+                .overlay(alignment: .bottomTrailing) { vibratoLabel(state) }
                 .overlay { circles(Self.shapingMarks(at: shapingTouches)) }
                 .overlay { shapingTouchArea(across: geometry.size) }
         }
     }
 
-    private func zoneLabels(_ state: ToneShapingViewState) -> some View {
+    private func pitchLabels(_ state: ToneShapingViewState) -> some View {
         VStack(alignment: .leading) {
-            Text(state.bendLabel)
-                .foregroundStyle(state.bendIsAvailable ? Color(white: 0.55) : Color(white: 0.3))
+            Text(state.overbendLabel)
+                .foregroundStyle(Self.labelShade(isAvailable: state.overbendIsAvailable))
             Spacer()
-            Text(state.vibratoLabel)
-                .foregroundStyle(Color(white: 0.55))
+            Text(state.bendLabel)
+                .foregroundStyle(Self.labelShade(isAvailable: state.bendIsAvailable))
         }
         .font(.caption)
         .padding(8)
+    }
+
+    private func vibratoLabel(_ state: ToneShapingViewState) -> some View {
+        Text(state.vibratoLabel)
+            .font(.caption)
+            .foregroundStyle(Self.labelShade(isAvailable: true))
+            .padding(8)
     }
 
     private func circles(_ marks: [FingerMark]) -> some View {
@@ -265,7 +277,7 @@ struct HarmonicaScreen: View {
         }
 
         viewModel.shapeTone(
-            bend: Double(leading.y / size.height),
+            pitch: 1 - 2 * Double(leading.y / size.height),
             vibrato: Double(leading.x / size.width)
         )
     }

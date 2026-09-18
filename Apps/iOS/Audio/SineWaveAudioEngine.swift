@@ -37,6 +37,10 @@ final class SineWaveAudioEngine: AudioEngineProtocol {
         oscillator.changeBend(to: depth.fraction)
     }
 
+    func changeOverbend(to depth: OverbendDepth) {
+        oscillator.changeOverbend(to: depth.fraction)
+    }
+
     func changeVibrato(to depth: VibratoDepth) {
         oscillator.changeVibrato(to: depth.fraction)
     }
@@ -50,7 +54,8 @@ final class SineWaveAudioEngine: AudioEngineProtocol {
     private static func sounding(_ tone: Tone) -> SoundingTone {
         SoundingTone(
             hertz: tone.pitch.converted(to: .hertz).value,
-            bendableSemitones: tone.bendableSemitones
+            bendableSemitones: tone.bendableSemitones,
+            overbendableSemitones: tone.overbendableSemitones
         )
     }
 
