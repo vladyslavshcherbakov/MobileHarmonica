@@ -26,16 +26,20 @@ struct HoleView: View {
     }
 
     private var blowHalf: Color {
-        state.isSounding ? .orange : Color(white: 0.22)
+        shade(lit: state.sounding == .blow)
     }
 
     private var drawHalf: Color {
-        blowHalf.opacity(Self.drawHalfDimming)
+        shade(lit: state.sounding == .draw).opacity(Self.drawHalfDimming)
+    }
+
+    private func shade(lit: Bool) -> Color {
+        lit ? .orange : Color(white: 0.22)
     }
 
     private var number: some View {
         Text(state.label)
             .font(.title2.weight(.semibold))
-            .foregroundStyle(state.isSounding ? Color.black : Color(white: 0.55))
+            .foregroundStyle(state.sounding == nil ? Color(white: 0.55) : Color.black)
     }
 }

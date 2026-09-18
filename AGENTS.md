@@ -207,6 +207,25 @@ An overbend shifts every sounding reed at once, each by its own range, the same 
 already follows. One mouth cannot overblow a chord on the instrument, but a second rule for
 chords would be a second rule for nothing.
 
+**The demo plays itself through the instrument, not around it.** `PlayScore` turns each score
+event into a finger position and puts it through `PlayHarmonica.play(at:)`, the same call a
+real finger makes. Nothing about the tuning, the bend ranges or the breath rule is written a
+second time, and everything the screen already shows keeps working: the plates light, the note
+row names the note, a bend is a fraction of that reed's own range.
+
+A score says a bend in **semitones**, not in axis travel, because a score should not know that
+hole 3 draw bends three semitones and hole 4 draw bends one. `PlayScore` asks `RichterTuning`
+for the range and divides. Each note is cut short by up to 50 ms so the next one re-attacks;
+without that gap two of the same note in a row would be one long note, because `play(at:)`
+sees the same reeds and does not re-sound.
+
+A live finger stops the score, since both drive one instrument. Timing is `Task.sleep`, whose
+jitter is a few milliseconds: fine for a demo, not for music. See ROADMAP item 3.
+
+**A sounding plate lights only the half that is sounding**, the top for blow and the bottom
+for draw, so the demo shows where to put a finger and which way to breathe. It used to light
+both halves, which said which hole and not which breath.
+
 **One breath for the whole instrument.** One mouth gives one airflow, so the topmost finger
 decides direction and intensity for every sounding hole. The boundary belongs to blow.
 

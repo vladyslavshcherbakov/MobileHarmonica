@@ -7,6 +7,7 @@ struct HarmonicaScreen: View {
     private static let fingerCircleDiameter: CGFloat = 56
     private static let fingerCircleLineWidth: CGFloat = 3
     private static let styleControlWidth: CGFloat = 150
+    private static let demoButtonWidth: CGFloat = 64
     private static let noteRowHeight: CGFloat = 30
     private static let zoneWidthFraction: CGFloat = 0.22
     private static let zoneCornerRadius: CGFloat = 12
@@ -140,6 +141,7 @@ struct HarmonicaScreen: View {
             )
             .tint(.orange)
             playingStyleControl(playable.style)
+            demoControl(playable.demo)
         }
         .padding(.horizontal)
         .safeAreaPadding(.leading)
@@ -154,6 +156,13 @@ struct HarmonicaScreen: View {
         .pickerStyle(.segmented)
         .labelsHidden()
         .frame(width: Self.styleControlWidth)
+    }
+
+    private func demoControl(_ demo: DemoViewState) -> some View {
+        Button(demo.label, action: viewModel.playTheDemo)
+            .buttonStyle(.bordered)
+            .tint(.orange)
+            .frame(width: Self.demoButtonWidth)
     }
 
     private func holes(_ holes: [HoleViewState], isMouth: Bool) -> some View {

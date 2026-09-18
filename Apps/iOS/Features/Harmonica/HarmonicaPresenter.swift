@@ -7,6 +7,8 @@ struct HarmonicaPresenter {
     private static let vibratoLabel = "vibrato →"
     private static let fingersLabel = "fingers"
     private static let mouthLabel = "mouth"
+    private static let playDemoLabel = "play"
+    private static let stopDemoLabel = "stop"
     private static let bendEffectLabel = "bend"
     private static let overblowEffectLabel = "overblow"
     private static let overdrawEffectLabel = "overdraw"
@@ -22,12 +24,13 @@ struct HarmonicaPresenter {
         holeLabels = Hole.allCases.map { $0.number.formatted(.number.locale(locale)) }
     }
 
-    func present(_ harmonica: Harmonica) -> HarmonicaViewState {
+    func present(_ harmonica: Harmonica, playingAScore: Bool) -> HarmonicaViewState {
         .ready(
             PlayableHarmonica(
                 holes: holes(of: harmonica),
                 key: keyState(harmonica.key),
                 style: styleState(harmonica.style),
+                demo: demoState(playingAScore),
                 toneShaping: toneShaping(harmonica)
             )
         )
@@ -51,7 +54,7 @@ struct HarmonicaPresenter {
             label: label,
             note: sounding.map { name(of: $0.pitch) } ?? "",
             effect: sounding.map(effect(shaping:)) ?? "",
-            isSounding: sounding != nil
+            sounding: sounding?.breath
         )
     }
 
@@ -87,6 +90,10 @@ struct HarmonicaPresenter {
             mouthLabel: Self.mouthLabel,
             isMouth: style == .mouth
         )
+    }
+
+    private func demoState(_ isPlaying: Bool) -> DemoViewState {
+        DemoViewState(label: isPlaying ? Self.stopDemoLabel : Self.playDemoLabel)
     }
 
     private func keyState(_ key: HarmonicaKey) -> KeyViewState {

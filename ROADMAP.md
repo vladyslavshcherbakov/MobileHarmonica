@@ -41,25 +41,25 @@ vibrato rate, is possible but is not what tilt is for.
 
 ## 3. Playing from a score
 
-**What.** The app plays a piece, or leads the player through one.
+**Built: timed playback, hand-timed.** `Score` carries a key, a tempo and a list of events,
+each a hole with a breath and a length in beats, or a rest. `PlayScore` walks it and puts
+synthetic finger positions through `PlayHarmonica`, so the plates light, the note row updates
+and the bends come out of each reed's own range. `Score.demo` is the one piece that ships.
 
-**The obstacle is not the notes.** A harmonica tab is hole numbers and breath directions,
-which the domain already models exactly. What a tab has no notation for is **rhythm**: no
-durations, no bars, no rests. A player cannot be driven from it and neither can a clock.
+**What is left: the score has no source but the code.** Events are Swift values. A text or
+MIDI file would let a piece arrive without a build, and MIDI carries duration, which a tab
+does not. A published tab is someone's transcription of someone's composition, so the demo is
+derived arithmetic over public-domain melodies rather than a transcription.
 
-**Three shapes, in increasing cost.**
+**What is left: guide mode.** The next hole lights and waits to be taken, rhythm from the
+player rather than the clock. Needs nothing a tab does not already have.
 
-| Shape | Rhythm from | Cost |
-|---|---|---|
-| Guide mode | The player. The next hole lights and waits to be taken | Needs only what a tab already has |
-| Timed playback, hand-timed | Durations entered by ear, once per note | Manual work per piece |
-| Timed playback from MIDI | A MIDI file, which carries pitch and duration | No tab needed, and the rights question goes away |
+**What is left: playability.** Nothing checks that a score is physically playable. The player
+can move across the strip instantly, and a mouth cannot, so a score can be written that no
+person could play.
 
-**Also.** A published tab is someone's transcription of someone's composition. Embedding one
-in the repository is a rights question, not a technical one. MIDI of a melody the user owns
-or writes avoids it.
-
-**Blocked on.** The user choosing a shape.
+**What is left: the clock.** Timing is `Task.sleep`, whose jitter is a few milliseconds. Real
+music wants the audio clock.
 
 ## 4. Mouth width
 

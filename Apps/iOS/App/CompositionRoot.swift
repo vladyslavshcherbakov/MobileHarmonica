@@ -12,8 +12,11 @@ struct CompositionRoot {
     }
 
     private func harmonicaViewModel() -> HarmonicaViewModel {
-        HarmonicaViewModel(
-            playHarmonica: PlayHarmonica(tuning: RichterTuning(), audioEngine: audioEngine, log: log),
+        let tuning = RichterTuning()
+        let playHarmonica = PlayHarmonica(tuning: tuning, audioEngine: audioEngine, log: log)
+        return HarmonicaViewModel(
+            playHarmonica: playHarmonica,
+            playScore: PlayScore(tuning: tuning, harmonica: playHarmonica, log: log),
             presenter: HarmonicaPresenter(locale: .current)
         )
     }

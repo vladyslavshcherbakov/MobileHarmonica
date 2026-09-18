@@ -11,7 +11,7 @@ final class WhatTheNoteRowSaysTests: XCTestCase {
     func test_noteRow_whenNoHoleSounds_namesNothing() {
         let harmonica = harmonica()
 
-        let state = presenter.present(harmonica.play(at: []))
+        let state = presenter.present(harmonica.play(at: []), playingAScore: false)
 
         XCTAssertEqual(hole(4, of: state)?.note, "")
         XCTAssertEqual(hole(4, of: state)?.effect, "")
@@ -20,7 +20,7 @@ final class WhatTheNoteRowSaysTests: XCTestCase {
     func test_noteRow_whenTheFingerIsAboveTheLine_namesTheBlowReed() {
         let harmonica = harmonica()
 
-        let state = presenter.present(harmonica.play(at: [finger(at: 0.35, above: 0.2)]))
+        let state = presenter.present(harmonica.play(at: [finger(at: 0.35, above: 0.2)]), playingAScore: false)
 
         XCTAssertEqual(hole(4, of: state)?.note, "C5")
     }
@@ -28,7 +28,7 @@ final class WhatTheNoteRowSaysTests: XCTestCase {
     func test_noteRow_whenTheFingerIsBelowTheLine_namesTheDrawReed() {
         let harmonica = harmonica()
 
-        let state = presenter.present(harmonica.play(at: [finger(at: 0.35, above: -0.3)]))
+        let state = presenter.present(harmonica.play(at: [finger(at: 0.35, above: -0.3)]), playingAScore: false)
 
         XCTAssertEqual(hole(4, of: state)?.note, "D5")
     }
@@ -37,7 +37,7 @@ final class WhatTheNoteRowSaysTests: XCTestCase {
         let harmonica = harmonica()
         _ = harmonica.play(at: [finger(at: 0.35, above: -0.3)])
 
-        let state = presenter.present(harmonica.shapeTone(PitchShaping(clamping: -1), vibrato: .off))
+        let state = presenter.present(harmonica.shapeTone(PitchShaping(clamping: -1), vibrato: .off), playingAScore: false)
 
         XCTAssertEqual(hole(4, of: state)?.note, "D♭5")
         XCTAssertEqual(hole(4, of: state)?.effect, "(D5 bend)")
@@ -47,7 +47,7 @@ final class WhatTheNoteRowSaysTests: XCTestCase {
         let harmonica = harmonica()
         _ = harmonica.play(at: [finger(at: 0.25, above: 0.2)])
 
-        let state = presenter.present(harmonica.shapeTone(PitchShaping(clamping: 1), vibrato: .off))
+        let state = presenter.present(harmonica.shapeTone(PitchShaping(clamping: 1), vibrato: .off), playingAScore: false)
 
         XCTAssertEqual(hole(3, of: state)?.note, "C5")
         XCTAssertEqual(hole(3, of: state)?.effect, "(G4 overblow)")
@@ -57,7 +57,7 @@ final class WhatTheNoteRowSaysTests: XCTestCase {
         let harmonica = harmonica()
         _ = harmonica.play(at: [finger(at: 0.85, above: -0.3)])
 
-        let state = presenter.present(harmonica.shapeTone(PitchShaping(clamping: 1), vibrato: .off))
+        let state = presenter.present(harmonica.shapeTone(PitchShaping(clamping: 1), vibrato: .off), playingAScore: false)
 
         XCTAssertEqual(hole(9, of: state)?.note, "A♭6")
         XCTAssertEqual(hole(9, of: state)?.effect, "(F6 overdraw)")
@@ -67,7 +67,7 @@ final class WhatTheNoteRowSaysTests: XCTestCase {
         let harmonica = harmonica()
         _ = harmonica.play(at: [finger(at: 0.25, above: -0.3)])
 
-        let state = presenter.present(harmonica.shapeTone(PitchShaping(clamping: -0.1), vibrato: .off))
+        let state = presenter.present(harmonica.shapeTone(PitchShaping(clamping: -0.1), vibrato: .off), playingAScore: false)
 
         XCTAssertEqual(hole(3, of: state)?.note, "B4")
         XCTAssertEqual(hole(3, of: state)?.effect, "")
@@ -77,7 +77,7 @@ final class WhatTheNoteRowSaysTests: XCTestCase {
         let harmonica = harmonica()
         _ = harmonica.play(at: [finger(at: 0.05, above: 0.2)])
 
-        let state = presenter.present(harmonica.changeKey(to: .d))
+        let state = presenter.present(harmonica.changeKey(to: .d), playingAScore: false)
 
         XCTAssertEqual(hole(1, of: state)?.note, "D4")
     }

@@ -4,12 +4,15 @@ final class HarmonicaViewModel: ObservableObject {
     @Published private(set) var state: HarmonicaViewState = .preparingSound
 
     private let playHarmonica: PlayHarmonica
+    private let playScore: PlayScore
     private let presenter: HarmonicaPresenter
+    private var performance: Task<Void, Never>?
 
     // MARK: - Public
 
-    init(playHarmonica: PlayHarmonica, presenter: HarmonicaPresenter) {
+    init(playHarmonica: PlayHarmonica, playScore: PlayScore, presenter: HarmonicaPresenter) {
         self.playHarmonica = playHarmonica
+        self.playScore = playScore
         self.presenter = presenter
     }
 
@@ -17,29 +20,45 @@ final class HarmonicaViewModel: ObservableObject {
     func prepareSound() async {
         do {
             let harmonica = try await playHarmonica.prepare()
-            show(presenter.present(harmonica))
+            show(harmonica)
         } catch {
-            show(presenter.presentSoundUnavailable())
+            publish(presenter.presentSoundUnavailable())
         }
     }
 
     func play(at positions: [PositionOnHarmonica]) {
         guard case .ready = state else { return }
 
-        show(presenter.present(playHarmonica.play(at: positions)))
+        if !positions.isEmpty {
+            stopTheScore()
+        }
+        show(playHarmonica.play(at: positions))
     }
 
     func changeKey(toPosition position: Double) {
         guard case .ready = state else { return }
 
         let key = HarmonicaKey(nearestPosition: Int(position.rounded()))
-        show(presenter.present(playHarmonica.changeKey(to: key)))
+        show(playHarmonica.changeKey(to: key))
     }
 
     func changeStyle(toMouth isMouth: Bool) {
         guard case .ready = state else { return }
 
-        show(presenter.present(playHarmonica.changeStyle(to: isMouth ? .mouth : .fingers)))
+        show(playHarmonica.changeStyle(to: isMouth ? .mouth : .fingers))
+    }
+
+    func playTheDemo() {
+        guard case .ready = state else { return }
+        guard performance == nil else {
+            stopTheScore()
+            show(playHarmonica.stopPlaying())
+            return
+        }
+
+        performance = Task { @MainActor [weak self] in
+            await self?.perform()
+        }
     }
 
     func shapeTone(pitch: Double, vibrato: Double) {
@@ -49,7 +68,7 @@ final class HarmonicaViewModel: ObservableObject {
         )
         guard case .ready = state else { return }
 
-        show(presenter.present(harmonica))
+        show(harmonica)
     }
 
     func stopShapingTone() {
@@ -57,15 +76,34 @@ final class HarmonicaViewModel: ObservableObject {
     }
 
     func stopPlaying() {
+        stopTheScore()
         let harmonica = playHarmonica.stopPlaying()
         guard case .ready = state else { return }
 
-        show(presenter.present(harmonica))
+        show(harmonica)
     }
 
     // MARK: - Private
 
-    private func show(_ updated: HarmonicaViewState) {
+    @MainActor
+    private func perform() async {
+        for await harmonica in playScore.play(.demo) {
+            show(harmonica)
+        }
+        performance = nil
+        show(playHarmonica.stopPlaying())
+    }
+
+    private func stopTheScore() {
+        performance?.cancel()
+        performance = nil
+    }
+
+    private func show(_ harmonica: Harmonica) {
+        publish(presenter.present(harmonica, playingAScore: performance != nil))
+    }
+
+    private func publish(_ updated: HarmonicaViewState) {
         guard updated != state else { return }
 
         state = updated

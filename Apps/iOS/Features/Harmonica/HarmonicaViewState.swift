@@ -10,6 +10,7 @@ struct PlayableHarmonica: Equatable {
     let holes: [HoleViewState]
     let key: KeyViewState
     let style: PlayingStyleViewState
+    let demo: DemoViewState
     let toneShaping: ToneShapingViewState
 }
 
@@ -19,6 +20,12 @@ struct PlayingStyleViewState: Equatable {
     let fingersLabel: String
     let mouthLabel: String
     let isMouth: Bool
+}
+
+// MARK: - DemoViewState
+
+struct DemoViewState: Equatable {
+    let label: String
 }
 
 // MARK: - ToneShapingViewState
@@ -38,7 +45,7 @@ struct HoleViewState: Equatable, Identifiable {
     let label: String
     let note: String
     let effect: String
-    let isSounding: Bool
+    let sounding: Breath?
 }
 
 // MARK: - KeyViewState
