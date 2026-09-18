@@ -279,6 +279,13 @@ it a finger that barely moves fires the engine and the log on every touch event.
 
 ## Conventions
 
+**No accessibility.** By the user's decision, nothing in this project carries an
+accessibility modifier: no labels, values, identifiers or `accessibilityHidden`. The strip is
+a raw multi-touch surface where a note is a finger held at a position, which VoiceOver's
+gesture model cannot drive at all, so the annotations on the plates never made the instrument
+playable. Do not add them back, including the identifiers a UI test bundle would key on;
+there is no UI test target, and if one arrives it gets its identifiers then.
+
 **Code.** Plain English names, no comments or documentation comments, one level of
 abstraction per function. `MARK: - Public` and `MARK: - Private` on any type past roughly
 forty lines, and a mark naming every other type or extension in a file.

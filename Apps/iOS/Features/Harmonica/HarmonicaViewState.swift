@@ -16,7 +16,6 @@ struct PlayableHarmonica: Equatable {
 // MARK: - PlayingStyleViewState
 
 struct PlayingStyleViewState: Equatable {
-    let label: String
     let fingersLabel: String
     let mouthLabel: String
     let isMouth: Bool

@@ -4,7 +4,6 @@ struct HarmonicaPresenter {
     private static let soundUnavailableText = "Sound is unavailable."
     private static let bendLabel = "bend ↓"
     private static let vibratoLabel = "vibrato →"
-    private static let playingStyleLabel = "Playing style"
     private static let fingersLabel = "fingers"
     private static let mouthLabel = "mouth"
     private static let bendEffectLabel = "bend"
@@ -73,7 +72,6 @@ struct HarmonicaPresenter {
 
     private func styleState(_ style: PlayingStyle) -> PlayingStyleViewState {
         PlayingStyleViewState(
-            label: Self.playingStyleLabel,
             fingersLabel: Self.fingersLabel,
             mouthLabel: Self.mouthLabel,
             isMouth: style == .mouth

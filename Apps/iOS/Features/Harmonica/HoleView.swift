@@ -10,10 +10,6 @@ struct HoleView: View {
         RoundedRectangle(cornerRadius: Self.cornerRadius)
             .fill(breathHalves)
             .overlay { number }
-            .accessibilityElement()
-            .accessibilityIdentifier("harmonica.hole.\(state.id)")
-            .accessibilityLabel(state.label)
-            .accessibilityValue(state.note)
     }
 
     private var breathHalves: LinearGradient {

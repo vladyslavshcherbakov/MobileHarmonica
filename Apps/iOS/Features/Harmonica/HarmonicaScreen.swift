@@ -103,7 +103,6 @@ struct HarmonicaScreen: View {
         case .soundUnavailable(let text):
             Text(text)
                 .foregroundStyle(.white)
-                .accessibilityIdentifier("harmonica.soundUnavailable")
         }
     }
 
@@ -130,15 +129,12 @@ struct HarmonicaScreen: View {
                 .monospaced()
                 .foregroundStyle(.white)
                 .frame(width: Self.keyLabelWidth, alignment: .leading)
-                .accessibilityIdentifier("harmonica.key")
             Slider(
                 value: Binding(get: { key.position }, set: viewModel.changeKey(toPosition:)),
                 in: 0...key.highestPosition,
                 step: 1
             )
             .tint(.orange)
-            .accessibilityIdentifier("harmonica.keySlider")
-            .accessibilityLabel(key.label)
             playingStyleControl(style)
         }
         .padding(.horizontal)
@@ -147,14 +143,13 @@ struct HarmonicaScreen: View {
     }
 
     private func playingStyleControl(_ style: PlayingStyleViewState) -> some View {
-        Picker(style.label, selection: Binding(get: { style.isMouth }, set: viewModel.changeStyle(toMouth:))) {
+        Picker("", selection: Binding(get: { style.isMouth }, set: viewModel.changeStyle(toMouth:))) {
             Text(style.fingersLabel).tag(false)
             Text(style.mouthLabel).tag(true)
         }
         .pickerStyle(.segmented)
         .labelsHidden()
         .frame(width: Self.playingStyleWidth)
-        .accessibilityIdentifier("harmonica.playingStyle")
     }
 
     private func holes(_ holes: [HoleViewState], isMouth: Bool) -> some View {
@@ -181,7 +176,6 @@ struct HarmonicaScreen: View {
             }
         }
         .frame(height: Self.noteRowHeight)
-        .accessibilityHidden(true)
     }
 
     private func soundingNote(_ hole: HoleViewState) -> some View {
@@ -206,7 +200,6 @@ struct HarmonicaScreen: View {
                 .overlay { circles(Self.shapingMarks(at: shapingTouches)) }
                 .overlay { shapingTouchArea(across: geometry.size) }
         }
-        .accessibilityIdentifier("harmonica.toneShapingZone")
     }
 
     private func zoneLabels(_ state: ToneShapingViewState) -> some View {
@@ -219,7 +212,6 @@ struct HarmonicaScreen: View {
         }
         .font(.caption)
         .padding(8)
-        .accessibilityHidden(true)
     }
 
     private func circles(_ marks: [FingerMark]) -> some View {
@@ -232,7 +224,6 @@ struct HarmonicaScreen: View {
                 .frame(width: mark.diameter, height: mark.diameter)
                 .position(mark.location)
         }
-        .accessibilityHidden(true)
     }
 
     private func holesTouchArea(across size: CGSize) -> some View {
