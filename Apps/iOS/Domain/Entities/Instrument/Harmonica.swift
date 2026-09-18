@@ -7,6 +7,10 @@ struct Harmonica: Equatable {
         Set(sounding.keys)
     }
 
+    var breath: Breath? {
+        sounding.values.first?.breath
+    }
+
     var canBend: Bool {
         sounding.values.contains(where: \.canBend)
     }

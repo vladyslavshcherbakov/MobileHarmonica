@@ -2,7 +2,9 @@ import Foundation
 
 struct HarmonicaPresenter {
     private static let soundUnavailableText = "Sound is unavailable."
-    private static let overbendLabel = "overbend ↑"
+    private static let overbendAtRestLabel = "overbend ↑"
+    private static let overblowLabel = "overblow ↑"
+    private static let overdrawLabel = "overdraw ↑"
     private static let bendLabel = "bend ↓"
     private static let vibratoLabel = "vibrato →"
     private static let playDemoLabel = "play"
@@ -83,12 +85,20 @@ struct HarmonicaPresenter {
 
     private func toneShaping(_ harmonica: Harmonica) -> ToneShapingViewState {
         ToneShapingViewState(
-            overbendLabel: Self.overbendLabel,
+            overbendLabel: Self.overbendLabel(breathing: harmonica.breath),
             bendLabel: Self.bendLabel,
             vibratoLabel: Self.vibratoLabel,
             overbendIsAvailable: harmonica.canOverbend,
             bendIsAvailable: harmonica.canBend
         )
+    }
+
+    private static func overbendLabel(breathing breath: Breath?) -> String {
+        switch breath {
+        case .blow: overblowLabel
+        case .draw: overdrawLabel
+        case nil: overbendAtRestLabel
+        }
     }
 
     private func styleState(_ style: PlayingStyle) -> PlayingStyleViewState {

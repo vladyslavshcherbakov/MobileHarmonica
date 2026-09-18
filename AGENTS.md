@@ -222,7 +222,25 @@ reason. It does move the frequency, by about 51 cents, but it moves it back and 
 the reed, so there is no steady note to round.
 
 **The square's vertical axis rests in the middle.** Down bends, up overbends, and on any one
-hole in one breath direction exactly one half is live, so the other half's label dims. Each
+hole in one breath direction exactly one half is live, so the other half's label dims. The live
+label names the technique this reed actually offers, `overblow ↑` on holes 1 to 6 and
+`overdraw ↑` on 7 to 10, which the breath alone decides; with nothing sounding there is no reed
+to name and it reads `overbend ↑`.
+
+The two halves are not one control split in two, and the dim half is not wasted travel. The
+mouth tunes its own resonance, and a bend is that resonance taken **below** the sounding reed,
+with the tongue root up and the larynx down; an overbend is the same resonance taken **above**
+it, tongue and larynx forward and high. They are opposite adjustments on one continuum, so an
+axis with rest in the middle is the shape of the thing itself. The dim half is a real mouth
+position that does nothing on this chamber, exactly as on the instrument, and the live half
+changing when the breath turns is the instrument too: hole 1 bends drawn and overblows blown,
+and the player's mouth really does go the other way.
+
+The axis is read against the reed sounding now, not against an absolute mouth shape. A blow
+bend on holes 8 to 10 is made high and forward while a draw bend on 1 to 6 is made low and
+back, because the resonance has to sit just under whatever pitch is sounding. Relative to that
+pitch both are the same move, which is why one rule covers the whole instrument instead of a
+table. Each
 half keeps half the travel; the square is pinch-resizable, so travel is recoverable and the
 convention that up is higher is not.
 
