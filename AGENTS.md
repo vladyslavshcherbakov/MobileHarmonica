@@ -20,6 +20,7 @@ per pitch, which the user supplies and which are not committed.
 9. [Conventions](#conventions)
 10. [Known limits](#known-limits)
 11. [Open questions](#open-questions)
+12. [Not built](#not-built)
 
 ## Quick start
 
@@ -268,7 +269,7 @@ bend, is already on the lower half.
 
 The threshold has a second job: it is a deadband around rest. Without it a thumb resting just
 above the middle would flicker the note between plain and overbent. Travel above the threshold
-does nothing, and that is where the stretch of ROADMAP item 6 would go.
+does nothing, and that is where the stretch would go. See [Not built](#not-built).
 
 An overbend shifts every sounding reed at once, each by its own range, which is not the rule
 the bend follows. A bend is one vocal tract pulling on whatever is under it, so every reed
@@ -367,7 +368,7 @@ Octaves and tongue slaps needed no new code: an event already names a set of hol
 octave is `[.one, .four]` and a slap is a chord of 0.15 beats followed by the single note.
 
 A live finger stops the score, since both drive one instrument. Timing is `Task.sleep`, whose
-jitter is a few milliseconds: fine for a demo, not for music. See ROADMAP item 3.
+jitter is a few milliseconds: fine for a demo, not for music. See [Not built](#not-built).
 
 **A sounding plate lights only the half that is sounding**, the top for blow and the bottom
 for draw, so the demo shows where to put a finger and which way to breathe. It used to light
@@ -684,7 +685,7 @@ inside an app is unsettled, which is why the folder is empty in git.
 
 **An overbend cannot be pushed past its own pitch.** Players bend an overblow further up
 after it pops. Here the axis stops at the overbend, so the travel above the threshold does
-nothing. ROADMAP item 6.
+nothing. See [Not built](#not-built).
 
 **The wah has no resonant peak.** A real cup is a resonator as well as a lid, so it lifts a
 band as it closes rather than only taking the top off. One pole cannot do that. A biquad can,
@@ -709,3 +710,32 @@ screen.
 |---|---|
 | Whether the contact radius needs a multiplier to reach a mouth's one to four holes, and which | The measurement from a device |
 | Whether vibrato rate becomes a third axis | Needs a free control |
+
+## Not built
+
+Nothing here is scheduled, and none of it is in the way. What each one waits on is the point.
+
+| | Waits on |
+|---|---|
+| **Layers by breath pressure.** Intensity is gain alone, so blowing harder is louder and never dirtier | Nothing. The library ships a velocity switched set beside the plain one, and only the plain one has been copied in |
+| **A recorded vibrato instead of the LFO.** Crossfading a vibrato set against the plain one by depth is a real vibrato rather than a modulated one, at twice the memory | Nothing. The library ships that set too |
+| **A timbre per reed.** 19 recorded pitches cover 20 reeds, so blow and draw sound alike | A library sampled per reed. Nothing else can fix it |
+| **A mouth's worth of width.** The contact radius is spent literally and covers about one hole, where a mouth covers up to four | One measurement on a device. The circle is drawn at the reported radius and the width is logged at debug level; press flat, on the tip, and with two pads, and see whether the number moves |
+| **Guide mode.** The next hole lights and waits to be taken, so the rhythm comes from the player rather than the clock | Nothing but the work |
+| **A score that cannot be played is not refused.** `Playability` reports the leaps and the unreachable pitches; nothing acts on the report | A decision about what refusing should do |
+| **The clock.** Notes are placed with `Task.sleep`, which drifts a few milliseconds. Inside a note the stepping already counts from the note's start, so only note to note drifts | Wanting music rather than a demo. The fix is the audio clock |
+| **An overbend pushed past its own pitch.** Players bend an overblow further up once it pops; here the axis stops at the pop and the travel above the threshold does nothing | Deciding it is worth the engine contract. The pop is an additive shift that differs per reed, while the axis fraction is shared, so one multiplication per voice stops being enough |
+| **A resonance that opens as well as closes.** The cup's resonance is fixed at four, where a real cup rings harder the more it shuts | Hearing whether it matters |
+| **Vibrato rate as a control.** Slow and wide against fast and narrow are different sounds, and the rate only wanders on its own | A free control. Leaning the phone left is the one place left: it is clamped to nothing today |
+| **Remembering the pinched square.** It returns to its natural side on every launch | Storage, which the project has none of |
+
+**Decided against, so it is not rediscovered as a bug.** Equal loudness compensation: drawn notes
+on holes 1 to 3 sound 1 to 1.6 dB louder than blown ones at the same amplitude, because the ear
+hears the higher note as louder. A real harmonica does this too, and it is why blues lives on
+the draw notes.
+
+**A missed overblow is not modelled either.** On a factory instrument it chokes or squeals, and
+it takes a set up harmonica with its gaps adjusted to pop cleanly every time. So the clean
+threshold is not a simplification, it is which instrument this is: the one a player who wants
+to play fast would own. Modelling the squeal would also have to live exactly where the deadband
+around rest is, and would bring back the flicker the deadband exists to stop.
