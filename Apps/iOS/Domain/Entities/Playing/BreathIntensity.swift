@@ -17,3 +17,9 @@ extension BreathIntensity {
         gain = ControlPrecision.quantised(Self.gainOnTheCentreLine + headroom * (1 - pow(1 - pressed, 2)))
     }
 }
+
+// MARK: - BreathIntensity + Score
+
+extension BreathIntensity {
+    static let full = BreathIntensity(gain: 1)
+}

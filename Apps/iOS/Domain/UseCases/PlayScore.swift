@@ -3,7 +3,8 @@ import Foundation
 final class PlayScore {
     private static let articulationSeconds = 0.05
     private static let slideStepSeconds = 0.04
-    private static let expressionStepSeconds = 0.06
+    private static let shakeStepSeconds = 0.06
+    private static let bendStepSeconds = 0.01
 
     private let tuning: RichterTuning
     private let harmonica: PlayHarmonica
@@ -65,7 +66,7 @@ final class PlayScore {
         let step = min(Self.slideStepSeconds, seconds / 2 / Double(passing.count))
         continuation.yield(harmonica.shapeTone(.rest, vibrato: .off))
         for hole in passing {
-            continuation.yield(harmonica.play(at: [Self.position(of: hole, breathing: note.breath)]))
+            continuation.yield(harmonica.play([hole], breathing: note.breath))
             await wait(step)
         }
         return step * Double(passing.count)
@@ -79,24 +80,29 @@ final class PlayScore {
         let gap = min(Self.articulationSeconds, seconds / 4)
         let sounding = seconds - gap
         let steps = Self.steps(of: note, within: sounding)
+        let started = ContinuousClock.now
         for step in 0..<steps {
-            continuation.yield(
-                harmonica.shapeTone(
-                    shaping(for: note, at: Self.fraction(step, of: steps)),
-                    vibrato: VibratoDepth(clamping: note.vibrato)
-                )
+            _ = harmonica.shapeTone(
+                shaping(for: note, at: Self.fraction(step, of: steps)),
+                vibrato: VibratoDepth(clamping: note.vibrato)
             )
-            continuation.yield(harmonica.play(at: Self.positions(of: note, at: step)))
-            await wait(sounding / Double(steps))
+            continuation.yield(harmonica.play(Self.holes(of: note, at: step), breathing: note.breath))
+            await wait(until: started, plus: sounding * Double(step + 1) / Double(steps))
         }
         continuation.yield(harmonica.stopPlaying())
         await wait(gap)
     }
 
     private static func steps(of note: ScoreNote, within seconds: Double) -> Int {
-        guard note.shakenWith != nil || note.bendEndsAtSemitones != nil else { return 1 }
+        guard let step = stepSeconds(of: note) else { return 1 }
 
-        return max(1, Int(seconds / expressionStepSeconds))
+        return max(1, Int(seconds / step))
+    }
+
+    private static func stepSeconds(of note: ScoreNote) -> Double? {
+        if note.shakenWith != nil { return shakeStepSeconds }
+
+        return note.bendEndsAtSemitones == nil ? nil : bendStepSeconds
     }
 
     private static func fraction(_ step: Int, of steps: Int) -> Double {
@@ -105,6 +111,10 @@ final class PlayScore {
 
     private func wait(_ seconds: Double) async {
         try? await Task.sleep(for: .seconds(max(0, seconds)))
+    }
+
+    private func wait(until started: ContinuousClock.Instant, plus seconds: Double) async {
+        try? await Task.sleep(until: started + .seconds(max(0, seconds)), clock: ContinuousClock())
     }
 
     private func shaping(for note: ScoreNote, at fraction: Double) -> PitchShaping {
@@ -134,20 +144,9 @@ final class PlayScore {
         return numbers.compactMap(Hole.init(rawValue:))
     }
 
-    private static func positions(of note: ScoreNote, at step: Int) -> [PositionOnHarmonica] {
-        guard let shaken = note.shakenWith, !step.isMultiple(of: 2) else { return positions(of: note) }
+    private static func holes(of note: ScoreNote, at step: Int) -> [Hole] {
+        guard let shaken = note.shakenWith, !step.isMultiple(of: 2) else { return note.holes }
 
-        return [position(of: shaken, breathing: note.breath)]
-    }
-
-    private static func positions(of note: ScoreNote) -> [PositionOnHarmonica] {
-        note.holes.map { position(of: $0, breathing: note.breath) }
-    }
-
-    private static func position(of hole: Hole, breathing breath: Breath) -> PositionOnHarmonica {
-        PositionOnHarmonica(
-            fractionFromLeftEdge: (Double(hole.number) - 0.5) / Double(Hole.allCases.count),
-            fractionAboveCentreLine: breath == .blow ? 0.5 : -0.5
-        )
+        return [shaken]
     }
 }

@@ -19,7 +19,7 @@ struct CompositionRoot {
             playHarmonica: playHarmonica,
             playScore: PlayScore(tuning: tuning, harmonica: playHarmonica, log: log),
             tunes: tunes,
-            presenter: HarmonicaPresenter(locale: .current, tunes: tunes.map(\.name))
+            presenter: HarmonicaPresenter(locale: .current, tunes: tunes)
         )
     }
 }

@@ -10,7 +10,7 @@ final class PlayHarmonica {
     private var vibrato: VibratoDepth = .off
     private var recordedMouthWidth = ""
     private var key: HarmonicaKey = .c
-    private var style: PlayingStyle = .fingers
+    private var style: PlayingStyle = .mouth
 
     // MARK: - Public
 
@@ -33,6 +33,15 @@ final class PlayHarmonica {
 
         applyBreathIntensity(intensity)
         recordMouthWidth(of: sounding)
+        guard reeds != soundingReeds else { return harmonica }
+
+        sound(reeds, as: .slide)
+        return harmonica
+    }
+
+    func play(_ holes: [Hole], breathing breath: Breath) -> Harmonica {
+        let reeds = holes.map { Reed(hole: $0, breath: breath) }
+        applyBreathIntensity(.full)
         guard reeds != soundingReeds else { return harmonica }
 
         sound(reeds, as: .slide)
@@ -137,16 +146,23 @@ final class PlayHarmonica {
     }
 
     private func holesUnder(_ positions: [PositionOnHarmonica]) -> [Hole] {
-        switch style {
-        case .fingers:
-            Set(positions.compactMap(Hole.init(at:))).sorted { $0.number < $1.number }
-        case .mouth:
-            PositionOnHarmonica.topmost(of: positions).map(Hole.allCovered(by:)) ?? []
-        }
+        Set(fingersThatSound(among: positions).flatMap(holesCovered(by:))).sorted { $0.number < $1.number }
+    }
+
+    private func fingersThatSound(among positions: [PositionOnHarmonica]) -> [PositionOnHarmonica] {
+        guard style.takesTheTopmostFingerOnly else { return positions }
+
+        return PositionOnHarmonica.topmost(of: positions).map { [$0] } ?? []
+    }
+
+    private func holesCovered(by position: PositionOnHarmonica) -> [Hole] {
+        guard style.coversTheContactWidth else { return Hole(at: position).map { [$0] } ?? [] }
+
+        return Hole.allCovered(by: position)
     }
 
     private func recordMouthWidth(of positions: [PositionOnHarmonica]) {
-        guard style == .mouth, let mouth = PositionOnHarmonica.topmost(of: positions) else { return }
+        guard style.coversTheContactWidth, let mouth = PositionOnHarmonica.topmost(of: positions) else { return }
 
         let width = rounded(mouth.coveredHoleWidths)
         guard width != recordedMouthWidth else { return }

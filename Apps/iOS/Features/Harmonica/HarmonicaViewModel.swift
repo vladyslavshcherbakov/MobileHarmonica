@@ -44,10 +44,10 @@ final class HarmonicaViewModel: ObservableObject {
         show(playHarmonica.changeKey(to: key))
     }
 
-    func changeStyle(toMouth isMouth: Bool) {
+    func changeStyle(to style: PlayingStyle) {
         guard case .ready = state else { return }
 
-        show(playHarmonica.changeStyle(to: isMouth ? .mouth : .fingers))
+        show(playHarmonica.changeStyle(to: style))
     }
 
     func playTheTune(at index: Int) {

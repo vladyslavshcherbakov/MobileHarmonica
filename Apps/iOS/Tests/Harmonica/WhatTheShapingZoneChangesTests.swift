@@ -69,6 +69,7 @@ final class WhatTheShapingZoneChangesTests: XCTestCase {
 
     func test_harmonica_whenTheTopmostFingerIsAboveTheLine_blowsEveryHole() {
         let harmonica = harmonica()
+        _ = harmonica.changeStyle(to: .notes)
 
         _ = harmonica.play(at: [
             PositionOnHarmonica(fractionFromLeftEdge: 0.05, fractionAboveCentreLine: 0.2),

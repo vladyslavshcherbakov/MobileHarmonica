@@ -61,7 +61,7 @@ struct HarmonicaScreen: View {
                     )
                     HarmonicaStrip(
                         holes: playable.holes,
-                        isMouth: playable.style.isMouth,
+                        fingerMarks: playable.fingerMarks,
                         viewModel: viewModel
                     )
                 }

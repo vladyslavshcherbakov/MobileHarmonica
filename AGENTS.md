@@ -164,7 +164,7 @@ harmonica in C and moves the slider there when it starts.
 
 | Control | Input | Effect |
 |---|---|---|
-| Hole | Finger x on the strip, right of the square | Sounds that hole. In `fingers` style every finger sounds its own; in `mouth` style only the topmost plays, and it sounds every hole its contact circle touches |
+| Hole | Finger x on the strip, right of the square | Sounds that hole. How many fingers count, and how much one finger covers, is the playing style |
 | Breath direction | y of the **topmost** finger | On or above the centre line blows, below draws |
 | Breath intensity | \|y\| of the same finger | 0.2 on the line to 1.0 at the edge |
 | Bend | Finger y below the middle of the square | 0 at the middle to the reed's full range at the bottom |
@@ -174,18 +174,25 @@ harmonica in C and moves the slider there when it starts.
 | Zone size | Pinch on the square | Resizes it, trading width with the strip |
 | Playing style | Segmented control in the top bar | `fingers` or `mouth` |
 
-**Two playing styles.** `fingers` is the default and unchanged: one finger, one hole, as many
-fingers as the player has. `mouth` takes the topmost finger only and sounds every hole the
-reported contact circle overlaps, which is `UITouch.majorRadius` either side of the centre.
-Breath direction and intensity come from the centre of that contact, so an edge of the pad
-crossing the centre line changes nothing. Switching style silences whatever was sounding.
+**Three playing styles**, and they differ in two things: how many fingers take part, and
+whether the width of a contact counts. `notes` is one finger, one hole, as many fingers as the
+player has. `mouth` is the default: every finger takes part, and each sounds every hole its
+contact circle overlaps, which is `UITouch.majorRadius` either side of the centre. `solo` keeps
+that width and takes the topmost finger only. Breath direction and intensity always come from
+the topmost contact's centre, so an edge of a pad crossing the centre line changes nothing.
+Switching style silences whatever was sounding.
+
+`PlayingStyle` answers the two questions rather than being switched on three ways:
+`coversTheContactWidth` and `takesTheTopmostFingerOnly`. The fourth combination, one hole from
+one finger, is an instrument that plays no chords, so it is not offered.
 
 The radius is taken literally, with no multiplier, and it is deliberately on trial: at the
 natural square size a hole is about 66 points and a fingertip reports something like 8 to 30,
 so a contact covers well under one hole and reaches two only by straddling a boundary. Two
-things measure it. The finger circle is drawn at the reported radius in `mouth` style instead
-of the fixed 56 points, and `PlayHarmonica` logs the width in hole widths at debug level,
-deduplicated to a hundredth. Decide the multiplier from those numbers, not from an estimate.
+things measure it. The finger circle is drawn at the reported radius wherever width counts
+instead of the fixed 56 points, and `PlayHarmonica` logs the width in hole widths at debug
+level, deduplicated to a hundredth. Decide the multiplier from those numbers, not from an
+estimate.
 
 **The note row.** Two lines above each plate, 30 points tall, taken off the plates rather
 than off the square. A hole that is sounding names its note, rounded to the nearest semitone,
@@ -230,16 +237,22 @@ An overbend shifts every sounding reed at once, each by its own range, the same 
 already follows. One mouth cannot overblow a chord on the instrument, but a second rule for
 chords would be a second rule for nothing.
 
-**The demo plays itself through the instrument, not around it.** `PlayScore` turns each score
-event into a finger position and puts it through `PlayHarmonica.play(at:)`, the same call a
-real finger makes. Nothing about the tuning, the bend ranges or the breath rule is written a
-second time, and everything the screen already shows keeps working: the plates light, the note
-row names the note, a bend is a fraction of that reed's own range.
+**The demo plays itself through the instrument, not around it.** `PlayScore` names holes and a
+breath and puts them through `PlayHarmonica.play(_:breathing:)`. Nothing about the tuning, the
+bend ranges or the crossfade is written a second time, and everything the screen already shows
+keeps working: the plates light, the note row names the note, a bend is a fraction of that
+reed's own range.
+
+What a score does not go through is the finger interpretation, because there is nothing to
+interpret: it already says which holes. It used to build synthetic finger positions and go
+through `play(at:)`, and then the playing style reinterpreted the music — in `solo` a written
+three-hole chord came out as whichever single hole the arbitration picked. The switch describes
+how to read a live hand, so `play(at:)` is where it lives and the score enters beside it.
 
 **An event names holes, not a hole**, because a mouth covers two to four of them and that is
 how the instrument is actually played: the chords are the rhythm and the single notes are the
-melody, in the same phrase. `PlayScore` puts down one synthetic finger per hole, all at the
-same height, so the breath rule sees what it would see from a mouth.
+melody, in the same phrase. They all sound on the breath the event names, at full pressure,
+because one mouth gives one airflow.
 
 **A slide is a run of holes, not a pitch glide.** A mouth dragging across the strip sounds
 every hole it passes, so `ScoreNote.slideFrom` names where the slide starts and `PlayScore`
@@ -266,8 +279,18 @@ staccato rather than a warble.
 A score says a bend in **semitones**, not in axis travel, because a score should not know that
 hole 3 draw bends three semitones and hole 4 draw bends one. `PlayScore` asks `RichterTuning`
 for the range and divides. Each note is cut short by up to 50 ms so the next one re-attacks;
-without that gap two of the same note in a row would be one long note, because `play(at:)`
+without that gap two of the same note in a row would be one long note, because the instrument
 sees the same reeds and does not re-sound.
+
+**A note that changes while it sounds is stepped, and the step is not one length.** A shake
+re-sounds reeds, so it rocks at 60 ms, which is about as fast as a mouth moves. A bend envelope
+is one number the render thread reads, so it steps at 10 ms. Both were 60 ms, and on a fast
+tune a three-semitone release arrived in six jumps of 60 cents, which is a staircase rather
+than a bend; at 10 ms the same release steps by under eight cents.
+
+Each step waits for its own share of the note counted from where the note began, not for a
+slice at a time. Sleeping slice by slice adds every sleep's overshoot to the note, so the finer
+the stepping the longer the note grows, and a forty step note would drift out of the bar.
 
 **A score can be written instead of coded.** `Apps/iOS/Scores/*.score` is a text file with a
 key, a position, a tempo and lines of pitches with lengths in beats; `ScoreReader` turns it
@@ -390,9 +413,15 @@ render thread never retains anything.
 
 `SampleBank.nearest(to:)` picks the recording closest in pitch, measured in octaves rather
 than hertz, and the voice reads it at `wanted ÷ recorded` times speed. The library is one
-harmonica in A, whose scale leaves every chromatic pitch within a semitone of some recording,
-so nothing is ever stretched further than that except by a bend. Stretching moves the formants
-with the pitch, which is what a real bent reed does anyway.
+harmonica in A, and inside its own range, A3 to A6, its scale leaves every chromatic pitch
+within a semitone of some recording. Stretching moves the formants with the pitch, which is
+what a real bent reed does anyway. Above A6 it has nothing, and that is where the stretch grows:
+see [Known limits](#known-limits).
+
+The library labels its files an octave below concert pitch, which is what
+`semitonesAboveTheLabel` adds back. Nothing has confirmed it. If it is wrong every note is an
+octave out, and the note row is the check: hole 4 blown on a C harmonica says C5, and the ear
+either agrees or the constant goes.
 
 **The loop is seconds 1 to 4 of each file**, chosen rather than read from the library's EXS
 mapping, and frames past second 4 are never loaded. A note plays from frame 0, so it keeps its
@@ -513,9 +542,11 @@ nothing separates a blow reed from a draw reed. The screen still says which brea
 sounding; the ear cannot tell. An overblow is likewise just the pitch above, with none of the
 strained timbre the technique has on the instrument.
 
-**One key is recorded, the rest are stretched.** Every key but A is reached by resampling,
-never more than a semitone, which is inaudible. A bend adds up to three semitones on top, and
-that is audible.
+**One key is recorded, and the top of the range runs out.** Every key but A is reached by
+resampling. From A♭ to B♭ nothing is stretched more than a semitone, which is inaudible. Above
+that the top reeds pass the library's highest recording, A6, and the stretch grows with the
+key: three semitones on hole 10 in C, five in D, nine in F♯. A bend adds up to three semitones
+on top of whatever the key already asks for.
 
 **The licence has not been read.** The samples are a commercial library. Whether they may ship
 inside an app is unsettled, which is why the folder is empty in git.

@@ -5,8 +5,9 @@ struct HarmonicaPresenter {
     private static let overbendLabel = "overbend ↑"
     private static let bendLabel = "bend ↓"
     private static let vibratoLabel = "vibrato →"
-    private static let fingersLabel = "fingers"
+    private static let notesLabel = "notes"
     private static let mouthLabel = "mouth"
+    private static let soloLabel = "solo"
     private static let playDemoLabel = "play"
     private static let stopDemoLabel = "stop"
     private static let bendEffectLabel = "bend"
@@ -14,14 +15,14 @@ struct HarmonicaPresenter {
     private static let overdrawEffectLabel = "overdraw"
 
     private let locale: Locale
-    private let tunes: [String]
+    private let tunes: [TuneViewState]
     private let holeLabels: [String]
 
     // MARK: - Public
 
-    init(locale: Locale, tunes: [String]) {
+    init(locale: Locale, tunes: [Score]) {
         self.locale = locale
-        self.tunes = tunes
+        self.tunes = tunes.enumerated().map { TuneViewState(id: $0.offset, name: $0.element.name) }
         holeLabels = Hole.allCases.map { $0.number.formatted(.number.locale(locale)) }
     }
 
@@ -31,6 +32,7 @@ struct HarmonicaPresenter {
                 holes: holes(of: harmonica),
                 key: keyState(harmonica.key),
                 style: styleState(harmonica.style),
+                fingerMarks: fingerMarksState(harmonica.style),
                 demo: demoState(playingAScore),
                 toneShaping: toneShaping(harmonica)
             )
@@ -86,10 +88,25 @@ struct HarmonicaPresenter {
     }
 
     private func styleState(_ style: PlayingStyle) -> PlayingStyleViewState {
-        PlayingStyleViewState(
-            fingersLabel: Self.fingersLabel,
-            mouthLabel: Self.mouthLabel,
-            isMouth: style == .mouth
+        PlayingStyleViewState(choices: PlayingStyle.allCases.map(choice(for:)), selected: style)
+    }
+
+    private func choice(for style: PlayingStyle) -> PlayingStyleChoiceViewState {
+        PlayingStyleChoiceViewState(id: style, name: label(for: style))
+    }
+
+    private func label(for style: PlayingStyle) -> String {
+        switch style {
+        case .notes: Self.notesLabel
+        case .mouth: Self.mouthLabel
+        case .solo: Self.soloLabel
+        }
+    }
+
+    private func fingerMarksState(_ style: PlayingStyle) -> FingerMarksViewState {
+        FingerMarksViewState(
+            atTheContactWidth: style.coversTheContactWidth,
+            onlyTheDecidingFinger: style.takesTheTopmostFingerOnly
         )
     }
 

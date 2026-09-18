@@ -46,6 +46,15 @@ final class WhatAScorePlaysTests: XCTestCase {
         XCTAssertEqual(engine.soundedTones.first?.count, 3, "holes 1 to 3 drawn are D4 G4 B4")
     }
 
+    func test_score_whenThePlayingStyleTakesOneFinger_stillSoundsEveryHoleTheScoreNames() async {
+        let harmonica = PlayHarmonica(tuning: RichterTuning(), audioEngine: engine, log: SilentLog())
+        _ = harmonica.changeStyle(to: .solo)
+
+        await play([.note(ScoreNote(holes: [.one, .two, .three], breath: .draw, beats: 1))], on: harmonica)
+
+        XCTAssertEqual(engine.soundedTones.first?.count, 3, "a score names holes, so nothing reinterprets them")
+    }
+
     func test_score_whenItIsPlayedInSecondPosition_callsForTheHarmonicaAFifthBelow() async {
         let blues = Score(name: "test", key: .g, position: .second, beatsPerMinute: 6000, events: [])
 
@@ -110,13 +119,19 @@ final class WhatAScorePlaysTests: XCTestCase {
     // MARK: - Helpers
 
     @discardableResult
-    private func play(_ events: [ScoreEvent]) async -> [Harmonica] {
-        await play(Score(name: "test", key: .c, position: .first, beatsPerMinute: 6000, events: events))
+    private func play(
+        _ events: [ScoreEvent],
+        on harmonica: PlayHarmonica? = nil
+    ) async -> [Harmonica] {
+        await play(
+            Score(name: "test", key: .c, position: .first, beatsPerMinute: 6000, events: events),
+            on: harmonica
+        )
     }
 
     @discardableResult
-    private func play(_ score: Score) async -> [Harmonica] {
-        let harmonica = PlayHarmonica(tuning: RichterTuning(), audioEngine: engine, log: SilentLog())
+    private func play(_ score: Score, on existing: PlayHarmonica? = nil) async -> [Harmonica] {
+        let harmonica = existing ?? PlayHarmonica(tuning: RichterTuning(), audioEngine: engine, log: SilentLog())
         let player = PlayScore(tuning: RichterTuning(), harmonica: harmonica, log: SilentLog())
 
         var played: [Harmonica] = []

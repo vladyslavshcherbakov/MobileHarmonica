@@ -6,7 +6,7 @@ struct HarmonicaStrip: View {
     private static let noteRowHeight: CGFloat = 30
 
     let holes: [HoleViewState]
-    let isMouth: Bool
+    let fingerMarks: FingerMarksViewState
     @ObservedObject var viewModel: HarmonicaViewModel
     @State private var touches: [FingerTouch] = []
 
@@ -17,7 +17,9 @@ struct HarmonicaStrip: View {
             noteRow
             GeometryReader { geometry in
                 plates
-                    .overlay { FingerCircles(marks: Self.marks(at: touches, across: geometry.size, isMouth: isMouth)) }
+                    .overlay {
+                        FingerCircles(marks: Self.marks(at: touches, across: geometry.size, style: fingerMarks))
+                    }
                     .overlay { touchArea(across: geometry.size) }
             }
         }
@@ -33,28 +35,37 @@ struct HarmonicaStrip: View {
         )
     }
 
-    private static func marks(at touches: [FingerTouch], across size: CGSize, isMouth: Bool) -> [FingerMark] {
+    private static func marks(
+        at touches: [FingerTouch],
+        across size: CGSize,
+        style: FingerMarksViewState
+    ) -> [FingerMark] {
         let positions = touches.map { position(of: $0, across: size) }
         let deciding = PositionOnHarmonica.topmost(of: positions.filter(\.isOnTheHarmonica))
 
         return positions.indices
-            .filter { isDrawn(positions[$0], deciding: deciding, isMouth: isMouth) }
-            .map { mark(index: $0, at: touches[$0], decidesBreath: positions[$0] == deciding, isMouth: isMouth) }
+            .filter { isDrawn(positions[$0], deciding: deciding, style: style) }
+            .map { mark(index: $0, at: touches[$0], decidesBreath: positions[$0] == deciding, style: style) }
     }
 
     private static func isDrawn(
         _ position: PositionOnHarmonica,
         deciding: PositionOnHarmonica?,
-        isMouth: Bool
+        style: FingerMarksViewState
     ) -> Bool {
-        isMouth ? position == deciding : position.isOnTheHarmonica
+        style.onlyTheDecidingFinger ? position == deciding : position.isOnTheHarmonica
     }
 
-    private static func mark(index: Int, at touch: FingerTouch, decidesBreath: Bool, isMouth: Bool) -> FingerMark {
+    private static func mark(
+        index: Int,
+        at touch: FingerTouch,
+        decidesBreath: Bool,
+        style: FingerMarksViewState
+    ) -> FingerMark {
         FingerMark(
             id: index,
             location: touch.location,
-            diameter: isMouth ? 2 * touch.radius : FingerCircles.diameter,
+            diameter: style.atTheContactWidth ? 2 * touch.radius : FingerCircles.diameter,
             decidesBreath: decidesBreath
         )
     }
