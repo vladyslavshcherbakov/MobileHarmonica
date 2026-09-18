@@ -7,22 +7,22 @@ Nothing here is scheduled. The order is by how much it changes the instrument.
 
 ## 1. Real samples
 
-**What.** Replace the synthesised sine with recorded reeds, three dynamic layers per reed
-(soft, medium, hard) as the GDD's phase 5 describes.
+**Built, one layer.** The oscillator reads recorded notes instead of a sine, and neither
+AudioKit nor `AppleSampler` was needed: the existing render callback already had the shape,
+so a table read replaced `sin(phase)` and everything else stayed. `Domain/` and `Features/`
+did not change at all, which is what the protocol seam was for.
 
-**How.** AudioKit through Swift Package Manager, `AppleSampler` behind the existing
-`AudioEngineProtocol`. Nothing in `Domain/` or `Features/` changes: the protocol is the only
-seam, and it already carries pitch, bend range, intensity and vibrato.
+**What is left: dynamic layers.** The GDD asks for soft, medium and hard per reed, so that
+breath intensity picks a layer and blends at the boundaries and the tone gets dirtier towards
+the edge rather than only louder. Today intensity is gain alone. The library supplies one
+layer, so this needs either recordings that have layers or a different library.
 
-The vertical distance from the centre line already produces a breath intensity from 0.2 to
-1.0. With samples it does two jobs instead of one: it picks which layer sounds and blends
-between layers at the boundaries, so the tone gets dirtier towards the edge rather than only
-louder. The compressive curve stays; the layers ride on it.
+**What is left: blow and draw.** The library records 19 pitches, not 20 reeds, so the two
+breath directions share a timbre. A library sampled per reed would fix it.
 
-The key slider stops transposing MIDI numbers and drives a pitch node instead.
-
-**Blocked on.** The samples. The user records or supplies them. Twenty reeds times three
-layers is sixty files, plus whatever the bends need if they are not pitch-shifted.
+**What is left: the vibrato layer.** The library ships a second set recorded with vibrato.
+Crossfading it against the plain set by vibrato depth would give a real vibrato with a
+continuous control, which the shared LFO cannot. Doubles the memory.
 
 **Also unblocks.** The wah filter below, and the harmonics that a bent note should gain.
 

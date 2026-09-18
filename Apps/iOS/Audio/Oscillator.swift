@@ -2,15 +2,21 @@ import AVFoundation
 import os
 
 final class Oscillator {
-    private let bank = OSAllocatedUnfairLock(initialState: VoiceBank())
+    private let samples: SampleBank
+    private let voices = OSAllocatedUnfairLock(initialState: VoiceBank())
     private let requestedBreathGain = OSAllocatedUnfairLock(initialState: 0.0)
     private let requestedBend = OSAllocatedUnfairLock(initialState: 0.0)
     private let requestedVibrato = OSAllocatedUnfairLock(initialState: 0.0)
 
     // MARK: - Public
 
+    init(samples: SampleBank) {
+        self.samples = samples
+    }
+
     func sound(_ tones: [SoundingTone], over crossfadeSeconds: Double) {
-        bank.withLock { $0.sound(tones, over: crossfadeSeconds) }
+        let playable = recorded(tones)
+        voices.withLock { $0.sound(playable, over: crossfadeSeconds) }
     }
 
     func changeBreathGain(to gain: Double) {
@@ -26,7 +32,7 @@ final class Oscillator {
     }
 
     func silence() {
-        bank.withLock { $0.silence() }
+        voices.withLock { $0.silence() }
     }
 
     func render(
@@ -35,7 +41,7 @@ final class Oscillator {
         amplitude: Float,
         into buffers: UnsafeMutableAudioBufferListPointer
     ) {
-        var rendering = bank.withLock { $0 }
+        var rendering = voices.withLock { $0 }
         guard !rendering.isSilent else {
             fillWithSilence(frameCount: frameCount, into: buffers)
             return
@@ -56,8 +62,10 @@ final class Oscillator {
 
     // MARK: - Private
 
-    private static func gainStep(crossfadeSeconds: Double, sampleRate: Double) -> Double {
-        1 / (crossfadeSeconds * sampleRate)
+    private func recorded(_ tones: [SoundingTone]) -> [PlayableTone] {
+        tones.compactMap { tone in
+            samples.nearest(to: tone.hertz).map { (tone: tone, recorded: $0) }
+        }
     }
 
     private func fillWithSilence(frameCount: Int, into buffers: UnsafeMutableAudioBufferListPointer) {
@@ -76,23 +84,30 @@ final class Oscillator {
         from rendering: inout VoiceBank
     ) {
         let gainStep = Self.gainStep(crossfadeSeconds: rendering.crossfadeSeconds, sampleRate: sampleRate)
-        for frame in 0..<frameCount {
-            let value = rendering.nextSample(
-                sampleRate: sampleRate,
-                gainStep: gainStep,
-                targetBreathGain: breathGain,
-                vibrato: vibrato
-            )
-            write(Float(value) * amplitude, atFrame: frame, into: buffers)
+        samples.frames.withUnsafeBufferPointer { frames in
+            for frame in 0..<frameCount {
+                let value = rendering.nextSample(
+                    from: frames,
+                    sampleRate: sampleRate,
+                    gainStep: gainStep,
+                    targetBreathGain: breathGain,
+                    vibrato: vibrato
+                )
+                write(Float(value) * amplitude, atFrame: frame, into: buffers)
+            }
         }
+    }
+
+    private static func gainStep(crossfadeSeconds: Double, sampleRate: Double) -> Double {
+        1 / (crossfadeSeconds * sampleRate)
     }
 
     /// The bank can be re-sounded while the buffer is being filled, so the rendered copy is
     /// not written back whole. What it carries back is a buffer's worth of progress, applied
     /// to whatever the bank asks for by the time the buffer is done, so neither a note started
-    /// mid-buffer nor the phase the buffer just advanced is lost.
+    /// mid-buffer nor the position the buffer just advanced is lost.
     private func keepProgress(of rendering: VoiceBank) {
-        bank.withLock { $0.absorbProgress(of: rendering) }
+        voices.withLock { $0.absorbProgress(of: rendering) }
     }
 
     private func write(_ sample: Float, atFrame frame: Int, into buffers: UnsafeMutableAudioBufferListPointer) {
@@ -108,6 +123,10 @@ struct SoundingTone: Equatable {
     let hertz: Double
     let bendableSemitones: Double
 }
+
+// MARK: - PlayableTone
+
+private typealias PlayableTone = (tone: SoundingTone, recorded: RecordedNote)
 
 // MARK: - VoiceBank
 
@@ -126,13 +145,13 @@ private struct VoiceBank {
         voices.isEmpty
     }
 
-    mutating func sound(_ tones: [SoundingTone], over seconds: Double) {
+    mutating func sound(_ playable: [PlayableTone], over seconds: Double) {
         crossfadeSeconds = seconds
         for index in voices.indices {
-            voices[index].targetGain = tones.contains { $0.hertz == voices[index].hertz } ? 1 : 0
+            voices[index].targetGain = playable.contains { $0.tone.hertz == voices[index].hertz } ? 1 : 0
         }
-        for tone in tones where !isRising(atHertz: tone.hertz) {
-            voices.append(Voice(tone))
+        for wanted in playable where !isRising(atHertz: wanted.tone.hertz) {
+            voices.append(Voice(wanted.tone, playing: wanted.recorded))
         }
     }
 
@@ -149,6 +168,7 @@ private struct VoiceBank {
     }
 
     mutating func nextSample(
+        from frames: UnsafeBufferPointer<Float>,
         sampleRate: Double,
         gainStep: Double,
         targetBreathGain: Double,
@@ -161,6 +181,7 @@ private struct VoiceBank {
         var mixed = 0.0
         for index in voices.indices {
             mixed += voices[index].nextSample(
+                from: frames,
                 sampleRate: sampleRate,
                 gainStep: gainStep,
                 vibratoRatio: vibratoRatio
@@ -204,15 +225,17 @@ private struct VoiceBank {
 private struct Voice {
     let hertz: Double
     let bendableSemitones: Double
+    let recorded: RecordedNote
 
-    var phase = 0.0
+    var position = 0.0
     var gain = 0.0
     var targetGain = 1.0
     var bendRatio = 1.0
 
-    init(_ tone: SoundingTone) {
+    init(_ tone: SoundingTone, playing recorded: RecordedNote) {
         hertz = tone.hertz
         bendableSemitones = tone.bendableSemitones
+        self.recorded = recorded
     }
 
     var isSilent: Bool {
@@ -224,22 +247,43 @@ private struct Voice {
     }
 
     /// A voice the render pass did not hold has either just been added to the bank or has
-    /// finished fading out there, and both belong at the start of a cycle.
+    /// finished fading out there, and both belong at the start of the recording.
     mutating func absorbProgress(of rendered: Voice?) {
-        phase = rendered?.phase ?? 0
+        position = rendered?.position ?? 0
         gain = rendered?.gain ?? 0
     }
 
-    mutating func nextSample(sampleRate: Double, gainStep: Double, vibratoRatio: Double) -> Double {
-        let value = sin(phase) * gain
-        phase = (phase + phaseIncrement(sampleRate: sampleRate, vibratoRatio: vibratoRatio))
-            .truncatingRemainder(dividingBy: radiansPerCycle)
+    mutating func nextSample(
+        from frames: UnsafeBufferPointer<Float>,
+        sampleRate: Double,
+        gainStep: Double,
+        vibratoRatio: Double
+    ) -> Double {
+        let value = Double(interpolated(from: frames)) * gain
+        position += positionIncrement(sampleRate: sampleRate, vibratoRatio: vibratoRatio)
+        wrapIntoTheLoop()
         gain = ramp(gain, toward: targetGain, by: gainStep)
         return value
     }
 
-    private func phaseIncrement(sampleRate: Double, vibratoRatio: Double) -> Double {
-        radiansPerCycle * hertz * bendRatio * vibratoRatio / sampleRate
+    // MARK: - Private
+
+    private func interpolated(from frames: UnsafeBufferPointer<Float>) -> Float {
+        let frame = Int(position)
+        let here = frames[recorded.start + frame]
+        let next = frames[recorded.start + (frame + 1 < recorded.loopEnd ? frame + 1 : recorded.loopStart)]
+        return here + (next - here) * Float(position - Double(frame))
+    }
+
+    private func positionIncrement(sampleRate: Double, vibratoRatio: Double) -> Double {
+        hertz * bendRatio * vibratoRatio / recorded.rootHertz * recorded.sampleRate / sampleRate
+    }
+
+    private mutating func wrapIntoTheLoop() {
+        let length = Double(recorded.loopEnd - recorded.loopStart)
+        while position >= Double(recorded.loopEnd) {
+            position -= length
+        }
     }
 }
 

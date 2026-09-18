@@ -21,6 +21,9 @@ targets:
       - path: Apps/iOS
         excludes:
           - Tests
+          - Audio/Samples
+      - path: Apps/iOS/Audio/Samples
+        type: folder
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.vladyslavshcherbakov.mobileharmonica

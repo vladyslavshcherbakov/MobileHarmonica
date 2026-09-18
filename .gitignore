@@ -6,3 +6,4 @@ DerivedData/
 build/
 .swiftpm/
 Apps/iOS/Info.plist
+Apps/iOS/Audio/Samples/*.wav

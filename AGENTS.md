@@ -3,9 +3,9 @@
 Expressive harmonica simulator for iPhone. The screen is the instrument: fingers on the left
 strip sound reeds, a square zone on the right shapes the tone. Landscape only.
 
-The product plan is the GDD, in six phases. **Current state: phase 4 complete, with
-multi-touch and the phase 6 shaping zone pulled forward.** Sound is synthesised; real
-samples arrive in phase 5 and the user supplies them.
+The product plan is the GDD, in six phases. **Current state: phase 5, with multi-touch and
+the phase 6 shaping zone pulled forward.** Sound comes from recorded harmonica notes, one WAV
+per pitch, which the user supplies and which are not committed.
 
 ## Contents
 
@@ -30,7 +30,9 @@ open MobileHarmonica.xcodeproj
 
 Scheme `MobileHarmonica` builds the app and runs `MobileHarmonicaTests`.
 
-`MobileHarmonica.xcodeproj` and `Apps/iOS/Info.plist` are generated and not committed.
+`MobileHarmonica.xcodeproj` and `Apps/iOS/Info.plist` are generated and not committed. Neither
+are the WAV files: `Apps/iOS/Audio/Samples/` ships empty and the app says sound is unavailable
+until they are copied in. See the README there.
 
 ## Constraints
 
@@ -50,7 +52,7 @@ Scheme `MobileHarmonica` builds the app and runs `MobileHarmonicaTests`.
 Apps/iOS/
   App/          entry point and composition root
   Domain/       Entities, Protocols, UseCases. Imports Foundation only
-  Audio/        AudioEngineProtocol implementation
+  Audio/        AudioEngineProtocol implementation, and Samples/ for the WAV files
   Features/     one folder per feature: view state, presenter, view model, views
   Logging/      TimestampedLog
   Navigation/   coordinator and routes
@@ -252,8 +254,10 @@ square stops short of the glass. The key bar takes the inset back with
 
 ## Audio pipeline
 
-`Oscillator` is polyphonic and crossfading. A voice is a sine with a frequency, a gain, a
-target gain and the semitones it can bend.
+`Oscillator` is polyphonic and crossfading. A voice is a recorded note read at a variable
+rate, with a frequency, a gain, a target gain and the semitones it can bend. It was a sine
+until phase 5, and the change was one line: a table read with linear interpolation instead of
+`sin(phase)`, position instead of phase. Everything around it survived unchanged.
 
 | Call | Frequency | Effect |
 |---|---|---|
@@ -275,6 +279,23 @@ event and the audio layer owns the milliseconds.
 
 The slide is not a model of the instrument: a real mouth covers both holes for a moment and
 both sound at full volume. See [Known limits](#known-limits).
+
+**The recordings.** `RecordedHarmonica` reads every WAV in the bundle's `Samples` folder at
+`prepare()`, mixes each to mono and appends it to one contiguous `[Float]`, so nothing is
+streamed or decoded while the audio runs. A `RecordedNote` says where its frames start and
+where its loop is; all of it is trivially copyable, so a voice carries one by value and the
+render thread never retains anything.
+
+`SampleBank.nearest(to:)` picks the recording closest in pitch, measured in octaves rather
+than hertz, and the voice reads it at `wanted ÷ recorded` times speed. The library is one
+harmonica in A, whose scale leaves every chromatic pitch within a semitone of some recording,
+so nothing is ever stretched further than that except by a bend. Stretching moves the formants
+with the pitch, which is what a real bent reed does anyway.
+
+**The loop is seconds 1 to 4 of each file**, chosen rather than read from the library's EXS
+mapping, and frames past second 4 are never loaded. A note plays from frame 0, so it keeps its
+recorded attack, then repeats that window for as long as the finger is down. A file too short
+to hold the window throws and names itself.
 
 **Mixing.** The sum is divided by the total gain of the sounding voices, then by the breath
 gain, so ten notes cannot clip and one note is as loud as it was.
@@ -385,10 +406,17 @@ that is what the drawn circle and the debug line are for. `UITouch.force` is not
 silent, with nothing in between. This is also why the horizontal crossfade is not physical: a
 real slide overlaps, it does not fade.
 
-**An overbend sounds like a sine at the right pitch.** On the instrument an overblow has its
-own timbre, thinner and strained, and a sine has nothing to carry that with. Hole 3's overblow
-and hole 4's blow are both C5 and are indistinguishable here; on a harmonica they are not.
-Waits for the samples of phase 5, same as the bend.
+**Blow and draw sound the same.** The library records 19 distinct pitches, not 20 reeds, so
+nothing separates a blow reed from a draw reed. The screen still says which breath is
+sounding; the ear cannot tell. An overblow is likewise just the pitch above, with none of the
+strained timbre the technique has on the instrument.
+
+**One key is recorded, the rest are stretched.** Every key but A is reached by resampling,
+never more than a semitone, which is inaudible. A bend adds up to three semitones on top, and
+that is audible.
+
+**The licence has not been read.** The samples are a commercial library. Whether they may ship
+inside an app is unsettled, which is why the folder is empty in git.
 
 **An overbend cannot be pushed past its own pitch.** Players bend an overblow further up
 after it pops. Here the axis stops at the overbend, so the travel above the threshold does

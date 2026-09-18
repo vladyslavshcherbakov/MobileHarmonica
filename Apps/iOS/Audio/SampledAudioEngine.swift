@@ -1,13 +1,13 @@
 import AVFoundation
 
-final class SineWaveAudioEngine: AudioEngineProtocol {
+final class SampledAudioEngine: AudioEngineProtocol {
     private static let amplitude: Float = 0.25
     private static let slideCrossfadeSeconds = 0.02
     private static let newReedCrossfadeSeconds = 0.05
 
     private let engine = AVAudioEngine()
-    private let oscillator = Oscillator()
     private let log: LogProtocol
+    private var oscillator: Oscillator?
     private var sourceNode: AVAudioSourceNode?
 
     // MARK: - Public
@@ -18,6 +18,7 @@ final class SineWaveAudioEngine: AudioEngineProtocol {
 
     func prepare() async throws {
         do {
+            try loadRecordingsIfNeeded()
             try await configureAudioSession()
             try connectOscillatorIfNeeded()
             try startEngineIfNeeded()
@@ -28,23 +29,23 @@ final class SineWaveAudioEngine: AudioEngineProtocol {
     }
 
     func soundTones(_ tones: [Tone], as change: ToneChange) {
-        oscillator.sound(tones.map(Self.sounding), over: Self.crossfadeSeconds(for: change))
+        oscillator?.sound(tones.map(Self.sounding), over: Self.crossfadeSeconds(for: change))
     }
 
     func changeIntensity(to intensity: BreathIntensity) {
-        oscillator.changeBreathGain(to: intensity.gain)
+        oscillator?.changeBreathGain(to: intensity.gain)
     }
 
     func changeBend(to depth: BendDepth) {
-        oscillator.changeBend(to: depth.fraction)
+        oscillator?.changeBend(to: depth.fraction)
     }
 
     func changeVibrato(to depth: VibratoDepth) {
-        oscillator.changeVibrato(to: depth.fraction)
+        oscillator?.changeVibrato(to: depth.fraction)
     }
 
     func silence() {
-        oscillator.silence()
+        oscillator?.silence()
     }
 
     // MARK: - Private
@@ -63,6 +64,14 @@ final class SineWaveAudioEngine: AudioEngineProtocol {
         )
     }
 
+    private func loadRecordingsIfNeeded() throws {
+        guard oscillator == nil else { return }
+
+        let samples = try RecordedHarmonica.bank()
+        oscillator = Oscillator(samples: samples)
+        log.record("loaded \(samples.notes.count) recorded notes")
+    }
+
     private func configureAudioSession() async throws {
         try await Task.detached(priority: .userInitiated) {
             let session = AVAudioSession.sharedInstance()
@@ -72,7 +81,7 @@ final class SineWaveAudioEngine: AudioEngineProtocol {
     }
 
     private func connectOscillatorIfNeeded() throws {
-        guard sourceNode == nil else {
+        guard sourceNode == nil, let oscillator else {
             log.record("oscillator was already connected")
             return
         }
@@ -84,10 +93,10 @@ final class SineWaveAudioEngine: AudioEngineProtocol {
             channels: 1,
             interleaved: false
         ) else {
-            throw SineWaveAudioEngineError.unsupportedOutputSampleRate(sampleRate)
+            throw SampledAudioEngineError.unsupportedOutputSampleRate(sampleRate)
         }
 
-        let node = makeSourceNode(format: format, sampleRate: sampleRate)
+        let node = makeSourceNode(oscillator, format: format, sampleRate: sampleRate)
         engine.attach(node)
         engine.connect(node, to: engine.mainMixerNode, format: format)
         sourceNode = node
@@ -104,8 +113,12 @@ final class SineWaveAudioEngine: AudioEngineProtocol {
         log.record("audio engine started")
     }
 
-    private func makeSourceNode(format: AVAudioFormat, sampleRate: Double) -> AVAudioSourceNode {
-        AVAudioSourceNode(format: format) { [oscillator, amplitude = Self.amplitude] _, _, frameCount, audioBufferList in
+    private func makeSourceNode(
+        _ oscillator: Oscillator,
+        format: AVAudioFormat,
+        sampleRate: Double
+    ) -> AVAudioSourceNode {
+        AVAudioSourceNode(format: format) { [amplitude = Self.amplitude] _, _, frameCount, audioBufferList in
             oscillator.render(
                 frameCount: Int(frameCount),
                 sampleRate: sampleRate,
@@ -117,8 +130,8 @@ final class SineWaveAudioEngine: AudioEngineProtocol {
     }
 }
 
-// MARK: - SineWaveAudioEngineError
+// MARK: - SampledAudioEngineError
 
-enum SineWaveAudioEngineError: Error {
+enum SampledAudioEngineError: Error {
     case unsupportedOutputSampleRate(Double)
 }

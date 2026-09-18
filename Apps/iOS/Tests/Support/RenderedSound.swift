@@ -10,7 +10,11 @@ struct RenderedSound {
     }
 
     static func settle(_ oscillator: Oscillator) {
-        for _ in 0..<3 {
+        render(3, from: oscillator)
+    }
+
+    static func render(_ buffers: Int, from oscillator: Oscillator) {
+        for _ in 0..<buffers {
             _ = buffer(from: oscillator)
         }
     }
