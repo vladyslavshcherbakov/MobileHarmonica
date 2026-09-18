@@ -55,6 +55,7 @@ Apps/iOS/
                 Instrument/ the harmonica itself, Playing/ what a finger does,
                 Scores/ written music. Imports Foundation only
   Audio/        AudioEngineProtocol implementation, and Samples/ for the WAV files
+  Motion/       TiltProtocol implementation, the device's lean read through CoreMotion
   Scores/       text scores the user writes, read at launch, not committed
   Features/     one folder per feature: view state, presenter, view model, views
   Logging/      TimestampedLog
@@ -88,6 +89,7 @@ Clean layering. A rule lives in exactly one layer.
 |---|---|---|---|
 | Domain | `Domain/` | Foundation | Entities, the protocols it needs, the use case |
 | Audio | `Audio/` | AVFoundation, os | The synthesiser behind `AudioEngineProtocol` |
+| Motion | `Motion/` | CoreMotion, UIKit | The lean behind `TiltProtocol` |
 | Presentation | `Features/` | SwiftUI, UIKit, Combine | View state, presenter, view model, views |
 | Composition | `App/` | everything | Building the graph |
 
@@ -179,6 +181,7 @@ harmonica in C and moves the slider there when it starts.
 | Vibrato | Finger x in the square | 0 at the left to 51 cents at the right |
 | Key | Slider in the top bar | Transposes every reed |
 | Zone size | Pinch on the square | Resizes it, trading width with the strip |
+| Hands | Leaning the phone to the right | Closes the cupped hands, from open at level to shut at 30 degrees |
 | Playing style | Menu in the top bar | How many fingers count, and how many notes each one takes |
 
 **Three playing styles, named after the two things that tell them apart**: how many fingers
@@ -430,6 +433,7 @@ until phase 5, and the change was one line: a table read with linear interpolati
 | `changeIntensity(to:)` | Every touch move | One number in its own lock |
 | `changeBend(to:)` | Every touch move | One number in its own lock |
 | `changeVibrato(to:)` | Every touch move | One number in its own lock |
+| `cupHands(to:)` | Every lean of the phone | One number in its own lock |
 | `silence()` | Lift | Fades every voice |
 
 **Why the split.** Continuous parameters change on every touch event while the set of
@@ -515,6 +519,24 @@ It was a parameter first, a ratio stepped from 1 to `2^(semitones/12)` on one vo
 a pitch teleport with no amplitude transition, more abrupt than anything the instrument does.
 Removing `smooth` is what made the better shape available: with only a threshold left, the
 overbend engages rarely rather than on every touch move, so it belongs with the rare calls.
+
+**Cupped hands are one low pass on the mix.** Hands closed around a harmonica are a cavity
+that eats the high partials, so closing them darkens the note rather than changing its pitch.
+One pole is enough for that, and it costs one multiply and one add per sample: the cutoff
+sweeps from 20 kHz open, where nothing is audibly touched, down to 800 Hz shut, which keeps
+every fundamental on the instrument and takes the harmonics off. The sweep is exponential
+because that is how the ear hears a filter move, and the coefficient is computed once a buffer
+rather than once a sample, so no transcendental runs on the render thread.
+
+High notes are muffled harder than low ones, which is not a bug to fix: a real cup is a fixed
+size, so what it takes off a note depends on where that note's partials sit.
+
+The phone's lean is what a mouth cannot give. Cupping is a whole-instrument gesture and both
+hands are already on the glass, so it costs no screen space. `DeviceTilt` reads the gravity
+along the device's long axis, which is zero when the phone is level in landscape and reaches a
+half at thirty degrees, and flips its sign with the interface orientation so that leaning the
+screen's right edge down always closes. There is a slack of three degrees around level, because
+gravity is never exactly zero in a hand.
 
 **Vibrato** is one shared LFO at 5.5 Hz, and it moves two things: the pitch by 1.5 per cent,
 about 26 cents, and the loudness by up to a quarter. A harmonica's vibrato is mostly the
@@ -640,8 +662,10 @@ inside an app is unsettled, which is why the folder is empty in git.
 after it pops. Here the axis stops at the overbend, so the travel above the threshold does
 nothing. ROADMAP item 6.
 
-**No wah.** A resonant filter sweeping a sine has no harmonics to emphasise, so it cannot be
-heard before the samples of phase 5.
+**The wah has no resonant peak.** A real cup is a resonator as well as a lid, so it lifts a
+band as it closes rather than only taking the top off. One pole cannot do that. A biquad can,
+at the price of recomputing coefficients once a buffer; worth it only if the one pole sounds
+like a tone control rather than like hands.
 
 **Audio interruptions** are handled only through `scenePhase`. A call takes the app out of
 `.active` and the note stops, but nothing observes
@@ -659,6 +683,5 @@ screen.
 
 | Question | Blocked on |
 |---|---|
-| Where the wah control lives: second finger in the square, device tilt, or taking the horizontal axis from vibrato | Nothing audible until phase 5 samples |
 | Whether the contact radius needs a multiplier to reach a mouth's one to four holes, and which | The measurement from a device |
 | Whether vibrato rate becomes a third axis | Needs a free control |

@@ -28,16 +28,15 @@ continuous control, which the shared LFO cannot. Doubles the memory.
 
 ## 2. Device tilt
 
-**What.** Read the device's attitude through CoreMotion and use it as a continuous control.
+**Built.** `DeviceTilt` reads gravity through CoreMotion and reports how far the phone leans to
+the right: zero when it is level in landscape, one at thirty degrees. That drives `CupDepth`,
+which closes a one pole low pass over the mix, and a bar in the top bar shows how far the hands
+are shut. It was blocked on item 1 and stopped being so the moment the oscillator read
+recordings instead of a sine, because a filter needs harmonics to take off.
 
-**Why.** Cupping and opening the hands around a harmonica is what produces the wah, and it
-is a whole-instrument gesture rather than a finger one. Tilt is the closest thing a phone
-has to it, and it costs no screen space, which the square and the strip are already
-competing for.
-
-**Blocked on.** A resonant filter sweeping a sine has no harmonics to emphasise, so wah
-cannot be heard at all before item 1. Mapping tilt to something audible today, such as
-vibrato rate, is possible but is not what tilt is for.
+**What is left: the resonant peak.** A cup lifts a band as it closes, not only takes the top
+off, and one pole cannot do that. A biquad can, recomputing coefficients once a buffer. Worth
+doing if the one pole sounds like a tone control rather than like hands.
 
 ## 3. Playing from a score
 

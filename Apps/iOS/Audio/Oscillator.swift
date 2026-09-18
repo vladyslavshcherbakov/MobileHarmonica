@@ -3,12 +3,15 @@ import os
 
 final class Oscillator {
     private static let reedSpeaksInSeconds = 0.005
+    private static let openCupHertz = 20000.0
+    private static let closedCupHertz = 800.0
 
     private let samples: SampleBank
     private let voices = OSAllocatedUnfairLock(initialState: VoiceBank())
     private let requestedBreathGain = OSAllocatedUnfairLock(initialState: 0.0)
     private let requestedBend = OSAllocatedUnfairLock(initialState: 0.0)
     private let requestedVibrato = OSAllocatedUnfairLock(initialState: 0.0)
+    private let requestedCup = OSAllocatedUnfairLock(initialState: 0.0)
 
     // MARK: - Public
 
@@ -35,6 +38,10 @@ final class Oscillator {
         requestedVibrato.withLock { $0 = fraction }
     }
 
+    func cupHands(to fraction: Double) {
+        requestedCup.withLock { $0 = fraction }
+    }
+
     func silence() {
         voices.withLock { $0.silence() }
     }
@@ -54,10 +61,17 @@ final class Oscillator {
         rendering.bend(by: requestedBend.withLock { $0 })
         fill(
             frameCount: frameCount,
-            sampleRate: sampleRate,
             amplitude: amplitude,
-            breathGain: requestedBreathGain.withLock { $0 },
-            vibrato: requestedVibrato.withLock { $0 },
+            settings: RenderSettings(
+                sampleRate: sampleRate,
+                ramp: Self.gainRamp(crossfadeSeconds: rendering.crossfadeSeconds, sampleRate: sampleRate),
+                breathGain: requestedBreathGain.withLock { $0 },
+                vibrato: requestedVibrato.withLock { $0 },
+                cupCoefficient: Self.cupCoefficient(
+                    closed: requestedCup.withLock { $0 },
+                    sampleRate: sampleRate
+                )
+            ),
             into: buffers,
             from: &rendering
         )
@@ -80,26 +94,22 @@ final class Oscillator {
 
     private func fill(
         frameCount: Int,
-        sampleRate: Double,
         amplitude: Float,
-        breathGain: Double,
-        vibrato: Double,
+        settings: RenderSettings,
         into buffers: UnsafeMutableAudioBufferListPointer,
         from rendering: inout VoiceBank
     ) {
-        let ramp = Self.gainRamp(crossfadeSeconds: rendering.crossfadeSeconds, sampleRate: sampleRate)
         samples.frames.withUnsafeBufferPointer { frames in
             for frame in 0..<frameCount {
-                let value = rendering.nextSample(
-                    from: frames,
-                    sampleRate: sampleRate,
-                    ramp: ramp,
-                    targetBreathGain: breathGain,
-                    vibrato: vibrato
-                )
+                let value = rendering.nextSample(from: frames, in: settings)
                 write(Float(value) * amplitude, atFrame: frame, into: buffers)
             }
         }
+    }
+
+    private static func cupCoefficient(closed: Double, sampleRate: Double) -> Double {
+        let hertz = openCupHertz * pow(closedCupHertz / openCupHertz, closed)
+        return 1 - exp(-radiansPerCycle * hertz / sampleRate)
     }
 
     private static func gainRamp(crossfadeSeconds: Double, sampleRate: Double) -> GainRamp {
@@ -139,6 +149,16 @@ struct SoundingTone: Equatable {
 
 private typealias PlayableTone = (tone: SoundingTone, recorded: RecordedNote)
 
+// MARK: - RenderSettings
+
+private struct RenderSettings {
+    let sampleRate: Double
+    let ramp: GainRamp
+    let breathGain: Double
+    let vibrato: Double
+    let cupCoefficient: Double
+}
+
 // MARK: - GainRamp
 
 private struct GainRamp {
@@ -166,6 +186,7 @@ private struct VoiceBank {
     var lfoPhase = 0.0
     var crossfadeSeconds = 0.02
     var voicesEverSounded = 0
+    var cupped = 0.0
 
     // MARK: - Public
 
@@ -195,32 +216,28 @@ private struct VoiceBank {
         }
     }
 
-    mutating func nextSample(
-        from frames: UnsafeBufferPointer<Float>,
-        sampleRate: Double,
-        ramp: GainRamp,
-        targetBreathGain: Double,
-        vibrato depth: Double
-    ) -> Double {
-        breathGain = ramped(breathGain, toward: targetBreathGain, by: ramp)
+    mutating func nextSample(from frames: UnsafeBufferPointer<Float>, in settings: RenderSettings) -> Double {
+        breathGain = ramped(breathGain, toward: settings.breathGain, by: settings.ramp)
         let scale = breathGain / airSpreadAcrossTheReeds
-        let vibrato = nextVibrato(sampleRate: sampleRate, depth: depth)
+        let vibrato = nextVibrato(sampleRate: settings.sampleRate, depth: settings.vibrato)
 
         var mixed = 0.0
         for index in voices.indices {
             mixed += voices[index].nextSample(
                 from: frames,
-                sampleRate: sampleRate,
-                ramp: ramp,
+                sampleRate: settings.sampleRate,
+                ramp: settings.ramp,
                 pitchRatio: vibrato.pitchRatio
             )
         }
-        return mixed * scale * vibrato.gain
+        cupped += (mixed * scale * vibrato.gain - cupped) * settings.cupCoefficient
+        return cupped
     }
 
     mutating func absorbProgress(of rendered: VoiceBank) {
         breathGain = rendered.breathGain
         lfoPhase = rendered.lfoPhase
+        cupped = rendered.cupped
         for index in voices.indices {
             voices[index].absorbProgress(of: rendered.voice(numbered: voices[index].number))
         }

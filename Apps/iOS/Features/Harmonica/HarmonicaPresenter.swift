@@ -7,6 +7,7 @@ struct HarmonicaPresenter {
     private static let overdrawLabel = "overdraw ↑"
     private static let bendLabel = "bend ↓"
     private static let vibratoLabel = "vibrato →"
+    private static let cupLabel = "cup"
     private static let playDemoLabel = "play"
     private static let stopDemoLabel = "stop"
     private static let bendEffectLabel = "bend"
@@ -32,6 +33,7 @@ struct HarmonicaPresenter {
                 key: keyState(harmonica.key),
                 style: styleState(harmonica.style),
                 fingerMarks: fingerMarksState(harmonica.style),
+                cup: Self.cupState(harmonica.cup),
                 demo: demoState(playingAScore),
                 toneShaping: toneShaping(harmonica)
             )
@@ -127,6 +129,10 @@ struct HarmonicaPresenter {
         case .severalFingersOneNote: "Many fingers, one note"
         case .oneFingerSeveralNotes: "One finger, many notes"
         }
+    }
+
+    private static func cupState(_ cup: CupDepth) -> CupViewState {
+        CupViewState(label: cupLabel, closed: cup.fraction)
     }
 
     private func fingerMarksState(_ style: PlayingStyle) -> FingerMarksViewState {

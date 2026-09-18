@@ -48,6 +48,10 @@ final class SampledAudioEngine: AudioEngineProtocol {
         oscillator?.changeVibrato(to: depth.fraction)
     }
 
+    func cupHands(to depth: CupDepth) {
+        oscillator?.cupHands(to: depth.fraction)
+    }
+
     func silence() {
         oscillator?.silence()
     }

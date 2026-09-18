@@ -8,6 +8,7 @@ final class PlayHarmonica {
     private var soundingIntensity: BreathIntensity?
     private var shaping: PitchShaping = .rest
     private var vibrato: VibratoDepth = .off
+    private var cup: CupDepth = .open
     private var recordedMouthWidth = ""
     private var key: HarmonicaKey = .c
     private var style: PlayingStyle = .severalFingersSeveralNotes
@@ -80,6 +81,15 @@ final class PlayHarmonica {
         return harmonica
     }
 
+    func cupHands(to cup: CupDepth) -> Harmonica {
+        guard cup != self.cup else { return harmonica }
+
+        self.cup = cup
+        audioEngine.cupHands(to: cup)
+        log.recordSample("hands cupped \(rounded(cup.fraction))")
+        return harmonica
+    }
+
     func stopPlaying() -> Harmonica {
         guard !soundingReeds.isEmpty else { return harmonica }
 
@@ -96,6 +106,7 @@ final class PlayHarmonica {
         Harmonica(
             key: key,
             style: style,
+            cup: cup,
             sounding: Dictionary(uniqueKeysWithValues: soundingReeds.map { ($0.hole, soundingReed(of: $0)) })
         )
     }

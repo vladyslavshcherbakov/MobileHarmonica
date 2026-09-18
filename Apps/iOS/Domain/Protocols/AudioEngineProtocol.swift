@@ -4,5 +4,6 @@ protocol AudioEngineProtocol: AnyObject {
     func changeIntensity(to intensity: BreathIntensity)
     func changeBend(to depth: BendDepth)
     func changeVibrato(to depth: VibratoDepth)
+    func cupHands(to depth: CupDepth)
     func silence()
 }

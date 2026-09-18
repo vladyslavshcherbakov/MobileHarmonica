@@ -23,6 +23,9 @@ struct HarmonicaScreen: View {
             .task(id: scenePhase) {
                 await prepareOrSilence(for: scenePhase)
             }
+            .task {
+                await viewModel.followTheTilt()
+            }
     }
 
     // MARK: - Private

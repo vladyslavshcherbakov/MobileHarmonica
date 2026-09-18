@@ -11,6 +11,7 @@ struct PlayableHarmonica: Equatable {
     let key: KeyViewState
     let style: PlayingStyleViewState
     let fingerMarks: FingerMarksViewState
+    let cup: CupViewState
     let demo: DemoViewState
     let toneShaping: ToneShapingViewState
 }
@@ -35,6 +36,13 @@ enum PlayingStyleChoice: Hashable {
     case severalFingersSeveralNotes
     case severalFingersOneNote
     case oneFingerSeveralNotes
+}
+
+// MARK: - CupViewState
+
+struct CupViewState: Equatable {
+    let label: String
+    let closed: Double
 }
 
 // MARK: - FingerMarksViewState

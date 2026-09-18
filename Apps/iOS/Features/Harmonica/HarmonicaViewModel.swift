@@ -5,15 +5,23 @@ final class HarmonicaViewModel: ObservableObject {
 
     private let playHarmonica: PlayHarmonica
     private let playScore: PlayScore
+    private let tilt: TiltProtocol
     private let tunes: [Score]
     private let presenter: HarmonicaPresenter
     private var performance: Task<Void, Never>?
 
     // MARK: - Public
 
-    init(playHarmonica: PlayHarmonica, playScore: PlayScore, tunes: [Score], presenter: HarmonicaPresenter) {
+    init(
+        playHarmonica: PlayHarmonica,
+        playScore: PlayScore,
+        tilt: TiltProtocol,
+        tunes: [Score],
+        presenter: HarmonicaPresenter
+    ) {
         self.playHarmonica = playHarmonica
         self.playScore = playScore
+        self.tilt = tilt
         self.tunes = tunes
         self.presenter = presenter
     }
@@ -35,6 +43,13 @@ final class HarmonicaViewModel: ObservableObject {
             stopTheScore()
         }
         show(playHarmonica.play(at: positions))
+    }
+
+    @MainActor
+    func followTheTilt() async {
+        for await leaning in tilt.tiltToTheRight() {
+            cupHands(to: CupDepth(clamping: leaning))
+        }
     }
 
     func changeKey(toPosition position: Double) {
@@ -98,6 +113,13 @@ final class HarmonicaViewModel: ObservableObject {
         }
         performance = nil
         show(playHarmonica.stopPlaying())
+    }
+
+    private func cupHands(to cup: CupDepth) {
+        let harmonica = playHarmonica.cupHands(to: cup)
+        guard case .ready = state else { return }
+
+        show(harmonica)
     }
 
     private static func style(chosen choice: PlayingStyleChoice) -> PlayingStyle {

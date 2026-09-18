@@ -6,6 +6,8 @@ struct KeyBar: View {
     private static let keyLabelWidth: CGFloat = 34
     private static let styleControlWidth: CGFloat = 180
     private static let demoButtonWidth: CGFloat = 64
+    private static let cupBarWidth: CGFloat = 40
+    private static let cupBarHeight: CGFloat = 6
 
     let playable: PlayableHarmonica
     @ObservedObject var viewModel: HarmonicaViewModel
@@ -16,6 +18,7 @@ struct KeyBar: View {
         HStack {
             keyLabel
             keySlider
+            cupIndicator
             playingStyleControl
             demoControl
         }
@@ -41,6 +44,19 @@ struct KeyBar: View {
             step: 1
         )
         .tint(.orange)
+    }
+
+    private var cupIndicator: some View {
+        VStack(spacing: 2) {
+            ZStack(alignment: .leading) {
+                Capsule().fill(Color(white: 0.22))
+                Capsule().fill(Color.orange).frame(width: Self.cupBarWidth * playable.cup.closed)
+            }
+            .frame(width: Self.cupBarWidth, height: Self.cupBarHeight)
+            Text(playable.cup.label)
+                .font(.caption2)
+                .foregroundStyle(Color(white: 0.5))
+        }
     }
 
     private var playingStyleControl: some View {

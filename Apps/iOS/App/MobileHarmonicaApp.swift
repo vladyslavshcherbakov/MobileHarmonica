@@ -7,7 +7,11 @@ struct MobileHarmonicaApp: App {
 
     init() {
         let log = TimestampedLog(subsystem: Self.bundleIdentifier(), category: "harmonica")
-        compositionRoot = CompositionRoot(audioEngine: SampledAudioEngine(log: log), log: log)
+        compositionRoot = CompositionRoot(
+            audioEngine: SampledAudioEngine(log: log),
+            tilt: DeviceTilt(),
+            log: log
+        )
     }
 
     var body: some Scene {
