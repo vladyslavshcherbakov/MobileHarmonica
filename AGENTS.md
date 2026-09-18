@@ -298,7 +298,8 @@ A score says a bend in **semitones**, not in axis travel, because a score should
 hole 3 draw bends three semitones and hole 4 draw bends one. `PlayScore` asks `RichterTuning`
 for the range and divides. Each note is cut short by up to 50 ms so the next one re-attacks;
 without that gap two of the same note in a row would be one long note, because the instrument
-sees the same reeds and does not re-sound.
+sees the same reeds and does not re-sound. A rest is then only time: every note already ends
+silent, so a rest has nothing left to stop.
 
 **A note that changes while it sounds is stepped, and the step is not one length.** A shake
 re-sounds reeds, so it rocks at 60 ms, which is about as fast as a mouth moves. A bend envelope
@@ -560,6 +561,10 @@ depending on the reader's locale.
 
 **Tests.** One bundle hosted by the app. Names are `test_subject_whenCondition_outcome`.
 Files are named for the promise, not the type.
+
+A score test runs at 6000 beats a minute so it finishes in no time, but a note that changes
+while it sounds needs a real tempo: at 10 ms a beat there is nothing to step through, and a
+shake or a released bend collapses to one slice that proves nothing.
 
 Sound is the one guarantee no screen can show, so it is checked where it is visible: on the
 real `Oscillator`, rendered offline into an `AudioBufferList` by `RenderedSound`, with pitch

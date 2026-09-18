@@ -27,10 +27,15 @@ final class WhatAScorePlaysTests: XCTestCase {
         XCTAssertEqual(engine.hertzOfTheFirstTone, 523.25, accuracy: 0.5, "hole 3 overblown is C5")
     }
 
-    func test_score_whenARestComes_silencesTheHarmonica() async {
-        await play([.rest(beats: 1)])
+    func test_score_whenARestComes_soundsNothingForItsLength() async {
+        await play([
+            .note(ScoreNote(holes: [.four], breath: .draw, beats: 1)),
+            .rest(beats: 1),
+            .note(ScoreNote(holes: [.four], breath: .draw, beats: 1))
+        ])
 
-        XCTAssertGreaterThan(engine.silencings, 0)
+        XCTAssertEqual(engine.soundedTones.count, 2, "the rest between the two notes adds nothing")
+        XCTAssertGreaterThan(engine.silencings, 1, "each note ends silent")
     }
 
     func test_score_whenItEnds_leavesNothingSounding() async {
@@ -92,7 +97,10 @@ final class WhatAScorePlaysTests: XCTestCase {
     }
 
     func test_score_whenANoteIsShaken_rocksBetweenTheTwoHoles() async {
-        await play([.note(ScoreNote(holes: [.four], breath: .draw, beats: 1, shakenWith: .five))])
+        await play(
+            [.note(ScoreNote(holes: [.four], breath: .draw, beats: 1, shakenWith: .five))],
+            atBeatsPerMinute: 240
+        )
 
         let hertz = engine.soundedTones.compactMap { $0.first?.pitch.converted(to: .hertz).value }
         XCTAssertGreaterThan(hertz.count, 2, "a shaken note re-sounds on every swing")
@@ -101,9 +109,10 @@ final class WhatAScorePlaysTests: XCTestCase {
     }
 
     func test_score_whenABendIsReleased_walksTheBendBackToNothing() async {
-        await play([
-            .note(ScoreNote(holes: [.three], breath: .draw, beats: 1, bentBySemitones: 2, bendEndsAtSemitones: 0))
-        ])
+        await play(
+            [.note(ScoreNote(holes: [.three], breath: .draw, beats: 1, bentBySemitones: 2, bendEndsAtSemitones: 0))],
+            atBeatsPerMinute: 240
+        )
 
         let bends = engine.bends.map(\.fraction)
         XCTAssertEqual(bends.first ?? 0, 0.67, accuracy: 0.02, "two of the three semitones hole 3 draw bends")
@@ -121,10 +130,11 @@ final class WhatAScorePlaysTests: XCTestCase {
     @discardableResult
     private func play(
         _ events: [ScoreEvent],
-        on harmonica: PlayHarmonica? = nil
+        on harmonica: PlayHarmonica? = nil,
+        atBeatsPerMinute tempo: Double = 6000
     ) async -> [Harmonica] {
         await play(
-            Score(name: "test", key: .c, position: .first, beatsPerMinute: 6000, events: events),
+            Score(name: "test", key: .c, position: .first, beatsPerMinute: tempo, events: events),
             on: harmonica
         )
     }

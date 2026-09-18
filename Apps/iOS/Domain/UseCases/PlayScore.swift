@@ -46,7 +46,6 @@ final class PlayScore {
     ) async {
         let seconds = event.beats * secondsPerBeat
         guard case .note(let note) = event else {
-            continuation.yield(harmonica.stopPlaying())
             await wait(seconds)
             return
         }
