@@ -28,7 +28,7 @@ final class WhatTheShapingZoneChangesTests: XCTestCase {
 
         _ = harmonica.shapeTone(PitchShaping(clamping: 0.6), vibrato: .off)
 
-        XCTAssertEqual(hertzOfTheLastTone(), 523.25, accuracy: 0.5, "G4 overblown is C5")
+        XCTAssertEqual(engine.hertzOfTheLastTone, 523.25, accuracy: 0.5, "G4 overblown is C5")
         XCTAssertEqual(engine.soundedTones.last?.first?.bendableSemitones, 0)
     }
 
@@ -46,7 +46,7 @@ final class WhatTheShapingZoneChangesTests: XCTestCase {
 
         _ = harmonica.shapeTone(PitchShaping(clamping: 0.1), vibrato: .off)
 
-        XCTAssertEqual(hertzOfTheLastTone(), 392.00, accuracy: 0.5, "hole 3 blows G4")
+        XCTAssertEqual(engine.hertzOfTheLastTone, 392.00, accuracy: 0.5, "hole 3 blows G4")
     }
 
     func test_shapingZone_whenTheFingerStaysStill_sendsNothingTwice() {
@@ -100,9 +100,5 @@ final class WhatTheShapingZoneChangesTests: XCTestCase {
         let harmonica = harmonica()
         _ = harmonica.play(at: [PositionOnHarmonica(fractionFromLeftEdge: 0.25, fractionAboveCentreLine: 0.2)])
         return harmonica
-    }
-
-    private func hertzOfTheLastTone() -> Double {
-        engine.soundedTones.last?.first?.pitch.converted(to: .hertz).value ?? 0
     }
 }

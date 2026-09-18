@@ -4,7 +4,7 @@ import XCTest
 
 final class WhatTheNoteRowSaysTests: XCTestCase {
     private let engine = RecordingAudioEngine()
-    private let presenter = HarmonicaPresenter(locale: Locale(identifier: "en_US_POSIX"))
+    private let presenter = HarmonicaPresenter(locale: Locale(identifier: "en_US_POSIX"), tunes: [])
 
     // MARK: - Tests
 

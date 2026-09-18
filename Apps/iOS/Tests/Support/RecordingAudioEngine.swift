@@ -31,3 +31,19 @@ final class RecordingAudioEngine: AudioEngineProtocol {
         silencings += 1
     }
 }
+
+// MARK: - Reading back the pitch
+
+extension RecordingAudioEngine {
+    var hertzOfTheFirstTone: Double {
+        hertz(of: soundedTones.first)
+    }
+
+    var hertzOfTheLastTone: Double {
+        hertz(of: soundedTones.last)
+    }
+
+    private func hertz(of tones: [Tone]?) -> Double {
+        tones?.first?.pitch.converted(to: .hertz).value ?? 0
+    }
+}

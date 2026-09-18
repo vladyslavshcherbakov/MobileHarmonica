@@ -9,7 +9,7 @@ final class WhatAScorePlaysTests: XCTestCase {
     func test_score_whenItNamesAHole_soundsThatHolesReed() async {
         await play([.note(ScoreNote(holes: [.four], breath: .blow, beats: 1))])
 
-        XCTAssertEqual(hertzOfTheFirstTone(), 523.25, accuracy: 0.5, "hole 4 blows C5")
+        XCTAssertEqual(engine.hertzOfTheFirstTone, 523.25, accuracy: 0.5, "hole 4 blows C5")
     }
 
     func test_score_whenANoteIsBentBySemitones_bendsThatFarIntoTheReedsRange() async {
@@ -24,7 +24,7 @@ final class WhatAScorePlaysTests: XCTestCase {
     func test_score_whenANoteIsOverbent_soundsTheOverblow() async {
         await play([.note(ScoreNote(holes: [.three], breath: .blow, beats: 1, isOverbent: true))])
 
-        XCTAssertEqual(hertzOfTheFirstTone(), 523.25, accuracy: 0.5, "hole 3 overblown is C5")
+        XCTAssertEqual(engine.hertzOfTheFirstTone, 523.25, accuracy: 0.5, "hole 3 overblown is C5")
     }
 
     func test_score_whenARestComes_silencesTheHarmonica() async {
@@ -66,14 +66,14 @@ final class WhatAScorePlaysTests: XCTestCase {
         await play([.note(ScoreNote(holes: [.four], breath: .draw, beats: 1, slideFrom: .one))])
 
         XCTAssertEqual(engine.soundedTones.count, 4, "holes 1, 2 and 3 pass before hole 4 arrives")
-        XCTAssertEqual(hertzOfTheLastTone(), 587.33, accuracy: 0.5, "hole 4 draws D5")
+        XCTAssertEqual(engine.hertzOfTheLastTone, 587.33, accuracy: 0.5, "hole 4 draws D5")
     }
 
     func test_score_whenANoteSlidesDownFromAnotherHole_passesTheHolesInReverse() async {
         await play([.note(ScoreNote(holes: [.one], breath: .draw, beats: 1, slideFrom: .three))])
 
         XCTAssertEqual(engine.soundedTones.count, 3)
-        XCTAssertEqual(hertzOfTheFirstTone(), 493.88, accuracy: 0.5, "hole 3 draws B4 first")
+        XCTAssertEqual(engine.hertzOfTheFirstTone, 493.88, accuracy: 0.5, "hole 3 draws B4 first")
     }
 
     func test_score_whenTheSlideStartsWhereTheNoteIs_soundsOnlyTheNote() async {
@@ -124,9 +124,5 @@ final class WhatAScorePlaysTests: XCTestCase {
             played.append(state)
         }
         return played
-    }
-
-    private func hertzOfTheFirstTone() -> Double {
-        engine.soundedTones.first?.first?.pitch.converted(to: .hertz).value ?? 0
     }
 }
