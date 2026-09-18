@@ -53,6 +53,7 @@ Apps/iOS/
   App/          entry point and composition root
   Domain/       Entities, Protocols, UseCases. Imports Foundation only
   Audio/        AudioEngineProtocol implementation, and Samples/ for the WAV files
+  Scores/       text scores the user writes, read at launch, not committed
   Features/     one folder per feature: view state, presenter, view model, views
   Logging/      TimestampedLog
   Navigation/   coordinator and routes
@@ -233,6 +234,24 @@ hole 3 draw bends three semitones and hole 4 draw bends one. `PlayScore` asks `R
 for the range and divides. Each note is cut short by up to 50 ms so the next one re-attacks;
 without that gap two of the same note in a row would be one long note, because `play(at:)`
 sees the same reeds and does not re-sound.
+
+**A score can be written instead of coded.** `Apps/iOS/Scores/*.score` is a text file with a
+key, a position, a tempo and lines of pitches with lengths in beats; `ScoreReader` turns it
+into a `Score` and the demo button plays the first one it finds. The files are not committed,
+the same as the WAV samples, because what a person writes there is theirs. The format is in
+that folder's README.
+
+The interesting half is `Fingerings`, which answers what a written pitch costs on the
+harmonica in a given key: a plain note, a bend of so many semitones, or an overbend. The
+reader prefers plain to bent and bent to overbent, and among equal choices takes the hole
+nearest the one before, so the mouth moves as little as it can. A chord takes its breath from
+its lowest pitch and the rest must be reachable on that breath, because one mouth gives one
+airflow.
+
+`Playability` is what it reports: how many bends and overbends the piece needed, the widest
+leap in holes, and every pitch this harmonica cannot reach in this key. It goes to the log at
+launch. A leap past three or four holes is one no mouth makes at speed, and that is the
+honest answer to whether a given piece suits the instrument at all.
 
 `Score.demo` is a twelve bar blues chorus **in G, second position**, which calls for the
 harmonica in C: 48 beats at 96, with a shuffled train chug on holes 1 and 2, the I, IV and V

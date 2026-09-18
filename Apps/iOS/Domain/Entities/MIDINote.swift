@@ -21,6 +21,8 @@ struct MIDINote: Equatable {
     static let a6 = MIDINote(number: 93)
     static let c7 = MIDINote(number: 96)
 
+    static let namesAboveC = ["C", "D♭", "D", "E♭", "E", "F", "G♭", "G", "A♭", "A", "B♭", "B"]
+
     private static let concertPitch = Measurement(value: 440, unit: UnitFrequency.hertz)
     private static let concertPitchNumber = 69
     private static let semitonesPerOctave = 12
@@ -43,6 +45,10 @@ struct MIDINote: Equatable {
 
     var octave: Int {
         number / Self.semitonesPerOctave - 1
+    }
+
+    var name: String {
+        Self.namesAboveC[semitonesAboveC] + String(octave)
     }
 
     // MARK: - Private

@@ -12,7 +12,6 @@ struct HarmonicaPresenter {
     private static let bendEffectLabel = "bend"
     private static let overblowEffectLabel = "overblow"
     private static let overdrawEffectLabel = "overdraw"
-    private static let noteNames = ["C", "D♭", "D", "E♭", "E", "F", "G♭", "G", "A♭", "A", "B♭", "B"]
 
     private let locale: Locale
     private let holeLabels: [String]
@@ -71,7 +70,7 @@ struct HarmonicaPresenter {
     }
 
     private func name(of note: MIDINote) -> String {
-        Self.noteNames[note.semitonesAboveC] + note.octave.formatted(.number.locale(locale))
+        MIDINote.namesAboveC[note.semitonesAboveC] + note.octave.formatted(.number.locale(locale))
     }
 
     private func toneShaping(_ harmonica: Harmonica) -> ToneShapingViewState {

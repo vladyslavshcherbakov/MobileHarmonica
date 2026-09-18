@@ -22,7 +22,10 @@ targets:
         excludes:
           - Tests
           - Audio/Samples
+          - Scores
       - path: Apps/iOS/Audio/Samples
+        type: folder
+      - path: Apps/iOS/Scores
         type: folder
     settings:
       base:

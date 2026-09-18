@@ -5,14 +5,16 @@ final class HarmonicaViewModel: ObservableObject {
 
     private let playHarmonica: PlayHarmonica
     private let playScore: PlayScore
+    private let demo: Score
     private let presenter: HarmonicaPresenter
     private var performance: Task<Void, Never>?
 
     // MARK: - Public
 
-    init(playHarmonica: PlayHarmonica, playScore: PlayScore, presenter: HarmonicaPresenter) {
+    init(playHarmonica: PlayHarmonica, playScore: PlayScore, demo: Score, presenter: HarmonicaPresenter) {
         self.playHarmonica = playHarmonica
         self.playScore = playScore
+        self.demo = demo
         self.presenter = presenter
     }
 
@@ -87,7 +89,7 @@ final class HarmonicaViewModel: ObservableObject {
 
     @MainActor
     private func perform() async {
-        for await harmonica in playScore.play(.demo) {
+        for await harmonica in playScore.play(demo) {
             show(harmonica)
         }
         performance = nil

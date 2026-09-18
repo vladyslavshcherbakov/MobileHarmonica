@@ -17,6 +17,7 @@ struct CompositionRoot {
         return HarmonicaViewModel(
             playHarmonica: playHarmonica,
             playScore: PlayScore(tuning: tuning, harmonica: playHarmonica, log: log),
+            demo: BundledScores(tuning: tuning, log: log).first() ?? .demo,
             presenter: HarmonicaPresenter(locale: .current)
         )
     }
