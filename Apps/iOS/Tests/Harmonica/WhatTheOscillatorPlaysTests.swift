@@ -36,6 +36,15 @@ final class WhatTheOscillatorPlaysTests: XCTestCase {
         XCTAssertGreaterThan(louder, 1.5, "three reeds move about the square root of three times the air")
     }
 
+    func test_cup_whenTheHandsShut_keepTheBandTheyRingAtAndLetGoOfTheRest() {
+        let atTheRingingBand = cupped(hertz: 600)
+        let twoOctavesAbove = cupped(hertz: 2400)
+
+        let kept = RenderedSound.loudness(of: atTheRingingBand) / RenderedSound.loudness(of: twoOctavesAbove)
+
+        XCTAssertGreaterThan(kept, 5, "shut hands ring near 600 Hz, which is what makes a wah a vowel")
+    }
+
     func test_vibrato_whenOff_holdsThePitchSteady() {
         let oscillator = sounding(hertz: 440, bendableSemitones: 0)
 
@@ -78,6 +87,13 @@ final class WhatTheOscillatorPlaysTests: XCTestCase {
 
     private func sounding(hertz: Double, bendableSemitones: Double = 0) -> Oscillator {
         sounding([SoundingTone(hertz: hertz, bendableSemitones: bendableSemitones)])
+    }
+
+    private func cupped(hertz: Double) -> Oscillator {
+        let oscillator = sounding(hertz: hertz)
+        oscillator.cupHands(to: 1)
+        RenderedSound.settle(oscillator)
+        return oscillator
     }
 
     private func sounding(_ tones: [SoundingTone]) -> Oscillator {

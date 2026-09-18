@@ -520,13 +520,20 @@ a pitch teleport with no amplitude transition, more abrupt than anything the ins
 Removing `smooth` is what made the better shape available: with only a threshold left, the
 overbend engages rarely rather than on every touch move, so it belongs with the rare calls.
 
-**Cupped hands are one low pass on the mix.** Hands closed around a harmonica are a cavity
-that eats the high partials, so closing them darkens the note rather than changing its pitch.
-One pole is enough for that, and it costs one multiply and one add per sample: the cutoff
-sweeps from 20 kHz open, where nothing is audibly touched, down to 800 Hz shut, which keeps
-every fundamental on the instrument and takes the harmonics off. The sweep is exponential
-because that is how the ear hears a filter move, and the coefficient is computed once a buffer
-rather than once a sample, so no transcendental runs on the render thread.
+**Cupped hands are a cavity that rings, not only a lid.** Hands closed around a harmonica trap
+a pocket of air, and a pocket of air has a frequency it wants to sound at, the way a bottle
+does. So the hands do two things at once: they keep the high partials from getting out, and
+they push forward whatever band the pocket favours. Closing the hands narrows the gap between
+them, which slides that band downwards, and the band sliding is what the ear hears as a vowel.
+That is the whole of a wah, and a lid alone cannot make one: it gives bright to dull, which is
+a tone control.
+
+So the cup is a resonant low pass, a state variable filter whose corner sweeps exponentially
+from 2800 Hz barely cupped to 600 Hz shut, with a resonance of four. Its output is mixed
+against the dry sound by how closed the hands are, so open hands pass the instrument through
+untouched and there is nothing to bypass. The peak is scaled back by the resonance, so the
+loudest the cup can be is the sound it was given: cupping focuses and quietens, as it does on
+the instrument, and it can never spend the headroom the mixing leaves.
 
 High notes are muffled harder than low ones, which is not a bug to fix: a real cup is a fixed
 size, so what it takes off a note depends on where that note's partials sit.

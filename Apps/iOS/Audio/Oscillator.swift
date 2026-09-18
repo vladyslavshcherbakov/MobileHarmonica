@@ -3,8 +3,9 @@ import os
 
 final class Oscillator {
     private static let reedSpeaksInSeconds = 0.005
-    private static let openCupHertz = 20000.0
-    private static let closedCupHertz = 800.0
+    private static let openCupHertz = 2800.0
+    private static let closedCupHertz = 600.0
+    private static let cupResonance = 4.0
 
     private let samples: SampleBank
     private let voices = OSAllocatedUnfairLock(initialState: VoiceBank())
@@ -67,10 +68,7 @@ final class Oscillator {
                 ramp: Self.gainRamp(crossfadeSeconds: rendering.crossfadeSeconds, sampleRate: sampleRate),
                 breathGain: requestedBreathGain.withLock { $0 },
                 vibrato: requestedVibrato.withLock { $0 },
-                cupCoefficient: Self.cupCoefficient(
-                    closed: requestedCup.withLock { $0 },
-                    sampleRate: sampleRate
-                )
+                cup: Self.cupSettings(closed: requestedCup.withLock { $0 }, sampleRate: sampleRate)
             ),
             into: buffers,
             from: &rendering
@@ -107,9 +105,13 @@ final class Oscillator {
         }
     }
 
-    private static func cupCoefficient(closed: Double, sampleRate: Double) -> Double {
+    private static func cupSettings(closed: Double, sampleRate: Double) -> CupSettings {
         let hertz = openCupHertz * pow(closedCupHertz / openCupHertz, closed)
-        return 1 - exp(-radiansPerCycle * hertz / sampleRate)
+        return CupSettings(
+            closed: closed,
+            ringing: 2 * sin(Double.pi * hertz / sampleRate),
+            damping: 1 / cupResonance
+        )
     }
 
     private static func gainRamp(crossfadeSeconds: Double, sampleRate: Double) -> GainRamp {
@@ -156,7 +158,28 @@ private struct RenderSettings {
     let ramp: GainRamp
     let breathGain: Double
     let vibrato: Double
-    let cupCoefficient: Double
+    let cup: CupSettings
+}
+
+// MARK: - CupSettings
+
+private struct CupSettings {
+    let closed: Double
+    let ringing: Double
+    let damping: Double
+}
+
+// MARK: - CupFilter
+
+private struct CupFilter {
+    var low = 0.0
+    var band = 0.0
+
+    mutating func next(_ sample: Double, through cup: CupSettings) -> Double {
+        low += cup.ringing * band
+        band += cup.ringing * (sample - low - cup.damping * band)
+        return sample + (low * cup.damping - sample) * cup.closed
+    }
 }
 
 // MARK: - GainRamp
@@ -186,7 +209,7 @@ private struct VoiceBank {
     var lfoPhase = 0.0
     var crossfadeSeconds = 0.02
     var voicesEverSounded = 0
-    var cupped = 0.0
+    var cup = CupFilter()
 
     // MARK: - Public
 
@@ -230,14 +253,13 @@ private struct VoiceBank {
                 pitchRatio: vibrato.pitchRatio
             )
         }
-        cupped += (mixed * scale * vibrato.gain - cupped) * settings.cupCoefficient
-        return cupped
+        return cup.next(mixed * scale * vibrato.gain, through: settings.cup)
     }
 
     mutating func absorbProgress(of rendered: VoiceBank) {
         breathGain = rendered.breathGain
         lfoPhase = rendered.lfoPhase
-        cupped = rendered.cupped
+        cup = rendered.cup
         for index in voices.indices {
             voices[index].absorbProgress(of: rendered.voice(numbered: voices[index].number))
         }
