@@ -1,4 +1,5 @@
 import type { RecordedNote, SampleBank } from './sampleBank.js'
+import type { Log } from '../domain/protocols/log.js'
 
 const indexName = 'index.json'
 const loopStartSeconds = 1
@@ -9,11 +10,22 @@ const concertPitchHertz = 440
 const concertPitchNumber = 69
 const semitonesAboveC: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }
 
-export async function recordedHarmonica(folder: string, context: BaseAudioContext): Promise<SampleBank> {
+export async function recordedHarmonica(
+    folder: string,
+    context: BaseAudioContext,
+    log: Log
+): Promise<SampleBank> {
     const names = await namesIn(folder)
     if (names.length === 0) throw new Error(`no recordings listed in ${folder}/${indexName}`)
 
-    const recordings = await Promise.all(names.map(name => read(folder, name, context)))
+    log.record(`${indexName} lists ${names.length} recordings`)
+    let done = 0
+    const recordings = await Promise.all(names.map(async name => {
+        const recording = await read(folder, name, context, log)
+        done += 1
+        log.record(`decoded ${done} of ${names.length}`)
+        return recording
+    }))
     return assembled(recordings)
 }
 
@@ -57,11 +69,17 @@ async function namesIn(folder: string): Promise<string[]> {
     return Array.isArray(listed.samples) ? listed.samples.filter(name => typeof name === 'string') : []
 }
 
-async function read(folder: string, name: string, context: BaseAudioContext): Promise<Recording> {
+async function read(
+    folder: string,
+    name: string,
+    context: BaseAudioContext,
+    log: Log
+): Promise<Recording> {
     const file = await fetch(`${folder}/${encodeURIComponent(name)}`)
     if (!file.ok) throw new Error(`${name} answered ${file.status}`)
 
-    const decoded = await context.decodeAudioData(await file.arrayBuffer())
+    const decoded = await decode(await file.arrayBuffer(), name, context)
+    log.recordSample(`${name} decoded, ${decoded.length} frames at ${decoded.sampleRate} Hz`)
     const played = withoutTheExtension(name)
     const [loopStart, loopEnd] = loopBoundsIn(decoded.length, decoded.sampleRate, played)
     const frames = mono(decoded).subarray(0, loopEnd)
@@ -69,6 +87,14 @@ async function read(folder: string, name: string, context: BaseAudioContext): Pr
     return {
         frames,
         note: start => ({ start, loopStart, loopEnd, rootHertz, sampleRate: decoded.sampleRate })
+    }
+}
+
+async function decode(file: ArrayBuffer, name: string, context: BaseAudioContext): Promise<AudioBuffer> {
+    try {
+        return await context.decodeAudioData(file)
+    } catch (failure) {
+        throw new Error(`${name} could not be decoded: ${String(failure)}`)
     }
 }
 

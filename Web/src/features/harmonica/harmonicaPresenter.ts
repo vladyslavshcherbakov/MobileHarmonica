@@ -62,8 +62,8 @@ export class HarmonicaPresenter {
         }
     }
 
-    presentSoundUnavailable(): HarmonicaViewState {
-        return { kind: 'soundUnavailable', text: soundUnavailableText }
+    presentSoundUnavailable(reason: string): HarmonicaViewState {
+        return { kind: 'soundUnavailable', text: `${soundUnavailableText} ${reason}` }
     }
 
     private demoState(isPlaying: boolean): DemoViewState {

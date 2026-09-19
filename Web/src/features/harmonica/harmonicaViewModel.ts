@@ -34,8 +34,8 @@ export class HarmonicaViewModel {
     async prepareSound(): Promise<void> {
         try {
             this.present(await this.playHarmonica.prepare())
-        } catch {
-            this.publish(this.presenter.presentSoundUnavailable())
+        } catch (failure) {
+            this.publish(this.presenter.presentSoundUnavailable(describe(failure)))
         }
     }
 
@@ -129,6 +129,10 @@ export class HarmonicaViewModel {
         this.state = state
         this.show(state)
     }
+}
+
+function describe(failure: unknown): string {
+    return failure instanceof Error ? `${failure.name}: ${failure.message}` : String(failure)
 }
 
 function styleChosen(choice: PlayingStyleChoice): PlayingStyle {
