@@ -93,6 +93,16 @@ ends by making them one JSON file read by both platforms.
 
 ## The page in Safari
 
+**The sound plays over the silent switch.** Safari puts a bare `AudioContext` in the `ambient`
+audio session, which the hardware mute switch silences, so a page that is nothing but sound went
+quiet in a pocket. `navigator.audioSession.type = 'playback'` says this audio is the point of the
+page rather than decoration. Only Safari implements it, so the property is read before it is set.
+
+**The screen is filled by a button.** The Fullscreen API reached iPhone in Safari 17.4; before
+that only a video element could go fullscreen. The button asks `document.documentElement`, falls
+back to the `webkit` spelling, and hides itself where neither exists, so nothing on the bar
+promises what the browser cannot do.
+
 The instrument fills the visible area in either landscape: `dvh`, `--appHeight` set from
 `visualViewport` on every resize, `env(safe-area-inset-*)` for the notch, `touch-action: none`
 and `overscroll-behavior: none` so nothing scrolls or rubber bands. In portrait the page says to

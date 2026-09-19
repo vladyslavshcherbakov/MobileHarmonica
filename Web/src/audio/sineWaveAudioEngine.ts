@@ -27,6 +27,7 @@ export class SineWaveAudioEngine implements AudioEngine {
     async prepare(): Promise<void> {
         if (this.node !== null) return this.resume()
 
+        playOverTheSilentSwitch()
         const context = new AudioContext({ latencyHint: 'interactive' })
         await context.audioWorklet.addModule(this.workletUrl)
         const node = new AudioWorkletNode(context, processorName, {
@@ -82,4 +83,15 @@ export class SineWaveAudioEngine implements AudioEngine {
 
 function crossfadeSecondsFor(change: ToneChange): number {
     return change === 'newReed' ? newReedCrossfadeSeconds : slideCrossfadeSeconds
+}
+
+function playOverTheSilentSwitch(): void {
+    const session = (navigator as NavigatorWithAudioSession).audioSession
+    if (session === undefined) return
+
+    session.type = 'playback'
+}
+
+interface NavigatorWithAudioSession {
+    audioSession?: { type: string }
 }

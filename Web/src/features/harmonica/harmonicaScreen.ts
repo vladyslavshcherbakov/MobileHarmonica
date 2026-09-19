@@ -79,6 +79,7 @@ export class HarmonicaScreen {
             chosen.value = ''
         })
         element('stopTune').addEventListener('click', () => this.viewModel.stopTheTune())
+        this.listenToTheFullScreenButton()
         element('startButton').addEventListener('click', () => void this.startSound())
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) this.silence()
@@ -91,6 +92,15 @@ export class HarmonicaScreen {
         window.addEventListener('resize', relaid)
         window.addEventListener('orientationchange', relaid)
         window.visualViewport?.addEventListener('resize', relaid)
+        document.addEventListener('fullscreenchange', relaid)
+        document.addEventListener('webkitfullscreenchange', relaid)
+    }
+
+    private listenToTheFullScreenButton(): void {
+        if (!theScreenCanBeFilled()) return
+
+        document.body.classList.add('canFillTheScreen')
+        element('fullScreen').addEventListener('click', () => void fillTheScreen())
     }
 
     private async startSound(): Promise<void> {
@@ -179,6 +189,42 @@ function topmostContact(contacts: readonly Contact[]): Contact | undefined {
         if (topmost === undefined || contact.y < topmost.y) topmost = contact
     }
     return topmost
+}
+
+function theScreenCanBeFilled(): boolean {
+    const root = document.documentElement as FullScreenElement
+    return root.requestFullscreen !== undefined || root.webkitRequestFullscreen !== undefined
+}
+
+async function fillTheScreen(): Promise<void> {
+    const shown = shownFullScreen()
+    try {
+        await (shown === null ? enterFullScreen() : leaveFullScreen())
+    } catch {
+        return
+    }
+}
+
+function shownFullScreen(): Element | null {
+    return document.fullscreenElement ?? (document as FullScreenDocument).webkitFullscreenElement ?? null
+}
+
+function enterFullScreen(): Promise<void> | undefined {
+    const root = document.documentElement as FullScreenElement
+    return root.requestFullscreen?.({ navigationUI: 'hide' }) ?? root.webkitRequestFullscreen?.()
+}
+
+function leaveFullScreen(): Promise<void> | undefined {
+    return document.exitFullscreen?.() ?? (document as FullScreenDocument).webkitExitFullscreen?.()
+}
+
+interface FullScreenElement extends HTMLElement {
+    webkitRequestFullscreen?: () => Promise<void>
+}
+
+interface FullScreenDocument extends Document {
+    webkitFullscreenElement?: Element | null
+    webkitExitFullscreen?: () => Promise<void>
 }
 
 function element<T extends HTMLElement = HTMLElement>(id: string): T {

@@ -109,6 +109,18 @@ body {
     display: none;
 }
 
+#fullScreen {
+    display: none;
+    flex: 0 0 auto;
+    font-size: 17px;
+    line-height: 1;
+    padding: 6px 10px;
+}
+
+body.canFillTheScreen #fullScreen {
+    display: block;
+}
+
 #instrument {
     display: flex;
     flex: 1;
