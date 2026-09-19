@@ -159,16 +159,26 @@ so the page opens with something to press. The same tap can ask for motion.
 **Tilt needs a prompt.** `DeviceMotionEvent.requestPermission()` must be called from a gesture and
 only over HTTPS. Until it is granted the cup stays open and the instrument is complete without it.
 
-**The contact width is a measurement, not a search.** What Safari puts on a `Touch` is the
-question, and no compatibility table answers it: where the hardware reports a point rather than
-an area, `radiusX` reads 1 whatever the standard says. This is the same question never answered
-natively either, where `UITouch.majorRadius` has been logged since the day it was added and never
-once read. One page printing the number answers it for both at the same time. Until it does, the
-page ships with one note per finger, which needs no width at all, and the two width styles arrive
-when the number does.
+**The contact width is set on the page, not read off the finger.** Where the hardware reports a
+point rather than an area, `Touch.radiusX` reads 1 whatever the standard says, so the width that
+`UITouch.majorRadius` gives the app has no counterpart here. `Touch.force` is not the way round
+it either, for the same reason it is not on the app: the hardware that varied it ended with the
+iPhone XS.
 
-`Touch.force` is not the way round it, for the same reason it is not on the app: the hardware
-that varied it ended with the iPhone XS.
+So the page asks for the width instead of measuring it, and that is the one place where it
+deliberately differs from the app. `PlayingStyle` keeps its meaning, several fingers or one
+mouth, and the width becomes a number from one hole to four. Three of the four combinations are
+worth offering: several fingers at one hole each, several fingers at a chosen width each, and
+one mouth at a chosen width. One mouth at one hole is an instrument that plays no chords, so it
+is not offered, the same as on the app.
+
+The holes a contact covers should be the ones whose centres fall inside a span that many holes
+wide, so four is four rather than three and a half, and a span at the end of the comb hangs over
+the edge as a mouth does. At one hole the span is dropped and a contact takes the hole it is
+over, which is what makes it exact rather than nearly exact.
+
+None of this touches the app, where the radius is real, still read on every touch and still
+logged, and whether it varies usefully on an iPhone is still the question it always was.
 
 ## The steps
 
