@@ -29,6 +29,8 @@ final class PlayHarmonica {
 
     func play(at positions: [PositionOnHarmonica]) -> Harmonica {
         let sounding = positions.filter(\.isOnTheHarmonica)
+        guard !isCrossingTheBreathBoundary(sounding) else { return harmonica }
+
         let reeds = reedsUnder(sounding)
         guard !reeds.isEmpty, let intensity = intensityOf(sounding) else { return stopPlaying(.ringsDown) }
 
@@ -170,6 +172,12 @@ final class PlayHarmonica {
         guard style.coversTheContactWidth else { return Hole(at: position).map { [$0] } ?? [] }
 
         return Hole.allCovered(by: position)
+    }
+
+    private func isCrossingTheBreathBoundary(_ positions: [PositionOnHarmonica]) -> Bool {
+        guard !soundingReeds.isEmpty, let topmost = PositionOnHarmonica.topmost(of: positions) else { return false }
+
+        return topmost.isCrossingTheBreathBoundary
     }
 
     private func breathTurns(into reeds: [Reed]) -> Bool {

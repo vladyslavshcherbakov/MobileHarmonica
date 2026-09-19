@@ -379,6 +379,23 @@ word blow.
 **One breath for the whole instrument.** One mouth gives one airflow, so the topmost finger
 decides direction and intensity for every sounding hole. The boundary belongs to blow.
 
+**The boundary has slack, and nothing changes while a finger is in it.** Within six per cent of
+the strip's height either side of the centre line, the instrument holds whatever it is already
+sounding: not the breath, not the hole, not the intensity. Leaving the slack applies both the
+breath and the hole at once.
+
+Without it, moving from hole 2 drawn to hole 3 blown was impossible rather than awkward. The
+finger has to cross the line and a hole boundary, and whichever it crosses first sounds a note
+nobody asked for: hole 2 blown, or hole 3 drawn. There is no path that avoids one, because both
+axes were read on every touch. With the slack the crossing happens inside it and the next thing
+heard is the note that was aimed at.
+
+It costs nothing that was there before. A chug still works, because a finger crossing the line
+without moving sideways leaves the slack on the same hole. A slide still works, because a finger
+running along the strip well away from the line never enters it. And a finger resting near the
+line stops flickering the note, which is the same reason the shaping axis has a deadband around
+rest.
+
 Only fingers on the strip take part. A finger that has slid off the side neither sounds a
 hole nor decides anything, and the arbitration passes to the topmost of those left, so the
 white circle always marks a finger that is actually playing. `PlayHarmonica` and the screen

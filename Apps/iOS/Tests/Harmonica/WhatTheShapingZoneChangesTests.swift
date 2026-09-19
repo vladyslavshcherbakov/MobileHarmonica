@@ -51,7 +51,6 @@ final class WhatTheShapingZoneChangesTests: XCTestCase {
 
     func test_bend_whenAChordSounds_pullsEveryReedAsFarAsTheShallowestChamber() {
         let harmonica = harmonica()
-        _ = harmonica.changeStyle(to: .severalFingersOneNote)
 
         _ = harmonica.play(at: [
             PositionOnHarmonica(fractionFromLeftEdge: 0.25, fractionAboveCentreLine: -0.3),
@@ -83,6 +82,19 @@ final class WhatTheShapingZoneChangesTests: XCTestCase {
         XCTAssertEqual(engine.soundedTones.last?.first?.bendableSemitones, 3)
     }
 
+    func test_harmonica_whenAFingerCrossesToAnotherHoleAndBreath_soundsNeitherHalfwayHouse() {
+        let harmonica = harmonica()
+        _ = harmonica.play(at: [PositionOnHarmonica(fractionFromLeftEdge: 0.15, fractionAboveCentreLine: -0.3)])
+
+        _ = harmonica.play(at: [PositionOnHarmonica(fractionFromLeftEdge: 0.18, fractionAboveCentreLine: -0.03)])
+        _ = harmonica.play(at: [PositionOnHarmonica(fractionFromLeftEdge: 0.23, fractionAboveCentreLine: 0.03)])
+        _ = harmonica.play(at: [PositionOnHarmonica(fractionFromLeftEdge: 0.25, fractionAboveCentreLine: 0.2)])
+
+        let hertz = engine.soundedTones.compactMap { $0.first?.pitch.converted(to: .hertz).value.rounded() }
+        XCTAssertEqual(hertz, [392, 392], "hole 2 drawn is G4, then hole 3 blown is G4, and nothing in between")
+        XCTAssertEqual(engine.soundedTones.count, 2, "neither hole 2 blown nor hole 3 drawn ever sounded")
+    }
+
     func test_harmonica_whenTheBreathTurnsWhileAHoleSounds_makesEveryReedSpeakAgain() {
         let harmonica = harmonica()
         _ = harmonica.play(at: [PositionOnHarmonica(fractionFromLeftEdge: 0.25, fractionAboveCentreLine: 0.2)])
@@ -94,7 +106,6 @@ final class WhatTheShapingZoneChangesTests: XCTestCase {
 
     func test_harmonica_whenTheTopmostFingerIsAboveTheLine_blowsEveryHole() {
         let harmonica = harmonica()
-        _ = harmonica.changeStyle(to: .severalFingersOneNote)
 
         _ = harmonica.play(at: [
             PositionOnHarmonica(fractionFromLeftEdge: 0.05, fractionAboveCentreLine: 0.2),

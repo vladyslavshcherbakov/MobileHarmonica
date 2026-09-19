@@ -10,6 +10,16 @@ enum Breath {
     }
 }
 
+// MARK: - PositionOnHarmonica + Breath
+
+extension PositionOnHarmonica {
+    private static let slackAcrossTheBoundary = 0.06
+
+    var isCrossingTheBreathBoundary: Bool {
+        abs(fractionAboveCentreLine) < Self.slackAcrossTheBoundary
+    }
+}
+
 // MARK: - Breath + PositionOnHarmonica
 
 extension Breath {
