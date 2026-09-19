@@ -1,6 +1,6 @@
+import HarmonicaCoreTestSupport
 import XCTest
 @testable import HarmonicaCore
-import HarmonicaCoreTestSupport
 
 final class WhatAScorePlaysTests: XCTestCase {
     private let engine = RecordingAudioEngine()

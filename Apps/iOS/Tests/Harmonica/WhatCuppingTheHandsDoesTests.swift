@@ -1,8 +1,8 @@
 import Foundation
-import XCTest
-@testable import MobileHarmonica
 import HarmonicaCore
 import HarmonicaCoreTestSupport
+import XCTest
+@testable import MobileHarmonica
 
 final class WhatCuppingTheHandsDoesTests: XCTestCase {
     private let engine = RecordingAudioEngine()

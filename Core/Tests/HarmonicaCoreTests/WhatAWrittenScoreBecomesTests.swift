@@ -1,6 +1,6 @@
+import HarmonicaCoreTestSupport
 import XCTest
 @testable import HarmonicaCore
-import HarmonicaCoreTestSupport
 
 final class WhatAWrittenScoreBecomesTests: XCTestCase {
     private let reader = ScoreReader(tuning: RichterTuning())

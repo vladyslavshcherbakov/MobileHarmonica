@@ -1,20 +1,13 @@
-public struct Fingering: Equatable {
-    public let hole: Hole
-    public let breath: Breath
-    public let bentBySemitones: Double
-    public let isOverbent: Bool
-
-    public init(hole: Hole, breath: Breath, bentBySemitones: Double, isOverbent: Bool) {
-        self.hole = hole
-        self.breath = breath
-        self.bentBySemitones = bentBySemitones
-        self.isOverbent = isOverbent
-    }
+struct Fingering: Equatable {
+    let hole: Hole
+    let breath: Breath
+    let bentBySemitones: Double
+    let isOverbent: Bool
 }
 
 // MARK: - Fingerings
 
-public struct Fingerings {
+struct Fingerings {
     private static let overbendCost = 10
 
     private let tuning: RichterTuning
@@ -22,12 +15,12 @@ public struct Fingerings {
 
     // MARK: - Public
 
-    public init(tuning: RichterTuning, key: HarmonicaKey) {
+    init(tuning: RichterTuning, key: HarmonicaKey) {
         self.tuning = tuning
         self.key = key
     }
 
-    public func reaching(_ note: MIDINote) -> [Fingering] {
+    func reaching(_ note: MIDINote) -> [Fingering] {
         Hole.allCases
             .flatMap { hole in [Breath.blow, .draw].compactMap { fingering(hole, $0, reaching: note) } }
             .sorted { cost(of: $0) < cost(of: $1) }

@@ -1,6 +1,6 @@
 import Foundation
-import os
 import HarmonicaCore
+import os
 
 struct TimestampedLog: LogProtocol {
     private static let timestampStyle = Date.ISO8601FormatStyle(timeZone: .gmt)

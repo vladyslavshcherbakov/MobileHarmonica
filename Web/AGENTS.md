@@ -45,7 +45,7 @@ Web/
   index.html      the whole markup, no template engine
   styles.css      the whole style
   src/
-    domain/       ported from Apps/iOS/Domain line for line
+    domain/       ported from Core/ line for line
     audio/        the AudioWorkletProcessor and the engine that talks to it
     motion/       devicemotion behind its permission prompt
     features/     view state, presenter, view model, renderer, touch adapter

@@ -78,8 +78,8 @@ share, is in [ROADMAP.md](ROADMAP.md).
 The app target's sources are `Apps/iOS` with `Tests` excluded. The test bundle generates its
 own Info.plist through `GENERATE_INFOPLIST_FILE`; without one Xcode refuses to sign it.
 
-One app, so no modules. Every folder is written as if it were one: public on the boundary,
-imports pointing inward.
+The instrument is a module and the app is not. Everything else is written as if it were one:
+public on the boundary, imports pointing inward.
 
 `Entities/` is sub-foldered because it passed twenty files, well past the fifteen where the
 folder rules say sub-folders start. The split is by subject, not by role: the role is already

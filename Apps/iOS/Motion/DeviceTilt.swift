@@ -1,6 +1,6 @@
 import CoreMotion
-import UIKit
 import HarmonicaCore
+import UIKit
 
 final class DeviceTilt: TiltProtocol {
     private static let secondsBetweenReadings = 1.0 / 60

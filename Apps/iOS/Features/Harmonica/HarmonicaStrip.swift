@@ -1,5 +1,5 @@
-import SwiftUI
 import HarmonicaCore
+import SwiftUI
 
 @MainActor
 struct HarmonicaStrip: View {

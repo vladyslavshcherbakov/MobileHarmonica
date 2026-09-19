@@ -1,8 +1,8 @@
 import Foundation
-import XCTest
-@testable import MobileHarmonica
 import HarmonicaCore
 import HarmonicaCoreTestSupport
+import XCTest
+@testable import MobileHarmonica
 
 final class WhatTheNoteRowSaysTests: XCTestCase {
     private let engine = RecordingAudioEngine()

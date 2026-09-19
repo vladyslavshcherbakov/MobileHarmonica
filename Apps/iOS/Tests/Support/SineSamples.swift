@@ -1,7 +1,7 @@
 import Foundation
-@testable import MobileHarmonica
 import HarmonicaCore
 import HarmonicaCoreTestSupport
+@testable import MobileHarmonica
 
 enum SineSamples {
     static let rootHertz = 440.0
