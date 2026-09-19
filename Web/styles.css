@@ -1,0 +1,301 @@
+:root {
+    --black: #000;
+    --plate: #383838;
+    --plateLit: #ff9500;
+    --zone: #212121;
+    --label: #8c8c8c;
+    --labelDim: #4d4d4d;
+    --note: #fff;
+    --effect: #808080;
+    --holeSpacing: 6px;
+    --noteRowHeight: 30px;
+    --keyBarHeight: 44px;
+    --zoneSide: 120px;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+    background: var(--black);
+    color: var(--note);
+    font: 16px -apple-system, system-ui, sans-serif;
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    position: fixed;
+    inset: 0;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+}
+
+#app {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    height: var(--appHeight, 100dvh);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+#keyBar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: var(--keyBarHeight);
+    flex: 0 0 var(--keyBarHeight);
+    padding: 0 16px;
+    padding-left: calc(16px + env(safe-area-inset-left));
+}
+
+#keyLabel {
+    width: 34px;
+    font: 600 17px ui-monospace, Menlo, monospace;
+}
+
+#keySlider {
+    flex: 1;
+    min-width: 60px;
+    accent-color: var(--plateLit);
+}
+
+#cup {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+#cupBar {
+    width: 40px;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--plate);
+    overflow: hidden;
+}
+
+#cupFill {
+    width: 0;
+    height: 100%;
+    background: var(--plateLit);
+}
+
+#cupLabel {
+    font-size: 11px;
+    color: var(--effect);
+}
+
+#keyBar select,
+#keyBar button {
+    font-size: 13px;
+    color: var(--plateLit);
+    background: #1c1c1c;
+    border: 0;
+    border-radius: 8px;
+    padding: 6px 8px;
+    max-width: 190px;
+}
+
+#stopTune {
+    display: none;
+}
+
+#instrument {
+    display: flex;
+    flex: 1;
+    gap: var(--holeSpacing);
+    min-height: 0;
+}
+
+#zone {
+    position: relative;
+    flex: 0 0 var(--zoneSide);
+    height: var(--zoneSide);
+    align-self: center;
+    margin-left: calc(-1 * env(safe-area-inset-left));
+    padding-left: env(safe-area-inset-left);
+    background: var(--zone);
+    border-radius: 12px;
+    touch-action: none;
+}
+
+#zone span {
+    position: absolute;
+    font-size: 12px;
+    color: var(--label);
+}
+
+#overbendLabel {
+    top: 8px;
+    left: 8px;
+}
+
+#bendLabel {
+    bottom: 8px;
+    left: 8px;
+}
+
+#vibratoLabel {
+    right: 8px;
+    bottom: 8px;
+}
+
+.dim {
+    color: var(--labelDim) !important;
+}
+
+#strip {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+    position: relative;
+}
+
+#noteRow {
+    display: flex;
+    gap: var(--holeSpacing);
+    height: var(--noteRowHeight);
+    flex: 0 0 var(--noteRowHeight);
+}
+
+.noteCell {
+    flex: 1;
+    min-width: 0;
+    text-align: center;
+    line-height: 1.1;
+    overflow: hidden;
+}
+
+.noteName {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--note);
+}
+
+.noteEffect {
+    display: block;
+    font-size: 10px;
+    color: var(--effect);
+}
+
+#plates {
+    position: relative;
+    display: flex;
+    flex: 1;
+    gap: var(--holeSpacing);
+    min-height: 0;
+    touch-action: none;
+}
+
+.plate {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.plateTop,
+.plateBottom {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: var(--plate);
+}
+
+.plateTop {
+    top: 0;
+}
+
+.plateBottom {
+    bottom: 0;
+    opacity: 0.55;
+}
+
+.plateTop.lit,
+.plateBottom.lit {
+    background: var(--plateLit);
+}
+
+.plateNumber {
+    position: relative;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--label);
+}
+
+.plateNumber.lit {
+    color: var(--black);
+}
+
+#stripMarks,
+#zoneMarks {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.fingerMark {
+    position: absolute;
+    top: 0;
+    left: 0;
+    border: 3px solid var(--effect);
+    border-radius: 50%;
+    will-change: transform;
+}
+
+.fingerMark.deciding {
+    border-color: var(--note);
+}
+
+#turnThePhone,
+#start,
+#soundUnavailable {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: var(--black);
+    color: var(--note);
+    font-size: 20px;
+    z-index: 10;
+}
+
+#startButton {
+    font-size: 22px;
+    color: var(--black);
+    background: var(--plateLit);
+    border: 0;
+    border-radius: 14px;
+    padding: 16px 28px;
+}
+
+body.preparing #start {
+    display: flex;
+}
+
+body.unavailable #soundUnavailable {
+    display: flex;
+}
+
+@media (orientation: portrait) {
+    #turnThePhone {
+        display: flex;
+    }
+}

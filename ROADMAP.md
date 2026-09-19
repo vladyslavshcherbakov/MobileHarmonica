@@ -6,7 +6,9 @@ works are in [AGENTS.md](AGENTS.md), including its own [Not built](AGENTS.md#not
 which is about the instrument and stays where it is.
 
 Nothing here is scheduled. The order below is the order the work has to happen in, because each
-step needs the one before it.
+step needs the one before it. **Steps 2 to 7 are done and the page plays**; what each one landed
+as, and what is still open, is in [The steps](#the-steps). How the page is built, served and
+tested is in [Web/AGENTS.md](Web/AGENTS.md).
 
 ## Contents
 
@@ -29,7 +31,7 @@ step needs the one before it.
 | Framework | None. See [The presentation layer](#the-presentation-layer) |
 | Dependencies | None, the same as the app |
 | Reference | What WebKit implements, not what every browser agrees on |
-| Hosting | A static page, private while it is being tested |
+| Hosting | GitHub Pages, built and published by `.github/workflows/pages.yml` |
 
 **One browser is a decision, not a shortcut.** Building for Safari alone means WebKit's API is
 the API: anything it ships is available, prefixed or not, with no fallback to write and no
@@ -43,6 +45,10 @@ the only thing that answers that is the phone.
 means porting them would mean writing each one twice in two languages and watching them drift.
 They become JSON, and each platform maps that JSON into its own model. A piece is written once
 and played by both.
+
+That move is deliberately left until last, so the tunes are written twice in the meantime: once
+in Swift and once in TypeScript. The cost is known and bounded, a wrong note lands in one
+platform and not the other, and it buys a page that runs before the iOS side is touched at all.
 
 **The rules are code, and the code is the specification.** `Domain/` says what a bend range is,
 what an overbend shifts by, how far a mouth can pull a chord, in the only form that cannot be
@@ -65,6 +71,9 @@ Apps/iOS/       the app, reading out of Resources/
   Scores/       the .score text files a person writes, theirs, not shared
 Web/            the page, its TypeScript, its tests
 ```
+
+Of that, `Resources/Samples/` and `Web/` exist. `Resources/Scores/` and the index arrive with
+step 1, which is now the last step rather than the first.
 
 **Why an index file.** iOS finds the samples with `Bundle.main.urls(forResourcesWithExtension:)`,
 which enumerates a directory. A browser cannot enumerate anything: it can only fetch a name it
@@ -102,7 +111,7 @@ know that hole 3 draw bends three and hole 4 draw bends one.
 | `Domain/Entities/Scores` | TypeScript plus the JSON | 8 files | The four tunes stop being code. `Fingerings` and `Playability` port as they are |
 | `Domain/UseCases` | TypeScript | 2 files, 357 lines | `PlayHarmonica` and `PlayScore`. The only place with state |
 | `Domain/Protocols` | TypeScript interfaces | 4 files | |
-| `Audio/` | Web Audio, an `AudioWorkletProcessor` | Rewrite | The render arithmetic is the same; the plumbing is not |
+| `Audio/` | Web Audio, an `AudioWorkletProcessor` | Rewrite | The render arithmetic is the same; the plumbing is not. The worklet owns its state outright, so the app's lock and its per buffer merge have no counterpart |
 | `Motion/` | `devicemotion`, behind its permission prompt | Rewrite | |
 | `Features/Harmonica` | DOM, no framework | Rewrite of the views; the view state and the presenter port | Keeping the presenter is what keeps both platforms saying `overblow ↑` and `(D5 bend)` in the same places |
 | `App/` | One entry point | Rewrite | |
@@ -184,15 +193,19 @@ logged, and whether it varies usefully on an iPhone is still the question it alw
 
 Each one ends somewhere that runs.
 
-**0. One measurement.** A throwaway page that prints `touch.radiusX`, `radiusY` and the tilt
-reading. Press it flat, on the tip, and with two pads. This answers the width question for the
-app as well.
+**0. One measurement.** Not done, and no longer in the way: the page asks for the mouth width
+rather than measuring it, so what is left is the app's own question. A throwaway page that prints
+`touch.radiusX`, `radiusY` and the tilt reading would still answer it.
 
-**1. One copy of the music.** Create `Resources/`, move `Samples/` into it, write the four tunes
-as JSON, write the index, teach `Score` to read a tune from JSON, delete the four Swift tune
-files, point `project.yml` and `RecordedHarmonica` at the new folder, and add the JSON exit to
-`ScoreReader`. Touches `BundledScores`, `CompositionRoot`, `RecordedHarmonica`, `Score`,
-`BluesStrain`, `SlowDrag`, `HammerSong`, `FoxChase`, `ScoreReader`, `project.yml` and both
+**1. One copy of the music.** `Resources/Samples/` exists and both `project.yml` and the samples
+README point at it. The rest is deferred to the end, by decision: the tunes stay Swift, the page
+writes its own copy in TypeScript, and the JSON, the index and `ScoreReader`'s JSON exit are the
+last step rather than the first.
+
+What is left of it: write the four tunes as JSON, write the index, teach `Score` to read a tune
+from JSON, delete the four Swift tune files and the TypeScript copies, and add the JSON exit to
+`ScoreReader`. Touches `BundledScores`, `CompositionRoot`, `Score`, `BluesStrain`, `SlowDrag`,
+`HammerSong`, `FoxChase`, `ScoreReader`, the tunes under `Web/src/domain/scores` and both
 READMEs. No test changes its expectation: `WhatAScorePlaysTests` builds its own scores in code
 and `WhatAWrittenScoreBecomesTests` reads from a string, so neither is touched. That is the
 evidence this step is a refactor and not a change in behaviour. The app stays green and plays
@@ -201,25 +214,34 @@ identically.
 A typo in a tune stops being a compile error and becomes a launch failure, which is the price of
 not writing each piece twice. `ScoreReader` already proves reading a score at launch works.
 
-**2. A page that draws the instrument.** `Web/`, TypeScript, no framework, and the strip and the
-square at the right proportions, filling the visible area in both landscapes and saying to turn
-the phone in portrait. No sound, no touches.
+**2. A page that draws the instrument.** Done. `Web/`, TypeScript, no framework, no bundler.
 
-**3. The domain, test for test.** Port `Instrument`, `Playing`, `Scores` and the two use cases by
-reading the Swift, with the test names carried across and the same numbers asserted. This step
-either proves the layering was worth it or shows where it leaked.
+**3. The domain, test for test.** Done, and the layering held: `Domain/` crossed with nothing to
+untangle, and the 65 tests on node assert the Swift numbers, down to `B4` pulled three semitones
+landing on 415.30 Hz.
 
-**4. Sound.** An `AudioWorkletProcessor` holding the voice bank: the recording read with linear
+**4. Sound.** Done as a generated sine rather than the recordings, because the WAV files are not
+committed and a page nobody can open proves nothing. The voice bank, the 5 ms attack, the ring
+down over thirty cycles, the air spread across four reeds, the bend, the wandering vibrato and
+the one pole cup are all in the worklet and all tested. What is left is a `SampledAudioEngine`
+that loads the shared folder through an index, which is a different bank behind the same
+`SampleBank`.
+
+The original step, for when that is written: an `AudioWorkletProcessor` holding the voice bank,
+with the recording read with linear
 interpolation, the 5 ms attack against the change's own fall, the ring down over 30 cycles, the
 air spread across at most four reeds, the bend as one multiplication, the vibrato and its wander,
-the cup as a state variable filter. Samples loaded from the shared folder through the index.
+the cup as the one pole lid the app settled on. Samples loaded from the shared folder through the
+index.
 
-**5. Touches.** Pointer events into `PositionOnHarmonica`, the playing styles the measurement
-allows, the square, the note row, the plates. At the end of this step the page is an instrument.
+**5. Touches.** Done. Pointer events captured per surface into `PositionOnHarmonica`, the three
+playing styles, the chosen mouth width, the square with its pinch, the note row, the plates.
 
-**6. The tunes.** `PlayScore` driving that instrument from the shared JSON, and the menu.
+**6. The tunes.** Done, from the TypeScript copy rather than the shared JSON, which is step 1
+again.
 
-**7. Tilt.** The permission gate, the lean, the cup bar.
+**7. Tilt.** Written, not verified. The permission gate is in a gesture and the cup bar moves,
+but which way a real iPhone reports its lean has not been checked on a real iPhone.
 
 ## Not in scope
 

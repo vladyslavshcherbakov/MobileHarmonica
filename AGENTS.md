@@ -32,7 +32,7 @@ open MobileHarmonica.xcodeproj
 Scheme `MobileHarmonica` builds the app and runs `MobileHarmonicaTests`.
 
 `MobileHarmonica.xcodeproj` and `Apps/iOS/Info.plist` are generated and not committed. Neither
-are the WAV files: `Apps/iOS/Audio/Samples/` ships empty and the app says sound is unavailable
+are the WAV files: `Resources/Samples/` ships empty and the app says sound is unavailable
 until they are copied in. See the README there.
 
 ## Constraints
@@ -50,21 +50,29 @@ until they are copied in. See the README there.
 ## Repository layout
 
 ```
+Resources/
+  Samples/      the WAV files, shared with the web version, not committed
 Apps/iOS/
   App/          entry point and composition root
   Domain/       Protocols, UseCases, and Entities split by subject:
                 Instrument/ the harmonica itself, Playing/ what a finger does,
                 Scores/ written music. Imports Foundation only
-  Audio/        AudioEngineProtocol implementation, and Samples/ for the WAV files
+  Audio/        AudioEngineProtocol implementation, reading out of Resources/Samples
   Motion/       TiltProtocol implementation, the device's lean read through CoreMotion
   Scores/       text scores the user writes, read at launch, not committed
   Features/     one folder per feature: view state, presenter, view model, views
   Logging/      TimestampedLog
   Navigation/   coordinator and routes
   Tests/        Harmonica/ for behaviour, Support/ for doubles and helpers
+Web/            the same instrument as a page, in TypeScript. See Web/AGENTS.md
 project.yml
 AGENTS.md
+ROADMAP.md
 ```
+
+The app and the page are two implementations of one instrument, and what is shared between them
+is in `Resources/`. Why each layer was rewritten rather than compiled across, and what is left to
+share, is in [ROADMAP.md](ROADMAP.md).
 
 The app target's sources are `Apps/iOS` with `Tests` excluded. The test bundle generates its
 own Info.plist through `GENERATE_INFOPLIST_FILE`; without one Xcode refuses to sign it.
