@@ -6,8 +6,10 @@ const slideStepSeconds = 0.04
 const shakeStepSeconds = 0.06
 const bendStepSeconds = 0.01
 
+export type TuneEnding = 'played' | 'stopped'
+
 export interface TunePerformance {
-    readonly finished: Promise<void>
+    readonly finished: Promise<TuneEnding>
     cancel(): void
 }
 
@@ -25,8 +27,8 @@ export class PlayTheTune {
     play(index: number, played: (harmonica: CoreState) => void): TunePerformance {
         const cancellation: Cancellation = { stopped: false }
         const tune = this.tunes[index]
-        const finished = tune === undefined
-            ? Promise.resolve()
+        const finished: Promise<TuneEnding> = tune === undefined
+            ? Promise.resolve('played')
             : this.perform(tune, played, cancellation)
         return { finished, cancel: () => { cancellation.stopped = true } }
     }
@@ -35,7 +37,7 @@ export class PlayTheTune {
         tune: CoreTune,
         played: (harmonica: CoreState) => void,
         cancellation: Cancellation
-    ): Promise<void> {
+    ): Promise<TuneEnding> {
         played(this.core.changeKey(tune.harmonicaKeyPosition))
         const secondsPerBeat = 60 / tune.beatsPerMinute
         for (const event of tune.events) {
@@ -43,8 +45,11 @@ export class PlayTheTune {
 
             await this.performEvent(event, secondsPerBeat, played, cancellation)
         }
+        if (cancellation.stopped) return 'stopped'
+
         played(this.core.shapeTone(0, 0))
         played(this.core.stopPlaying(true))
+        return 'played'
     }
 
     private async performEvent(
@@ -97,6 +102,8 @@ export class PlayTheTune {
             played(this.core.play(holesOf(note, step), note.breath ?? 'blow'))
             await waitUntil(started + (sounding * (step + 1)) / steps)
         }
+        if (cancellation.stopped) return
+
         played(this.core.stopPlaying(false))
         await wait(gap)
     }

@@ -407,8 +407,13 @@ They are folk songs with no author, and no edition was transcribed: the melodies
 they are commonly sung. That means a wrong interval is possible and is meant to be corrected by
 ear, in the file, the same way the other four were shaped.
 
-A live finger stops the score, since both drive one instrument. Timing is `Task.sleep`, whose
-jitter is a few milliseconds: fine for a demo, not for music. See [Not built](#not-built).
+A live finger stops the score, since both drive one instrument, and **a stopped score then
+touches nothing**: it does not end its note, rest the shaping axis or ring the reeds down,
+because by then the finger is playing and those are its reeds now. The tail used to run whatever
+stopped the score, so taking over from the demo silenced the very note the finger had just
+sounded, up to a note's length later. Whoever stops the score decides what follows: the stop
+button silences, a finger plays on. Timing is `Task.sleep`, whose jitter is a few milliseconds:
+fine for a demo, not for music. See [Not built](#not-built).
 
 **A sounding plate lights only the half that is sounding**, the top for blow and the bottom
 for draw, so the demo shows where to put a finger and which way to breathe. It used to light

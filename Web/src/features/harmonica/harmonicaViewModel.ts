@@ -5,7 +5,7 @@ import type { Log } from '../../logging/log.js'
 import type { Tilt } from '../../motion/tilt.js'
 import type { HarmonicaPresenter } from './harmonicaPresenter.js'
 import type { HarmonicaViewState, PlayingStyleChoice } from './harmonicaViewState.js'
-import type { TunePerformance } from './playTheTune.js'
+import type { TuneEnding, TunePerformance } from './playTheTune.js'
 import { PlayTheTune } from './playTheTune.js'
 
 export class HarmonicaViewModel {
@@ -73,7 +73,7 @@ export class HarmonicaViewModel {
         this.log.record(`the tune ${this.nameOfTune(index)} started`)
         this.performance = this.tunePlayer.play(index, harmonica => this.present(harmonica))
         void this.performance.finished
-            .then(() => this.tuneFinished())
+            .then(ending => this.tuneEnded(ending))
             .catch(failure => this.tuneFailed(failure))
     }
 
@@ -114,7 +114,9 @@ export class HarmonicaViewModel {
         return this.state.playable.demo.tunes.find(tune => tune.id === index)?.name ?? String(index)
     }
 
-    private tuneFinished(): void {
+    private tuneEnded(ending: TuneEnding): void {
+        if (ending === 'stopped') return this.log.record('the tune was stopped')
+
         this.log.record('the tune ended')
         this.silenceTheTune()
     }

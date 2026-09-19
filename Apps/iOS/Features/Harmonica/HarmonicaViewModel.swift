@@ -110,6 +110,8 @@ final class HarmonicaViewModel: ObservableObject {
         for await harmonica in playScore.play(tune) {
             show(harmonica)
         }
+        guard !Task.isCancelled else { return }
+
         performance = nil
         show(playHarmonica.stopPlaying(.ringsDown))
     }

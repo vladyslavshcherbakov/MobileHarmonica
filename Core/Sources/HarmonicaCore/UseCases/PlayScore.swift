@@ -33,9 +33,15 @@ public final class PlayScore {
         for event in score.events where !Task.isCancelled {
             await perform(event, secondsPerBeat: score.secondsPerBeat, into: continuation)
         }
+        guard !Task.isCancelled else {
+            log.record("score stopped early")
+            continuation.finish()
+            return
+        }
+
         continuation.yield(harmonica.shapeTone(.rest, vibrato: .off))
         continuation.yield(harmonica.stopPlaying(.ringsDown))
-        log.record(Task.isCancelled ? "score stopped early" : "score finished")
+        log.record("score finished")
         continuation.finish()
     }
 
@@ -64,7 +70,7 @@ public final class PlayScore {
 
         let step = min(Self.slideStepSeconds, seconds / 2 / Double(passing.count))
         continuation.yield(harmonica.shapeTone(.rest, vibrato: .off))
-        for hole in passing {
+        for hole in passing where !Task.isCancelled {
             continuation.yield(harmonica.play([hole], breathing: note.breath))
             await wait(step)
         }
@@ -80,7 +86,7 @@ public final class PlayScore {
         let sounding = seconds - gap
         let steps = Self.steps(of: note, within: sounding)
         let started = ContinuousClock.now
-        for step in 0..<steps {
+        for step in 0..<steps where !Task.isCancelled {
             _ = harmonica.shapeTone(
                 shaping(for: note, at: Self.fraction(step, of: steps)),
                 vibrato: VibratoDepth(clamping: note.vibrato)
@@ -88,6 +94,8 @@ public final class PlayScore {
             continuation.yield(harmonica.play(Self.holes(of: note, at: step), breathing: note.breath))
             await wait(until: started, plus: sounding * Double(step + 1) / Double(steps))
         }
+        guard !Task.isCancelled else { return }
+
         continuation.yield(harmonica.stopPlaying(.damped))
         await wait(gap)
     }
