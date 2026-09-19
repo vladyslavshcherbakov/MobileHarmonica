@@ -13,7 +13,10 @@ struct Score: Equatable {
         60 / beatsPerMinute
     }
 
-    static let tunes: [Score] = [.bluesStrain, .slowDrag, .hammerSong, .foxChase]
+    static let tunes: [Score] = [
+        .bluesStrain, .slowDrag, .hammerSong, .foxChase,
+        .neseHaliaVodu, .oiPidVyshneiu, .naIvanaNaKupala
+    ]
 }
 
 // MARK: - ScoreEvent

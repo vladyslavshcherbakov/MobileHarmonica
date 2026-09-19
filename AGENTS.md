@@ -363,9 +363,21 @@ instrument at once:
 | Slow drag | Scoops and released bends, long notes under vibrato, a slide into a phrase, one shake |
 | Hammer song | Chugging blow and draw, tongue-block octaves on holes 1 and 4, tongue slaps, syncopation |
 | Fox chase | A gallop chug, shakes, deep bends released, horn chords. Its bars are deliberately uneven, as the genre is |
+| Nese Halia vodu | Ukrainian folk, in A, third position on a harmonica in G |
+| Oi pid vyshneiu | Ukrainian folk, in D, third position on a harmonica in C |
+| Na Ivana na Kupala | Ukrainian folk, in G, first position on a harmonica in G |
 
 Octaves and tongue slaps needed no new code: an event already names a set of holes, so an
 octave is `[.one, .four]` and a slap is a chord of 0.15 beats followed by the single note.
+
+**The three Ukrainian ones are melodies rather than settings**, and they are there to be played
+along with rather than listened to: single notes, no bends, no overbends, all inside holes 4 to
+6, so every one of them can be taken with a mouth. Their keys and positions were chosen to make
+that true, which is why two of them ask for a harmonica in G and one for a C.
+
+They are folk songs with no author, and no edition was transcribed: the melodies are written as
+they are commonly sung. That means a wrong interval is possible and is meant to be corrected by
+ear, in the file, the same way the other four were shaped.
 
 A live finger stops the score, since both drive one instrument. Timing is `Task.sleep`, whose
 jitter is a few milliseconds: fine for a demo, not for music. See [Not built](#not-built).
