@@ -1,6 +1,18 @@
 const errorSuccess = 0
 const errorNotSupported = 58
 const nanosecondsPerMillisecond = 1_000_000
+const characterDevice = 2
+const flagsOffset = 2
+
+const refusedCalls = [
+    'fd_advise', 'fd_allocate', 'fd_datasync', 'fd_fdstat_set_flags', 'fd_fdstat_set_rights',
+    'fd_filestat_get', 'fd_filestat_set_size', 'fd_filestat_set_times', 'fd_pread', 'fd_prestat_get',
+    'fd_prestat_dir_name', 'fd_pwrite', 'fd_read', 'fd_readdir', 'fd_renumber', 'fd_seek', 'fd_sync',
+    'fd_tell', 'path_create_directory', 'path_filestat_get', 'path_filestat_set_times', 'path_link',
+    'path_open', 'path_readlink', 'path_remove_directory', 'path_rename', 'path_symlink',
+    'path_unlink_file', 'poll_oneoff', 'proc_raise', 'sock_accept', 'sock_recv', 'sock_send',
+    'sock_shutdown'
+]
 
 export interface WasiHost {
     readonly imports: Record<string, WebAssembly.ImportValue>
@@ -38,15 +50,15 @@ export function wasiHost(write: (line: string) => void): WasiHost {
             memory = given
         },
         imports: {
+            ...Object.fromEntries(refusedCalls.map(call => [call, () => errorNotSupported])),
             fd_write: (file: number, vectors: number, count: number, written: number) =>
                 writeTo(file, vectors, count, written),
             fd_close: () => errorSuccess,
-            fd_fdstat_get: () => errorSuccess,
-            fd_seek: () => errorNotSupported,
-            fd_read: () => errorNotSupported,
-            fd_prestat_get: () => errorNotSupported,
-            fd_prestat_dir_name: () => errorNotSupported,
-            path_open: () => errorNotSupported,
+            fd_fdstat_get: (_file: number, status: number) => {
+                view().setUint8(status, characterDevice)
+                view().setUint16(status + flagsOffset, 0, true)
+                return errorSuccess
+            },
             environ_sizes_get: (count: number, size: number) => {
                 view().setUint32(count, 0, true)
                 view().setUint32(size, 0, true)
@@ -71,7 +83,6 @@ export function wasiHost(write: (line: string) => void): WasiHost {
                 crypto.getRandomValues(bytes().subarray(at, at + length))
                 return errorSuccess
             },
-            poll_oneoff: () => errorNotSupported,
             sched_yield: () => errorSuccess,
             proc_exit: (code: number) => {
                 throw new Error(`the instrument stopped itself with ${code}`)

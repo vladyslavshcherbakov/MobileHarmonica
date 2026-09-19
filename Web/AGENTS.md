@@ -76,6 +76,13 @@ random bytes, an environment and somewhere to write; the shim answers those and 
 so the page carries no WASI package. `_initialize` is what the loader calls after instantiating:
 the module is built as a reactor, so it survives its own start and keeps its exports.
 
+**Refusing a call and not naming it are different things.** A name the module imports and the
+shim does not carry is a `LinkError` that kills the whole module before a line of it runs, which
+is how `fd_fdstat_set_flags` left the page dead on `reading the instrument`. So the shim names
+every one of preview1's forty-six calls: a dozen it answers, the rest return `ENOTSUP`, and a
+test lists the specification's names beside what the shim exports, because the one thing that
+cannot be found by reading our own code is what Foundation decided to import.
+
 **The clock stays on this side.** `PlayTheTune` walks a tune's events, sleeping between them, and
 drives the instrument through the same calls a finger does. The core has no executor to sleep on,
 and the project's own rule already says time lives in the player. What it cannot know by itself,
