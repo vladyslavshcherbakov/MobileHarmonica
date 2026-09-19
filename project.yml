@@ -21,9 +21,8 @@ targets:
       - path: Apps/iOS
         excludes:
           - Tests
-          - Audio/Samples
           - Scores
-      - path: Apps/iOS/Audio/Samples
+      - path: Resources/Samples
         type: folder
       - path: Apps/iOS/Scores
         type: folder
