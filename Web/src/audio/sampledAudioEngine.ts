@@ -9,18 +9,20 @@ import type { VibratoDepth } from '../domain/playing/vibratoDepth.js'
 import type { CupDepth } from '../domain/playing/cupDepth.js'
 import type { WorkletMessage } from './workletMessage.js'
 import { processorName } from './workletMessage.js'
+import { recordedHarmonica } from './recordedHarmonica.js'
 
 const amplitude = 0.25
 const slideCrossfadeSeconds = 0.02
 const newReedCrossfadeSeconds = 0.05
 const reedStopsInSeconds = 0.02
 
-export class SineWaveAudioEngine implements AudioEngine {
+export class SampledAudioEngine implements AudioEngine {
     private context: AudioContext | null = null
     private node: AudioWorkletNode | null = null
 
     constructor(
         private readonly workletUrl: string,
+        private readonly samplesFolder: string,
         private readonly log: Log
     ) {}
 
@@ -41,6 +43,7 @@ export class SineWaveAudioEngine implements AudioEngine {
         this.node = node
         await this.resume()
         this.log.record(`audio started at ${context.sampleRate} Hz`)
+        await this.loadTheRecordings(context)
     }
 
     soundTones(tones: readonly Tone[], change: ToneChange): void {
@@ -70,6 +73,15 @@ export class SineWaveAudioEngine implements AudioEngine {
 
     silence(release: ReedRelease): void {
         this.send(release === 'ringsDown' ? { kind: 'ringDown' } : { kind: 'damp', seconds: reedStopsInSeconds })
+    }
+
+    private async loadTheRecordings(context: AudioContext): Promise<void> {
+        const samples = await recordedHarmonica(this.samplesFolder, context)
+        this.node?.port.postMessage(
+            { kind: 'samples', frames: samples.frames, notes: samples.notes },
+            [samples.frames.buffer]
+        )
+        this.log.record(`loaded ${samples.notes.length} recorded notes`)
     }
 
     private async resume(): Promise<void> {

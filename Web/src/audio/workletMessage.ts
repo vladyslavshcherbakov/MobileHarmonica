@@ -1,3 +1,5 @@
+import type { RecordedNote } from './sampleBank.js'
+
 export const processorName = 'harmonica'
 
 export interface SoundingTone {
@@ -6,6 +8,11 @@ export interface SoundingTone {
 }
 
 export type WorkletMessage =
+    | {
+        readonly kind: 'samples'
+        readonly frames: Float32Array
+        readonly notes: readonly RecordedNote[]
+    }
     | {
         readonly kind: 'sound'
         readonly tones: readonly SoundingTone[]

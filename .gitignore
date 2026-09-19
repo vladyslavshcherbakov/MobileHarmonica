@@ -10,3 +10,4 @@ Resources/Samples/*.wav
 Apps/iOS/Scores/*.score
 Web/node_modules/
 Web/dist/
+Web/samples/

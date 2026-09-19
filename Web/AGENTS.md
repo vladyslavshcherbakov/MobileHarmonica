@@ -65,13 +65,24 @@ of a double.
 `PlayingStyle` keeps its three cases and its two questions, so the width is the third control
 rather than a fourth style. One mouth at one hole is still not offered.
 
-**The sound is generated, not recorded.** `SineWaveAudioEngine` drives a voice bank reading a
-sine wavetable, because the WAV library is not committed and a page that has to be handed the
-samples first is not a page anyone can open. Everything above the bank is the shape the sampled
-engine needs: a `SampleBank` of frames plus a `RecordedNote` per pitch, read at
-`wanted ÷ recorded` speed. Writing the sampled engine is swapping `sineBank()` for a loader and
-nothing else, which is why the tests for the oscillator are the app's tests unchanged: they
-always ran on a synthetic bank.
+**The recordings reach the page over the network, not out of a bundle.** The app enumerates its
+`Samples` folder; a browser can fetch a name but cannot list a directory, so the folder carries
+`index.json` and both the page and the copy step read that. `npm run samples` copies
+`Resources/Samples` into `Web/samples` and writes the index, and the Pages workflow runs it
+before publishing, so the shared folder stays the one place the WAV files live.
+
+Loading is `fetch` plus `decodeAudioData` in place of `AVAudioFile`, and the arithmetic around it
+is the app's: each file is mixed to mono, its loop is seconds 1 to 4, frames past second 4 are
+never kept, and the whole library ends up in one contiguous `Float32Array` that crosses to the
+worklet once, transferred rather than copied. `decodeAudioData` resamples to the context's rate
+on the way in, so a `RecordedNote` carries that rate and the voice still reads at
+`wanted ÷ recorded` speed.
+
+The sine bank stays, and is now only what the oscillator's tests run on, exactly as
+`SineSamples` is on the app. The processor starts on a silent bank and says nothing until the
+recordings arrive, so a page that cannot load them is silent rather than buzzing — and
+`prepare()` waits for them, so the screen reports sound as unavailable the same way the app
+does.
 
 **The worklet holds no locks.** `Oscillator` in the app merges a buffer's worth of progress back
 into a bank the main thread may have re-sounded meanwhile, because both threads reach it. Here
@@ -136,10 +147,13 @@ notices.
 
 ## Verified, and not
 
-Run on node: the domain, the use cases and the oscillator, 65 tests. Run in Chromium through
+Run on node: the domain, the use cases, the oscillator and how a recording's name is read, 71
+tests. Run in Chromium through
 Playwright: the page lays out, the plates light, the note row names the bent and overbent notes,
 the pinch resizes the square, a tune plays, and the worklet renders 440 Hz, bends it three
-semitones to 370 and rings down to silence.
+semitones to 370 and rings down to silence. On the real library: nineteen recordings load in
+under two seconds, hole 4 blown comes out as 522 Hz with its partials at 1044 and 1572, and a
+full bend on a three semitone reed moves all of them by 1.19, which is the three semitones.
 
 Not run anywhere yet: **Safari on an iPhone**, and **the tilt**. The lean reads
 `accelerationIncludingGravity.y` and flips its sign on `screen.orientation.angle === 90`, and

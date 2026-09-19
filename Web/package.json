@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc",
+    "samples": "node tools/prepareSamples.mjs",
+    "build": "npm run samples && tsc",
     "test": "tsc && node --test \"dist/tests/**/*.test.js\""
   },
   "devDependencies": {

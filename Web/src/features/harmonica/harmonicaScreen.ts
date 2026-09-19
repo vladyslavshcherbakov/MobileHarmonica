@@ -12,6 +12,7 @@ const zoneWidthFraction = 0.22
 const smallestZoneScale = 0.45
 const largestZoneScale = 2
 const holeCount = 10
+const loadingLabel = 'loading the reeds'
 
 export class HarmonicaScreen {
     private readonly renderer: HarmonicaRenderer
@@ -107,6 +108,9 @@ export class HarmonicaScreen {
     }
 
     private async startSound(): Promise<void> {
+        const button = element<HTMLButtonElement>('startButton')
+        button.disabled = true
+        button.textContent = loadingLabel
         await this.viewModel.prepareSound()
         document.body.classList.remove('preparing')
         this.layOutTheZone()

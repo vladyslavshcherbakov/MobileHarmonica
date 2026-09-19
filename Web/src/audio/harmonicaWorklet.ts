@@ -1,4 +1,5 @@
 import type { SoundingTone, WorkletMessage } from './workletMessage.js'
+import type { RecordedNote, SampleBank } from './sampleBank.js'
 
 const processorName = 'harmonica'
 
@@ -18,18 +19,7 @@ const radiansPerCycle = 2 * Math.PI
 const sineLoopCycles = 44
 const sineRootHertz = 440
 
-export interface RecordedNote {
-    readonly start: number
-    readonly loopStart: number
-    readonly loopEnd: number
-    readonly rootHertz: number
-    readonly sampleRate: number
-}
-
-export interface SampleBank {
-    readonly frames: Float32Array
-    readonly notes: readonly RecordedNote[]
-}
+export const silentBank: SampleBank = { frames: new Float32Array(0), notes: [] }
 
 export function sineBank(atSampleRate: number): SampleBank {
     const frameCount = Math.round((sineLoopCycles * atSampleRate) / sineRootHertz)
@@ -77,9 +67,14 @@ export class Oscillator {
     private ringingDown = false
 
     constructor(
-        private readonly samples: SampleBank,
+        private samples: SampleBank,
         private readonly sampleRate: number
     ) {}
+
+    useRecordings(samples: SampleBank): void {
+        this.samples = samples
+        this.voices.length = 0
+    }
 
     sound(tones: readonly SoundingTone[], crossfadeSeconds: number, everyReedSpeaksAgain: boolean): void {
         const playable = this.recorded(tones)
@@ -332,7 +327,7 @@ export function registerHarmonicaProcessor(): void {
             super(options)
             const settings = (options?.processorOptions ?? {}) as { amplitude?: number }
             this.amplitude = settings.amplitude ?? 0.25
-            this.oscillator = new Oscillator(sineBank(sampleRate), sampleRate)
+            this.oscillator = new Oscillator(silentBank, sampleRate)
             this.port.onmessage = event => this.receive(event.data as WorkletMessage)
         }
 
@@ -350,6 +345,9 @@ export function registerHarmonicaProcessor(): void {
 
         private receive(message: WorkletMessage): void {
             switch (message.kind) {
+                case 'samples':
+                    this.oscillator.useRecordings({ frames: message.frames, notes: message.notes })
+                    return
                 case 'sound':
                     this.oscillator.sound(message.tones, message.crossfadeSeconds, message.everyReedSpeaksAgain)
                     return
