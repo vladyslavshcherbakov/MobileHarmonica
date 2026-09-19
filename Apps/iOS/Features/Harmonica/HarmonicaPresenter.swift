@@ -9,7 +9,7 @@ struct HarmonicaPresenter {
     private static let bendLabel = "bend ↓"
     private static let vibratoLabel = "vibrato →"
     private static let cupLabel = "cup"
-    private static let playDemoLabel = "play"
+    private static let playDemoLabel = "▶\u{FE0E}"
     private static let stopDemoLabel = "stop"
     private static let bendEffectLabel = "bend"
     private static let overblowEffectLabel = "overblow"
