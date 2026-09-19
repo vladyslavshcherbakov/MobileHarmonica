@@ -154,8 +154,6 @@ body.canFillTheScreen #fullScreen {
     flex: 0 0 var(--zoneSide);
     height: var(--zoneSide);
     align-self: center;
-    margin-left: calc(-1 * env(safe-area-inset-left));
-    padding-left: env(safe-area-inset-left);
     background: var(--zone);
     border-radius: 12px;
     touch-action: none;
@@ -328,6 +326,10 @@ body.canFillTheScreen #fullScreen {
 
 body:not(.canFillTheScreen) #howToFillTheScreen {
     display: block;
+}
+
+body.runsAsAnApp #howToFillTheScreen {
+    display: none;
 }
 
 #startButton {

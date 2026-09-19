@@ -98,6 +98,8 @@ export class HarmonicaScreen {
     }
 
     private listenToTheFullScreenButton(): void {
+        if (runsAsAnApp()) document.body.classList.add('runsAsAnApp')
+
         if (!theScreenCanBeFilled()) return
 
         document.body.classList.add('canFillTheScreen')
@@ -198,6 +200,15 @@ function topmostContact(contacts: readonly Contact[]): Contact | undefined {
         if (topmost === undefined || contact.y < topmost.y) topmost = contact
     }
     return topmost
+}
+
+function runsAsAnApp(): boolean {
+    return (navigator as HomeScreenNavigator).standalone === true
+        || window.matchMedia('(display-mode: standalone), (display-mode: fullscreen)').matches
+}
+
+interface HomeScreenNavigator extends Navigator {
+    standalone?: boolean
 }
 
 function theScreenCanBeFilled(): boolean {

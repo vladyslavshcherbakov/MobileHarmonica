@@ -109,6 +109,13 @@ audio session, which the hardware mute switch silences, so a page that is nothin
 quiet in a pocket. `navigator.audioSession.type = 'playback'` says this audio is the point of the
 page rather than decoration. Only Safari implements it, so the property is read before it is set.
 
+**The instrument installs as an app.** Safari on iPhone does not carry the Fullscreen API at
+all, so the only way to lose the browser's own bars there is to be started from the home screen.
+`manifest.webmanifest` asks for `fullscreen` display and a landscape orientation, and since iOS
+16.4 that manifest is what Safari reads; the old `apple-mobile-web-app-capable` meta tag stays
+beside it as the fallback Safari uses when it cannot load the manifest. Started that way, the
+page hides its own advice about installing, because there is nothing left to install.
+
 **The screen is filled by a button.** The Fullscreen API reached iPhone in Safari 17.4; before
 that only a video element could go fullscreen. The button asks `document.documentElement`, falls
 back to the `webkit` spelling, and hides itself where neither exists, so nothing on the bar
