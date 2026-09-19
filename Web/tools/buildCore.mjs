@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url'
 const here = dirname(fileURLToPath(import.meta.url))
 const core = resolve(here, '../../Core')
 const served = resolve(here, '../core')
-const sdk = process.env.SWIFT_WASM_SDK ?? 'wasm32-unknown-wasi'
+const sdk = process.env.SWIFT_WASM_SDK ?? 'swift-6.4.0-RELEASE_wasm'
 
 const built = spawnSync(
     'swift',
