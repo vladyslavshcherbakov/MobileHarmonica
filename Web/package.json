@@ -3,10 +3,11 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "core": "node tools/buildCore.mjs",
     "samples": "node tools/prepareSamples.mjs",
     "build": "npm run samples && tsc",
-    "test": "tsc && node --test \"dist/tests/**/*.test.js\"",
-    "stamp": "node tools/stampTheBuild.mjs"
+    "stamp": "node tools/stampTheBuild.mjs",
+    "test": "tsc && node --test \"dist/tests/**/*.test.js\""
   },
   "devDependencies": {
     "typescript": "^5.9.0 || ^6.0.0"

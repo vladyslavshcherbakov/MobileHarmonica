@@ -111,16 +111,17 @@ public final class PlayHarmonica {
         return harmonica
     }
 
-    // MARK: - Private
-
-    private var harmonica: Harmonica {
+    public var harmonica: Harmonica {
         Harmonica(
             key: key,
             style: style,
+            mouth: mouth,
             cup: cup,
             sounding: Dictionary(uniqueKeysWithValues: soundingReeds.map { ($0.hole, soundingReed(of: $0)) })
         )
     }
+
+    // MARK: - Private
 
     private var bend: BendDepth {
         shaping.bend
