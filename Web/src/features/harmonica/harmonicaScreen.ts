@@ -101,6 +101,9 @@ export class HarmonicaScreen {
 
         document.body.classList.add('canFillTheScreen')
         element('fullScreen').addEventListener('click', () => void fillTheScreen())
+        element('fillTheScreenHint').addEventListener('click', () => {
+            document.body.classList.remove('askedToFillTheScreen')
+        })
     }
 
     private async startSound(): Promise<void> {
@@ -200,9 +203,21 @@ async function fillTheScreen(): Promise<void> {
     const shown = shownFullScreen()
     try {
         await (shown === null ? enterFullScreen() : leaveFullScreen())
-    } catch {
-        return
+    } catch (refusal) {
+        sayHowElseToFillTheScreen(refusal)
     }
+}
+
+function sayHowElseToFillTheScreen(refusal: unknown): void {
+    element('fillTheScreenReason').textContent =
+        'Safari would not fill the screen from a tab. Open the share menu and add this page to the'
+        + ' home screen: started from there it runs without the browser at all.'
+    element('fillTheScreenRefusal').textContent = nameOf(refusal)
+    document.body.classList.add('askedToFillTheScreen')
+}
+
+function nameOf(refusal: unknown): string {
+    return refusal instanceof Error ? `${refusal.name}: ${refusal.message}` : String(refusal)
 }
 
 function shownFullScreen(): Element | null {
@@ -211,7 +226,7 @@ function shownFullScreen(): Element | null {
 
 function enterFullScreen(): Promise<void> | undefined {
     const root = document.documentElement as FullScreenElement
-    return root.requestFullscreen?.({ navigationUI: 'hide' }) ?? root.webkitRequestFullscreen?.()
+    return root.requestFullscreen?.() ?? root.webkitRequestFullscreen?.()
 }
 
 function leaveFullScreen(): Promise<void> | undefined {

@@ -277,7 +277,8 @@ body.canFillTheScreen #fullScreen {
 
 #turnThePhone,
 #start,
-#soundUnavailable {
+#soundUnavailable,
+#fillTheScreenHint {
     position: fixed;
     inset: 0;
     display: none;
@@ -304,6 +305,27 @@ body.preparing #start {
 
 body.unavailable #soundUnavailable {
     display: flex;
+}
+
+body.askedToFillTheScreen #fillTheScreenHint {
+    display: flex;
+}
+
+#fillTheScreenHint {
+    flex-direction: column;
+}
+
+#fillTheScreenHint p {
+    max-width: 30em;
+    padding: 0 24px;
+    text-align: center;
+    line-height: 1.5;
+}
+
+#fillTheScreenRefusal {
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--effect);
 }
 
 @media (orientation: portrait) {

@@ -103,6 +103,12 @@ that only a video element could go fullscreen. The button asks `document.documen
 back to the `webkit` spelling, and hides itself where neither exists, so nothing on the bar
 promises what the browser cannot do.
 
+A refused request says so rather than doing nothing. Safari can hold the method and still reject
+the call, which looked from the phone like a dead button, so the rejection now opens a note: add
+the page to the home screen, where it runs with no browser around it at all, which is what
+`apple-mobile-web-app-capable` in the markup is for. The note carries the rejection's own words,
+because a button that fails silently costs a round trip to a device to diagnose.
+
 The instrument fills the visible area in either landscape: `dvh`, `--appHeight` set from
 `visualViewport` on every resize, `env(safe-area-inset-*)` for the notch, `touch-action: none`
 and `overscroll-behavior: none` so nothing scrolls or rubber bands. In portrait the page says to
