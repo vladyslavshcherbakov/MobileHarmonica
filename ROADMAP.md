@@ -182,44 +182,57 @@ logged, and whether it varies usefully on an iPhone is still the question it alw
 
 ## The steps
 
-Each one ends somewhere that runs.
+Each one ends somewhere that runs, and they are in this order for one reason: **a harmonica that
+plays comes first, and everything about written music comes last.** The page is an instrument
+before it is a jukebox, so nothing that only serves the demo is allowed to hold up the
+instrument, and nothing touches the app until the page can be played.
 
 **0. One measurement.** A throwaway page that prints `touch.radiusX`, `radiusY` and the tilt
 reading. Press it flat, on the tip, and with two pads. This answers the width question for the
 app as well.
 
-**1. One copy of the music.** Create `Resources/`, move `Samples/` into it, write the four tunes
-as JSON, write the index, teach `Score` to read a tune from JSON, delete the four Swift tune
-files, point `project.yml` and `RecordedHarmonica` at the new folder, and add the JSON exit to
-`ScoreReader`. Touches `BundledScores`, `CompositionRoot`, `RecordedHarmonica`, `Score`,
-`BluesStrain`, `SlowDrag`, `HammerSong`, `FoxChase`, `ScoreReader`, `project.yml` and both
-READMEs. No test changes its expectation: `WhatAScorePlaysTests` builds its own scores in code
-and `WhatAWrittenScoreBecomesTests` reads from a string, so neither is touched. That is the
-evidence this step is a refactor and not a change in behaviour. The app stays green and plays
-identically.
-
-A typo in a tune stops being a compile error and becomes a launch failure, which is the price of
-not writing each piece twice. `ScoreReader` already proves reading a score at launch works.
-
-**2. A page that draws the instrument.** `Web/`, TypeScript, no framework, and the strip and the
+**1. A page that draws the instrument.** `Web/`, TypeScript, no framework, and the strip and the
 square at the right proportions, filling the visible area in both landscapes and saying to turn
 the phone in portrait. No sound, no touches.
 
-**3. The domain, test for test.** Port `Instrument`, `Playing`, `Scores` and the two use cases by
-reading the Swift, with the test names carried across and the same numbers asserted. This step
-either proves the layering was worth it or shows where it leaked.
+**2. The instrument, test for test.** Port `Instrument`, `Playing` and `PlayHarmonica` by reading
+the Swift, with the test names carried across and the same numbers asserted. `Scores` and
+`PlayScore` are not in this step: nothing plays a score yet and porting them now would be code
+with nothing to run against. This step either proves the layering was worth it or shows where it
+leaked.
+
+**3. One folder for the samples.** Create `Resources/Samples/` with its index, point
+`RecordedHarmonica` and `project.yml` at it, and have the page read the same folder. This is the
+only thing the app has to change before the page makes a sound, and it changes nothing about how
+the app behaves.
 
 **4. Sound.** An `AudioWorkletProcessor` holding the voice bank: the recording read with linear
 interpolation, the 5 ms attack against the change's own fall, the ring down over 30 cycles, the
 air spread across at most four reeds, the bend as one multiplication, the vibrato and its wander,
-the cup as a state variable filter. Samples loaded from the shared folder through the index.
+the cup as a low pass.
 
-**5. Touches.** Pointer events into `PositionOnHarmonica`, the playing styles the measurement
-allows, the square, the note row, the plates. At the end of this step the page is an instrument.
+**5. Touches.** Pointer events into `PositionOnHarmonica`, the playing styles with the width the
+page asks for, the square, the note row, the plates.
 
-**6. The tunes.** `PlayScore` driving that instrument from the shared JSON, and the menu.
+**6. Tilt.** The permission gate, the lean, the cup bar. **At the end of this step the page is a
+harmonica**, and it has needed one mechanical change to the app and nothing else.
 
-**7. Tilt.** The permission gate, the lean, the cup bar.
+**7. One copy of the music, and the demo.** Only now. Write the seven tunes as JSON into
+`Resources/Scores/`, teach `Score` to read one, delete the Swift tune files, add the JSON exit to
+`ScoreReader`, port `Scores` and `PlayScore`, and give the page the menu. Touches
+`BundledScores`, `CompositionRoot`, `Score`, the seven tune files, `ScoreReader` and both
+READMEs. No test changes its expectation: `WhatAScorePlaysTests` builds its own scores in code
+and `WhatAWrittenScoreBecomesTests` reads from a string, so neither is touched, which is the
+evidence this is a refactor and not a change in behaviour.
+
+A typo in a tune stops being a compile error and becomes a launch failure, which is the price of
+not writing each piece twice. `ScoreReader` already proves reading a score at launch works.
+
+**Why last.** It is the only step that rewrites working code in the app, and it buys the app
+nothing: the tunes already play there. It pays off on the page, which cannot use it until the
+page has an instrument to play it on. Doing it first would mean changing something that works,
+for a consumer that does not exist yet, and then carrying that change through every step that
+follows.
 
 ## Not in scope
 
