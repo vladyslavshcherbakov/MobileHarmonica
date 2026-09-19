@@ -27,8 +27,6 @@ export class HarmonicaScreen {
             body: document.body,
             keyLabel: element('keyLabel'),
             keySlider: element<HTMLInputElement>('keySlider'),
-            cupFill: element('cupFill'),
-            cupLabel: element('cupLabel'),
             mouthWidth: element<HTMLSelectElement>('mouthWidth'),
             style: element<HTMLSelectElement>('style'),
             tunes: element<HTMLSelectElement>('tunes'),
@@ -117,7 +115,6 @@ export class HarmonicaScreen {
         await this.viewModel.prepareSound()
         document.body.classList.remove('preparing')
         this.layOutTheZone()
-        void this.viewModel.followTheTilt()
     }
 
     private silence(): void {

@@ -9,7 +9,6 @@ export interface PlayableHarmonica {
     readonly style: PlayingStyleViewState
     readonly mouth: MouthViewState
     readonly fingerMarks: FingerMarksViewState
-    readonly cup: CupViewState
     readonly demo: DemoViewState
     readonly toneShaping: ToneShapingViewState
 }
@@ -57,11 +56,6 @@ export interface FingerMarksViewState {
     readonly spansTheMouth: boolean
     readonly onlyTheDecidingFinger: boolean
     readonly holesWide: number
-}
-
-export interface CupViewState {
-    readonly label: string
-    readonly closed: number
 }
 
 export interface TuneViewState {

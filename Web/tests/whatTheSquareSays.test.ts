@@ -32,12 +32,6 @@ test('square_whenTheSoundingReedCannotOverbend_dimsTheOverbend', () => {
     assert.equal(state?.overbendIsAvailable, false)
 })
 
-test('cup_whenTheHandsClose_showsHowFarInTheTopBar', () => {
-    const state = presenter.present(harmonica({ cup: 0.6 }), false)
-
-    assert.ok(state.kind === 'ready' && Math.abs(state.playable.cup.closed - 0.6) < 0.001)
-})
-
 function shaping(of: Partial<CoreState>): ToneShapingViewState | undefined {
     const state = presenter.present(harmonica(of), false)
     if (state.kind !== 'ready') return undefined
@@ -50,7 +44,7 @@ function harmonica(of: Partial<CoreState>): CoreState {
         keyPosition: 5,
         style: 'severalFingersSeveralNotes',
         mouthHolesWide: 2,
-        cup: 0,
+    cup: 0,
         canBend: false,
         canOverbend: false,
         breath: null,

@@ -1,7 +1,6 @@
 import type { CoreAudio } from '../core/coreState.js'
 import { HarmonicaCore } from '../core/harmonicaCore.js'
 import type { Log } from '../logging/log.js'
-import type { Tilt } from '../motion/tilt.js'
 import { HarmonicaPresenter } from '../features/harmonica/harmonicaPresenter.js'
 import { HarmonicaViewModel } from '../features/harmonica/harmonicaViewModel.js'
 import { HarmonicaScreen } from '../features/harmonica/harmonicaScreen.js'
@@ -11,7 +10,6 @@ export class CompositionRoot {
     constructor(
         private readonly coreUrl: string,
         private readonly audioEngine: CoreAudio & { prepare(): Promise<void> },
-        private readonly tilt: Tilt,
         private readonly log: Log
     ) {}
 
@@ -25,7 +23,6 @@ export class CompositionRoot {
         return new HarmonicaViewModel(
             core,
             this.audioEngine,
-            this.tilt,
             new PlayTheTune(core, tunes, core.reeds(), core.timing()),
             new HarmonicaPresenter(tunes),
             this.log

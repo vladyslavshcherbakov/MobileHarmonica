@@ -8,8 +8,6 @@ export interface HarmonicaElements {
     readonly body: HTMLElement
     readonly keyLabel: HTMLElement
     readonly keySlider: HTMLInputElement
-    readonly cupFill: HTMLElement
-    readonly cupLabel: HTMLElement
     readonly mouthWidth: HTMLSelectElement
     readonly style: HTMLSelectElement
     readonly tunes: HTMLSelectElement
@@ -51,7 +49,6 @@ export class HarmonicaRenderer {
         this.buildOnce(playable)
         this.renderHoles(playable.holes)
         this.renderKey(playable)
-        this.renderCup(playable)
         this.renderControls(playable)
         this.renderToneShaping(playable)
         this.drawn = playable
@@ -94,13 +91,6 @@ export class HarmonicaRenderer {
         this.elements.keyLabel.textContent = playable.key.label
         this.elements.keySlider.max = String(playable.key.highestPosition)
         this.elements.keySlider.value = String(playable.key.position)
-    }
-
-    private renderCup(playable: PlayableHarmonica): void {
-        if (this.drawn?.cup.closed === playable.cup.closed) return
-
-        this.elements.cupFill.style.width = `${playable.cup.closed * 100}%`
-        this.elements.cupLabel.textContent = playable.cup.label
     }
 
     private renderControls(playable: PlayableHarmonica): void {

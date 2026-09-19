@@ -2,7 +2,6 @@ import type { CoreFinger, CoreState } from '../../core/coreState.js'
 import type { HarmonicaCore } from '../../core/harmonicaCore.js'
 import type { CoreAudio } from '../../core/coreState.js'
 import type { Log } from '../../logging/log.js'
-import type { Tilt } from '../../motion/tilt.js'
 import type { HarmonicaPresenter } from './harmonicaPresenter.js'
 import type { HarmonicaViewState, PlayingStyleChoice } from './harmonicaViewState.js'
 import type { TuneEnding, TunePerformance } from './playTheTune.js'
@@ -16,7 +15,6 @@ export class HarmonicaViewModel {
     constructor(
         private readonly core: HarmonicaCore,
         private readonly audio: CoreAudio & { prepare(): Promise<void> },
-        private readonly tilt: Tilt,
         private readonly tunePlayer: PlayTheTune,
         private readonly presenter: HarmonicaPresenter,
         private readonly log: Log
@@ -34,11 +32,6 @@ export class HarmonicaViewModel {
         } catch (failure) {
             this.publish(this.presenter.presentSoundUnavailable(describe(failure)))
         }
-    }
-
-    async followTheTilt(): Promise<void> {
-        await this.tilt.requestAccess()
-        this.tilt.followTheLean(leaning => this.cupHands(leaning))
     }
 
     playAt(fingers: readonly CoreFinger[]): void {
@@ -129,13 +122,6 @@ export class HarmonicaViewModel {
     private silenceTheTune(): void {
         this.performance = null
         this.present(this.core.stopPlaying(true))
-    }
-
-    private cupHands(leaning: number): void {
-        const harmonica = this.core.cupHands(leaning)
-        if (this.state.kind !== 'ready') return
-
-        this.present(harmonica)
     }
 
     private present(harmonica: CoreState): void {

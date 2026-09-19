@@ -1,7 +1,6 @@
 import type { CoreSoundingHole, CoreState, CoreTune } from '../../core/coreState.js'
 import { keyNames, nameOf } from './noteNames.js'
 import type {
-    CupViewState,
     DemoViewState,
     FingerMarksViewState,
     HarmonicaViewState,
@@ -21,7 +20,6 @@ const overblowLabel = 'overblow ↑'
 const overdrawLabel = 'overdraw ↑'
 const bendLabel = 'bend ↓'
 const vibratoLabel = 'vibrato →'
-const cupLabel = 'cup'
 const mouthLabel = 'mouth'
 const playDemoLabel = '▶\uFE0E'
 const stopDemoLabel = 'stop'
@@ -50,7 +48,6 @@ export class HarmonicaPresenter {
                 style: styleState(harmonica.style),
                 mouth: mouthState(harmonica.style, harmonica.mouthHolesWide),
                 fingerMarks: fingerMarksState(harmonica.style, harmonica.mouthHolesWide),
-                cup: cupState(harmonica.cup),
                 demo: this.demoState(playingAScore),
                 toneShaping: toneShapingState(harmonica)
             }
@@ -155,10 +152,6 @@ function fingerMarksState(style: string, holesWide: number): FingerMarksViewStat
         onlyTheDecidingFinger: style === 'oneFingerSeveralNotes',
         holesWide
     }
-}
-
-function cupState(cup: number): CupViewState {
-    return { label: cupLabel, closed: cup }
 }
 
 function keyState(position: number): KeyViewState {

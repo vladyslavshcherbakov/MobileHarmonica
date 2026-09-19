@@ -1,5 +1,4 @@
 import { SampledAudioEngine } from '../audio/sampledAudioEngine.js'
-import { DeviceTilt } from '../motion/deviceTilt.js'
 import { TimestampedLog } from '../logging/timestampedLog.js'
 import { CompositionRoot } from './compositionRoot.js'
 import { fitIntoTelegram } from './telegram.js'
@@ -11,7 +10,6 @@ const coreUrl = new URL('../../../core/harmonica.wasm', import.meta.url).href
 const compositionRoot = new CompositionRoot(
     coreUrl,
     new SampledAudioEngine(workletUrl, samplesFolder, log),
-    new DeviceTilt(),
     log
 )
 

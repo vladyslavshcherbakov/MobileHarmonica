@@ -84,32 +84,9 @@ body {
     accent-color: var(--plateLit);
 }
 
-#cup {
-    flex: 0 0 auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-}
 
-#cupBar {
-    width: 40px;
-    height: 6px;
-    border-radius: 3px;
-    background: var(--plate);
-    overflow: hidden;
-}
 
-#cupFill {
-    width: 0;
-    height: 100%;
-    background: var(--plateLit);
-}
 
-#cupLabel {
-    font-size: 11px;
-    color: var(--effect);
-}
 
 #keyBar select {
     flex: 0 1 auto;
