@@ -1,12 +1,12 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import type { CoreState, CoreTune } from '../src/core/coreState.js'
+import type { CoreState, CoreTiming, CoreTune } from '../src/core/coreState.js'
 import type { HarmonicaCore } from '../src/core/harmonicaCore.js'
 import { PlayTheTune } from '../src/features/harmonica/playTheTune.js'
 
 test('tune_whenItIsStopped_leavesTheInstrumentToWhoeverStoppedIt', async () => {
     const core = new RecordingCore()
-    const performance = new PlayTheTune(core.asCore(), [tune()], []).play(0, () => {})
+    const performance = new PlayTheTune(core.asCore(), [tune()], [], timing).play(0, () => {})
 
     performance.cancel()
     const ending = await performance.finished
@@ -17,7 +17,7 @@ test('tune_whenItIsStopped_leavesTheInstrumentToWhoeverStoppedIt', async () => {
 
 test('tune_whenItPlaysToTheEnd_silencesWhatItSounded', async () => {
     const core = new RecordingCore()
-    const performance = new PlayTheTune(core.asCore(), [tune()], []).play(0, () => {})
+    const performance = new PlayTheTune(core.asCore(), [tune()], [], timing).play(0, () => {})
 
     const ending = await performance.finished
 
@@ -52,6 +52,13 @@ class RecordingCore {
         this.calls.push(call)
         return silent
     }
+}
+
+const timing: CoreTiming = {
+    articulationSeconds: 0.05,
+    slideStepSeconds: 0.04,
+    shakeStepSeconds: 0.06,
+    bendStepSeconds: 0.01
 }
 
 const silent: CoreState = {

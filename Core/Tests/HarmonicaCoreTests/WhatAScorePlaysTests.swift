@@ -126,6 +126,29 @@ final class WhatAScorePlaysTests: XCTestCase {
         XCTAssertEqual(engine.soundedTones.count, 1, "no expression means no stepping")
     }
 
+    func test_score_whenItIsStoppedPartWay_leavesTheFingersNoteSounding() async throws {
+        let harmonica = PlayHarmonica(tuning: RichterTuning(), audioEngine: engine, log: SilentLog())
+        let player = PlayScore(tuning: RichterTuning(), harmonica: harmonica, log: SilentLog())
+        let score = Score(
+            name: "test",
+            key: .c,
+            position: .first,
+            beatsPerMinute: 60,
+            events: [
+                .note(ScoreNote(holes: [.two], breath: .draw, beats: 1)),
+                .note(ScoreNote(holes: [.three], breath: .draw, beats: 1))
+            ]
+        )
+
+        for await _ in player.play(score) { break }
+        _ = harmonica.play([.four], breathing: .blow)
+        let silencings = engine.silencings
+        try await Task.sleep(for: .milliseconds(100))
+
+        XCTAssertEqual(engine.silencings, silencings, "a stopped score does not damp what the finger sounds")
+        XCTAssertEqual(engine.hertzOfTheLastTone, 523.25, accuracy: 0.5, "hole 4 blown is still what is heard")
+    }
+
     // MARK: - Helpers
 
     @discardableResult

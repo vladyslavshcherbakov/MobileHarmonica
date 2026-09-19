@@ -1,11 +1,6 @@
 import Foundation
 
 public final class PlayScore {
-    private static let articulationSeconds = 0.05
-    private static let slideStepSeconds = 0.04
-    private static let shakeStepSeconds = 0.06
-    private static let bendStepSeconds = 0.01
-
     private let tuning: RichterTuning
     private let harmonica: PlayHarmonica
     private let log: LogProtocol
@@ -68,7 +63,7 @@ public final class PlayScore {
         let passing = Self.passingHoles(of: note)
         guard !passing.isEmpty else { return 0 }
 
-        let step = min(Self.slideStepSeconds, seconds / 2 / Double(passing.count))
+        let step = min(ScoreTiming.slideStepSeconds, seconds / 2 / Double(passing.count))
         continuation.yield(harmonica.shapeTone(.rest, vibrato: .off))
         for hole in passing where !Task.isCancelled {
             continuation.yield(harmonica.play([hole], breathing: note.breath))
@@ -82,7 +77,7 @@ public final class PlayScore {
         for seconds: Double,
         into continuation: AsyncStream<Harmonica>.Continuation
     ) async {
-        let gap = min(Self.articulationSeconds, seconds / 4)
+        let gap = min(ScoreTiming.articulationSeconds, seconds / 4)
         let sounding = seconds - gap
         let steps = Self.steps(of: note, within: sounding)
         let started = ContinuousClock.now
@@ -107,9 +102,9 @@ public final class PlayScore {
     }
 
     private static func stepSeconds(of note: ScoreNote) -> Double? {
-        if note.shakenWith != nil { return shakeStepSeconds }
+        if note.shakenWith != nil { return ScoreTiming.shakeStepSeconds }
 
-        return note.bendEndsAtSemitones == nil ? nil : bendStepSeconds
+        return note.bendEndsAtSemitones == nil ? nil : ScoreTiming.bendStepSeconds
     }
 
     private static func fraction(_ step: Int, of steps: Int) -> Double {

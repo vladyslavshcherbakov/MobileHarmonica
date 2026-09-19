@@ -76,6 +76,12 @@ func harmonicaTunes() -> Int32 {
     instrument.tunes()
 }
 
+@_expose(wasm, "harmonica_timing")
+@_cdecl("harmonica_timing")
+func harmonicaTiming() -> Int32 {
+    instrument.timing()
+}
+
 @_expose(wasm, "harmonica_reeds")
 @_cdecl("harmonica_reeds")
 func harmonicaReeds() -> Int32 {

@@ -1,10 +1,5 @@
-import type { CoreEvent, CoreReed, CoreState, CoreTune } from '../../core/coreState.js'
+import type { CoreEvent, CoreReed, CoreState, CoreTiming, CoreTune } from '../../core/coreState.js'
 import type { HarmonicaCore } from '../../core/harmonicaCore.js'
-
-const articulationSeconds = 0.05
-const slideStepSeconds = 0.04
-const shakeStepSeconds = 0.06
-const bendStepSeconds = 0.01
 
 export type TuneEnding = 'played' | 'stopped'
 
@@ -21,7 +16,8 @@ export class PlayTheTune {
     constructor(
         private readonly core: HarmonicaCore,
         private readonly tunes: readonly CoreTune[],
-        private readonly reeds: readonly CoreReed[]
+        private readonly reeds: readonly CoreReed[],
+        private readonly timing: CoreTiming
     ) {}
 
     play(index: number, played: (harmonica: CoreState) => void): TunePerformance {
@@ -74,7 +70,7 @@ export class PlayTheTune {
         const passing = passingHoles(note)
         if (passing.length === 0) return 0
 
-        const step = Math.min(slideStepSeconds, seconds / 2 / passing.length)
+        const step = Math.min(this.timing.slideStepSeconds, seconds / 2 / passing.length)
         played(this.core.shapeTone(0, 0))
         for (const hole of passing) {
             if (cancellation.stopped) break
@@ -91,9 +87,9 @@ export class PlayTheTune {
         played: (harmonica: CoreState) => void,
         cancellation: Cancellation
     ): Promise<void> {
-        const gap = Math.min(articulationSeconds, seconds / 4)
+        const gap = Math.min(this.timing.articulationSeconds, seconds / 4)
         const sounding = seconds - gap
-        const steps = stepsOf(note, sounding)
+        const steps = this.stepsOf(note, sounding)
         const started = now()
         for (let step = 0; step < steps; step += 1) {
             if (cancellation.stopped) break
@@ -118,25 +114,25 @@ export class PlayTheTune {
         return -semitones / range
     }
 
+    private stepsOf(note: CoreEvent, seconds: number): number {
+        const step = this.stepSecondsOf(note)
+        if (step === null) return 1
+
+        return Math.max(1, Math.floor(seconds / step))
+    }
+
+    private stepSecondsOf(note: CoreEvent): number | null {
+        if (note.shakenWith !== null) return this.timing.shakeStepSeconds
+
+        return note.bendEndsAtSemitones === null ? null : this.timing.bendStepSeconds
+    }
+
     private bendableSemitones(note: CoreEvent): number {
         const ranges = note.holes.map(hole =>
             this.reeds.find(reed => reed.hole === hole && reed.breath === note.breath)?.bendableSemitones ?? 0
         )
         return Math.max(0, ...ranges)
     }
-}
-
-function stepsOf(note: CoreEvent, seconds: number): number {
-    const step = stepSecondsOf(note)
-    if (step === null) return 1
-
-    return Math.max(1, Math.floor(seconds / step))
-}
-
-function stepSecondsOf(note: CoreEvent): number | null {
-    if (note.shakenWith !== null) return shakeStepSeconds
-
-    return note.bendEndsAtSemitones === null ? null : bendStepSeconds
 }
 
 function fractionOf(step: number, steps: number): number {

@@ -25,6 +25,55 @@ enum RecordedHarmonica {
         return SampleBank(frames: frames, notes: notes)
     }
 
+    static func rootHertz(of name: String) throws -> Double {
+        guard let number = midiNumber(of: name) else { throw RecordedHarmonicaError.unnamedPitch(name) }
+
+        return MIDINote(number: number + semitonesAboveTheLabel).pitch.converted(to: .hertz).value
+    }
+
+    static func loopBounds(
+        framesPerSecond: Double,
+        within frameCount: Int,
+        named name: String
+    ) throws -> Range<Int> {
+        let start = Int(loopStartSeconds * framesPerSecond)
+        let end = min(frameCount, Int(loopEndSeconds * framesPerSecond))
+        guard end - start >= Int(shortestLoopSeconds * framesPerSecond) else {
+            throw RecordedHarmonicaError.tooShortToLoop(name, seconds: Double(frameCount) / framesPerSecond)
+        }
+
+        return start..<end
+    }
+
+    static func withASmoothedLoop(
+        _ mono: [Float],
+        loop: Range<Int>,
+        framesPerSecond: Double
+    ) -> [Float] {
+        let width = min(Int(loopCrossfadeSeconds * framesPerSecond), loop.lowerBound, loop.count)
+        guard width > 1 else { return mono }
+
+        var smoothed = mono
+        for step in 0..<width {
+            let angle = 0.5 * Float.pi * Float(step) / Float(width - 1)
+            let leaving = mono[loop.upperBound - width + step]
+            let arriving = mono[loop.lowerBound - width + step]
+            smoothed[loop.upperBound - width + step] = leaving * cos(angle) + arriving * sin(angle)
+        }
+        return smoothed
+    }
+
+    static func midiNumber(of name: String) -> Int? {
+        guard let octave = name.last.flatMap({ Int(String($0)) }) else { return nil }
+
+        var letters = name.dropLast()
+        let isSharp = letters.last == "#"
+        if isSharp { letters = letters.dropLast() }
+        guard let semitones = letters.last.flatMap({ semitonesAboveC[String($0)] }) else { return nil }
+
+        return semitones + (isSharp ? 1 : 0) + 12 * (octave + 1)
+    }
+
     // MARK: - Private
 
     private static func read(_ url: URL, appendingTo frames: inout [Float]) throws -> RecordedNote {
@@ -44,24 +93,6 @@ enum RecordedHarmonica {
             rootHertz: try rootHertz(of: name),
             sampleRate: file.processingFormat.sampleRate
         )
-    }
-
-    private static func withASmoothedLoop(
-        _ mono: [Float],
-        loop: Range<Int>,
-        framesPerSecond: Double
-    ) -> [Float] {
-        let width = min(Int(loopCrossfadeSeconds * framesPerSecond), loop.lowerBound, loop.count)
-        guard width > 1 else { return mono }
-
-        var smoothed = mono
-        for step in 0..<width {
-            let angle = 0.5 * Float.pi * Float(step) / Float(width - 1)
-            let leaving = mono[loop.upperBound - width + step]
-            let arriving = mono[loop.lowerBound - width + step]
-            smoothed[loop.upperBound - width + step] = leaving * cos(angle) + arriving * sin(angle)
-        }
-        return smoothed
     }
 
     private static func monoFrames(of file: AVAudioFile, named name: String) throws -> [Float] {
@@ -84,37 +115,6 @@ enum RecordedHarmonica {
             }
         }
         return mono
-    }
-
-    private static func loopBounds(
-        framesPerSecond: Double,
-        within frameCount: Int,
-        named name: String
-    ) throws -> Range<Int> {
-        let start = Int(loopStartSeconds * framesPerSecond)
-        let end = min(frameCount, Int(loopEndSeconds * framesPerSecond))
-        guard end - start >= Int(shortestLoopSeconds * framesPerSecond) else {
-            throw RecordedHarmonicaError.tooShortToLoop(name, seconds: Double(frameCount) / framesPerSecond)
-        }
-
-        return start..<end
-    }
-
-    private static func rootHertz(of name: String) throws -> Double {
-        guard let number = midiNumber(of: name) else { throw RecordedHarmonicaError.unnamedPitch(name) }
-
-        return MIDINote(number: number + semitonesAboveTheLabel).pitch.converted(to: .hertz).value
-    }
-
-    private static func midiNumber(of name: String) -> Int? {
-        guard let octave = name.last.flatMap({ Int(String($0)) }) else { return nil }
-
-        var letters = name.dropLast()
-        let isSharp = letters.last == "#"
-        if isSharp { letters = letters.dropLast() }
-        guard let semitones = letters.last.flatMap({ semitonesAboveC[String($0)] }) else { return nil }
-
-        return semitones + (isSharp ? 1 : 0) + 12 * (octave + 1)
     }
 }
 

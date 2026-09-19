@@ -14,3 +14,8 @@ declare module 'node:assert/strict' {
     const assert: Assert
     export default assert
 }
+
+declare module 'node:fs' {
+    export function readFileSync(path: URL, encoding: 'utf8'): string
+    export function readdirSync(path: URL): string[]
+}

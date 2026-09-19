@@ -1,4 +1,12 @@
-import type { CoreAudio, CoreFinger, CoreReed, CoreState, CoreToneChange, CoreTune } from './coreState.js'
+import type {
+    CoreAudio,
+    CoreFinger,
+    CoreReed,
+    CoreState,
+    CoreTiming,
+    CoreToneChange,
+    CoreTune
+} from './coreState.js'
 import { wasiHost } from './wasi.js'
 
 const doublesPerFinger = 3
@@ -19,6 +27,7 @@ interface CoreExports {
     readonly harmonica_cup_hands: (fraction: number) => number
     readonly harmonica_stop_playing: (release: number) => number
     readonly harmonica_tunes: () => number
+    readonly harmonica_timing: () => number
     readonly harmonica_reeds: () => number
 }
 
@@ -97,6 +106,10 @@ export class HarmonicaCore {
 
     tunes(): CoreTune[] {
         return this.decode(this.exports.harmonica_tunes()) as CoreTune[]
+    }
+
+    timing(): CoreTiming {
+        return this.decode(this.exports.harmonica_timing()) as CoreTiming
     }
 
     reeds(): CoreReed[] {

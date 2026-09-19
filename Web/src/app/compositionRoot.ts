@@ -26,7 +26,7 @@ export class CompositionRoot {
             core,
             this.audioEngine,
             this.tilt,
-            new PlayTheTune(core, tunes, core.reeds()),
+            new PlayTheTune(core, tunes, core.reeds(), core.timing()),
             new HarmonicaPresenter(tunes),
             this.log
         )

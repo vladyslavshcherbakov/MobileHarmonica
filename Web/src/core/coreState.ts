@@ -51,6 +51,13 @@ export interface CoreTone {
     readonly bendableSemitones: number
 }
 
+export interface CoreTiming {
+    readonly articulationSeconds: number
+    readonly slideStepSeconds: number
+    readonly shakeStepSeconds: number
+    readonly bendStepSeconds: number
+}
+
 export type CoreToneChange = 'slide' | 'newReed' | 'breathReversed'
 
 export interface CoreAudio {

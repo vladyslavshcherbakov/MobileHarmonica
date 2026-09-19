@@ -99,6 +99,15 @@ struct ReedState: Encodable {
     }
 }
 
+// MARK: - TimingState
+
+struct TimingState: Encodable {
+    let articulationSeconds = ScoreTiming.articulationSeconds
+    let slideStepSeconds = ScoreTiming.slideStepSeconds
+    let shakeStepSeconds = ScoreTiming.shakeStepSeconds
+    let bendStepSeconds = ScoreTiming.bendStepSeconds
+}
+
 // MARK: - TuneState
 
 struct TuneState: Encodable {

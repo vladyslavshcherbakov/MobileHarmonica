@@ -76,6 +76,10 @@ final class Instrument {
         write(Score.tunes.map(TuneState.init))
     }
 
+    func timing() -> Int32 {
+        write(TimingState())
+    }
+
     func reeds() -> Int32 {
         let tuning = RichterTuning()
         return write(
