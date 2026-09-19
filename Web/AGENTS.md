@@ -116,6 +116,12 @@ all, so the only way to lose the browser's own bars there is to be started from 
 beside it as the fallback Safari uses when it cannot load the manifest. Started that way, the
 page hides its own advice about installing, because there is nothing left to install.
 
+**Filling the screen and starting the sound are two taps, not one.** They were one for a
+while, and it hung the page: entering fullscreen spends the transient user activation, and
+Safari will not start an `AudioContext` without one, so `resume()` never settled and the start
+screen sat on "loading" with nothing in the log. The log now names the context before that wait
+and its state after, so the same hang would say where it is.
+
 **The screen is filled by a button.** The Fullscreen API reached iPhone in Safari 17.4; before
 that only a video element could go fullscreen. The button asks `document.documentElement`, falls
 back to the `webkit` spelling, and hides itself where neither exists, so nothing on the bar

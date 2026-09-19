@@ -41,12 +41,13 @@ export class SampledAudioEngine implements AudioEngine {
         node.connect(context.destination)
         this.context = context
         this.node = node
-        await this.resume()
         this.log.record(
-            `audio started at ${context.sampleRate} Hz,`
+            `audio built at ${context.sampleRate} Hz,`
             + ` ${milliseconds(context.baseLatency)} ms of buffer`
             + ` and ${milliseconds(context.outputLatency)} ms out to the speaker`
         )
+        await this.resume()
+        this.log.record(`audio ${context.state}`)
         await this.loadTheRecordings(context)
     }
 
