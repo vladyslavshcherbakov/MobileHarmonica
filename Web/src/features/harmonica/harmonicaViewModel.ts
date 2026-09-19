@@ -53,10 +53,10 @@ export class HarmonicaViewModel {
         this.present(this.core.changeStyle(styleIndex(choice)))
     }
 
-    changeMouthWidth(holesWide: number): void {
+    changeNotesPerFinger(notes: number): void {
         if (this.state.kind !== 'ready') return
 
-        this.present(this.core.changeMouth(holesWide))
+        this.present(this.core.changeMouth(notes))
     }
 
     playTheTune(index: number): void {

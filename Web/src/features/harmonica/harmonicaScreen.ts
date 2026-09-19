@@ -27,7 +27,7 @@ export class HarmonicaScreen {
             body: document.body,
             keyLabel: element('keyLabel'),
             keySlider: element<HTMLInputElement>('keySlider'),
-            mouthWidth: element<HTMLSelectElement>('mouthWidth'),
+            notesPerFinger: element<HTMLSelectElement>('notesPerFinger'),
             style: element<HTMLSelectElement>('style'),
             tunes: element<HTMLSelectElement>('tunes'),
             stopTune: element('stopTune'),
@@ -67,8 +67,8 @@ export class HarmonicaScreen {
         element<HTMLSelectElement>('style').addEventListener('change', event => {
             this.viewModel.changeStyle((event.target as HTMLSelectElement).value as never)
         })
-        element<HTMLSelectElement>('mouthWidth').addEventListener('change', event => {
-            this.viewModel.changeMouthWidth(Number((event.target as HTMLSelectElement).value))
+        element<HTMLSelectElement>('notesPerFinger').addEventListener('change', event => {
+            this.viewModel.changeNotesPerFinger(Number((event.target as HTMLSelectElement).value))
         })
         element<HTMLSelectElement>('tunes').addEventListener('change', event => {
             const chosen = event.target as HTMLSelectElement

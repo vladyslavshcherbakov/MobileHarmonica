@@ -122,6 +122,14 @@ of a double.
 `PlayingStyle` keeps its three cases and its two questions, so the width is the third control
 rather than a fourth style. One mouth at one hole is still not offered.
 
+**The control counts notes, because that is what the player chooses.** It said `mouth 1` to
+`mouth 4` and it is not a mouth: it is how many notes one finger takes, so it reads `1 note` to
+`4 notes` and the wording lives in the presenter with every other string rather than in the view
+that draws it. On the style that gives each finger exactly the hole it is over, the control says
+one and is not offered, because any other answer would be a number the instrument ignores. What
+was chosen is kept, not overwritten, so going back to a style that spans several notes brings it
+back.
+
 **A note name shrinks to its hole, because CSS has no `minimumScaleFactor`.** The app writes the
 rule as `.lineLimit(1)` and `.minimumScaleFactor(0.6)`, and a hole on a phone in full screen is
 about 54 points wide while `(G4 overblow)` at ten pixels wants about 69. Here each label is a

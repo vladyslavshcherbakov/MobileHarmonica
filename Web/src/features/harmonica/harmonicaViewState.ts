@@ -7,7 +7,7 @@ export interface PlayableHarmonica {
     readonly holes: readonly HoleViewState[]
     readonly key: KeyViewState
     readonly style: PlayingStyleViewState
-    readonly mouth: MouthViewState
+    readonly notesPerFinger: NotesPerFingerViewState
     readonly fingerMarks: FingerMarksViewState
     readonly demo: DemoViewState
     readonly toneShaping: ToneShapingViewState
@@ -45,11 +45,15 @@ export interface PlayingStyleViewState {
     readonly choices: readonly PlayingStyleChoiceViewState[]
 }
 
-export interface MouthViewState {
-    readonly label: string
-    readonly holesWide: number
-    readonly widths: readonly number[]
+export interface NotesPerFingerViewState {
+    readonly chosen: number
+    readonly choices: readonly NoteCountViewState[]
     readonly isAvailable: boolean
+}
+
+export interface NoteCountViewState {
+    readonly count: number
+    readonly name: string
 }
 
 export interface FingerMarksViewState {

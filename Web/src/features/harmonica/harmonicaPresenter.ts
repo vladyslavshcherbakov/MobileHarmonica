@@ -7,7 +7,7 @@ import type {
     HoleViewState,
     KeyViewState,
     LitHalf,
-    MouthViewState,
+    NotesPerFingerViewState,
     PlayingStyleChoice,
     PlayingStyleViewState,
     ToneShapingViewState,
@@ -20,7 +20,6 @@ const overblowLabel = 'overblow ↑'
 const overdrawLabel = 'overdraw ↑'
 const bendLabel = 'bend ↓'
 const vibratoLabel = 'vibrato →'
-const mouthLabel = 'mouth'
 const playDemoLabel = '▶\uFE0E'
 const stopDemoLabel = 'stop'
 const bendEffectLabel = 'bend'
@@ -28,7 +27,7 @@ const overblowEffectLabel = 'overblow'
 const overdrawEffectLabel = 'overdraw'
 
 const everyHole: readonly number[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-const mouthWidths: readonly number[] = [1, 2, 3, 4]
+const noteCounts: readonly number[] = [1, 2, 3, 4]
 const playingStyles: readonly PlayingStyleChoice[] =
     ['severalFingersSeveralNotes', 'severalFingersOneNote', 'oneFingerSeveralNotes']
 
@@ -46,7 +45,7 @@ export class HarmonicaPresenter {
                 holes: holeStates(harmonica),
                 key: keyState(harmonica.keyPosition),
                 style: styleState(harmonica.style),
-                mouth: mouthState(harmonica.style, harmonica.mouthHolesWide),
+                notesPerFinger: notesPerFingerState(harmonica.style, harmonica.mouthHolesWide),
                 fingerMarks: fingerMarksState(harmonica.style, harmonica.mouthHolesWide),
                 demo: this.demoState(playingAScore),
                 toneShaping: toneShapingState(harmonica)
@@ -137,12 +136,12 @@ function nameOfChoice(choice: PlayingStyleChoice): string {
     }
 }
 
-function mouthState(style: string, holesWide: number): MouthViewState {
+function notesPerFingerState(style: string, holesWide: number): NotesPerFingerViewState {
+    const takesSeveral = style !== 'severalFingersOneNote'
     return {
-        label: mouthLabel,
-        holesWide,
-        widths: mouthWidths,
-        isAvailable: style !== 'severalFingersOneNote'
+        chosen: takesSeveral ? holesWide : 1,
+        choices: noteCounts.map(count => ({ count, name: count === 1 ? '1 note' : `${count} notes` })),
+        isAvailable: takesSeveral
     }
 }
 

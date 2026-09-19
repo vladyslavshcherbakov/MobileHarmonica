@@ -44,7 +44,7 @@ function harmonica(of: Partial<CoreState>): CoreState {
         keyPosition: 5,
         style: 'severalFingersSeveralNotes',
         mouthHolesWide: 2,
-    cup: 0,
+        cup: 0,
         canBend: false,
         canOverbend: false,
         breath: null,

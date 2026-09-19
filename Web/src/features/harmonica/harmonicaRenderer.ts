@@ -8,7 +8,7 @@ export interface HarmonicaElements {
     readonly body: HTMLElement
     readonly keyLabel: HTMLElement
     readonly keySlider: HTMLInputElement
-    readonly mouthWidth: HTMLSelectElement
+    readonly notesPerFinger: HTMLSelectElement
     readonly style: HTMLSelectElement
     readonly tunes: HTMLSelectElement
     readonly stopTune: HTMLElement
@@ -62,7 +62,10 @@ export class HarmonicaRenderer {
             this.plates.push(addedPlate(this.elements.plates, hole.label))
         }
         fill(this.elements.style, playable.style.choices.map(choice => [choice.id, choice.name]))
-        fill(this.elements.mouthWidth, playable.mouth.widths.map(width => [String(width), `mouth ${width}`]))
+        fill(
+            this.elements.notesPerFinger,
+            playable.notesPerFinger.choices.map(choice => [String(choice.count), choice.name] as Choice)
+        )
         fill(
             this.elements.tunes,
             [['', playable.demo.label], ...playable.demo.tunes.map(tune => [String(tune.id), tune.name] as Choice)]
@@ -97,10 +100,10 @@ export class HarmonicaRenderer {
         if (this.elements.style.value !== playable.style.chosen) {
             this.elements.style.value = playable.style.chosen
         }
-        if (this.elements.mouthWidth.value !== String(playable.mouth.holesWide)) {
-            this.elements.mouthWidth.value = String(playable.mouth.holesWide)
+        if (this.elements.notesPerFinger.value !== String(playable.notesPerFinger.chosen)) {
+            this.elements.notesPerFinger.value = String(playable.notesPerFinger.chosen)
         }
-        this.elements.mouthWidth.disabled = !playable.mouth.isAvailable
+        this.elements.notesPerFinger.disabled = !playable.notesPerFinger.isAvailable
         if (this.drawn?.demo.isPlaying === playable.demo.isPlaying) return
 
         this.elements.stopTune.style.display = playable.demo.isPlaying ? 'block' : 'none'
