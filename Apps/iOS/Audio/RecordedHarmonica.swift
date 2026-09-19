@@ -1,4 +1,5 @@
 import AVFoundation
+import HarmonicaCore
 
 enum RecordedHarmonica {
     static let folder = "Samples"

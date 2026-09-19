@@ -1,4 +1,5 @@
 import Combine
+import HarmonicaCore
 
 @MainActor
 final class HarmonicaViewModel: ObservableObject {

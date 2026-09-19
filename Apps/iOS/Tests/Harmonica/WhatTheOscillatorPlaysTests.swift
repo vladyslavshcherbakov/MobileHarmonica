@@ -1,5 +1,7 @@
 import XCTest
 @testable import MobileHarmonica
+import HarmonicaCore
+import HarmonicaCoreTestSupport
 
 final class WhatTheOscillatorPlaysTests: XCTestCase {
     // MARK: - Tests

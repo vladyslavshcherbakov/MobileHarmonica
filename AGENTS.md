@@ -50,13 +50,14 @@ until they are copied in. See the README there.
 ## Repository layout
 
 ```
+Core/           HarmonicaCore, a SwiftPM package: the instrument itself, shared by
+                every platform. Protocols, UseCases, and Entities split by subject:
+                Instrument/ the harmonica, Playing/ what a finger does,
+                Scores/ written music. Imports Foundation only
 Resources/
   Samples/      the WAV files, shared with the web version, not committed
 Apps/iOS/
   App/          entry point and composition root
-  Domain/       Protocols, UseCases, and Entities split by subject:
-                Instrument/ the harmonica itself, Playing/ what a finger does,
-                Scores/ written music. Imports Foundation only
   Audio/        AudioEngineProtocol implementation, reading out of Resources/Samples
   Motion/       TiltProtocol implementation, the device's lean read through CoreMotion
   Scores/       text scores the user writes, read at launch, not committed
@@ -96,13 +97,24 @@ Clean layering. A rule lives in exactly one layer.
 
 | Layer | Path | May import | Owns |
 |---|---|---|---|
-| Domain | `Domain/` | Foundation | Entities, the protocols it needs, the use case |
+| Domain | `Core/` | Foundation | Entities, the protocols it needs, the use case |
 | Audio | `Audio/` | AVFoundation, os | The synthesiser behind `AudioEngineProtocol` |
 | Motion | `Motion/` | CoreMotion, UIKit | The lean behind `TiltProtocol` |
 | Presentation | `Features/` | SwiftUI, UIKit, Combine | View state, presenter, view model, views |
 | Composition | `App/` | everything | Building the graph |
 
-**Enforced boundaries.** Nothing under `Domain/` or `Features/` imports AVFoundation or will
+**The domain is a package, not a folder.** `Core/` is `HarmonicaCore`, built by SwiftPM and
+depended on by the app, so the compiler enforces the boundary that used to be a convention: the
+app cannot reach past the package's public API, and the package cannot reach into the app at all.
+Everything the app needs is `public`, including the memberwise initialisers, which a package has
+to spell out.
+
+The tests split the same way. What tests the instrument lives in the package and runs without an
+app or a simulator; what tests the presenter, the oscillator or the screen stays in
+`Apps/iOS/Tests`. The doubles they share, `RecordingAudioEngine` and `SilentLog`, are a second
+product of the package, `HarmonicaCoreTestSupport`.
+
+**Enforced boundaries.** Nothing under `Core/` or `Features/` imports AVFoundation or will
 import AudioKit. No domain type imports `os`; it reaches the log through `LogProtocol`. Only
 values cross a boundary.
 

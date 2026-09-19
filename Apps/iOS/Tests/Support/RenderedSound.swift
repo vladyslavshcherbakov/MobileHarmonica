@@ -1,5 +1,7 @@
 import AVFoundation
 @testable import MobileHarmonica
+import HarmonicaCore
+import HarmonicaCoreTestSupport
 
 struct RenderedSound {
     static let sampleRate = 48000.0

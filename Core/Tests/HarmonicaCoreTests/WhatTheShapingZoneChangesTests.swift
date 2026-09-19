@@ -1,0 +1,142 @@
+import XCTest
+@testable import HarmonicaCore
+import HarmonicaCoreTestSupport
+
+final class WhatTheShapingZoneChangesTests: XCTestCase {
+    private let engine = RecordingAudioEngine()
+
+    // MARK: - Tests
+
+    func test_shapingZone_whenTheFingerGoesBelowTheMiddle_sendsTheNewBendAndVibrato() {
+        let harmonica = harmonica()
+
+        _ = harmonica.shapeTone(PitchShaping(clamping: -0.25), vibrato: VibratoDepth(clamping: 0.75))
+
+        XCTAssertEqual(engine.bends.last?.fraction, 0.25)
+        XCTAssertEqual(engine.vibratos.last?.fraction, 0.75)
+    }
+
+    func test_shapingZone_whenTheFingerIsJustAboveTheMiddle_leavesTheReedSounding() {
+        let harmonica = blowingHoleThree()
+
+        _ = harmonica.shapeTone(PitchShaping(clamping: 0.4), vibrato: .off)
+
+        XCTAssertEqual(engine.soundedTones.count, 1)
+    }
+
+    func test_shapingZone_whenTheFingerPassesTheOverbendThreshold_soundsTheOverblowInstead() {
+        let harmonica = blowingHoleThree()
+
+        _ = harmonica.shapeTone(PitchShaping(clamping: 0.6), vibrato: .off)
+
+        XCTAssertEqual(engine.hertzOfTheLastTone, 523.25, accuracy: 0.5, "G4 overblown is C5")
+        XCTAssertEqual(engine.soundedTones.last?.first?.bendableSemitones, 0)
+    }
+
+    func test_shapingZone_whenTheOverblowStarts_crossfadesAsANewReedRatherThanASlide() {
+        let harmonica = blowingHoleThree()
+
+        _ = harmonica.shapeTone(PitchShaping(clamping: 0.6), vibrato: .off)
+
+        XCTAssertEqual(engine.toneChanges, [.slide, .newReed])
+    }
+
+    func test_shapingZone_whenTheFingerLeavesTheOverbend_soundsThePlainReedAgain() {
+        let harmonica = blowingHoleThree()
+        _ = harmonica.shapeTone(PitchShaping(clamping: 0.6), vibrato: .off)
+
+        _ = harmonica.shapeTone(PitchShaping(clamping: 0.1), vibrato: .off)
+
+        XCTAssertEqual(engine.hertzOfTheLastTone, 392.00, accuracy: 0.5, "hole 3 blows G4")
+    }
+
+    func test_bend_whenAChordSounds_pullsEveryReedAsFarAsTheShallowestChamber() {
+        let harmonica = harmonica()
+
+        _ = harmonica.play(at: [
+            PositionOnHarmonica(fractionFromLeftEdge: 0.25, fractionAboveCentreLine: -0.3),
+            PositionOnHarmonica(fractionFromLeftEdge: 0.35, fractionAboveCentreLine: -0.3)
+        ])
+
+        XCTAssertEqual(
+            engine.soundedTones.last?.map(\.bendableSemitones),
+            [1, 1],
+            "hole 3 draw bends three alone, hole 4 draw one, and one mouth pulls them together"
+        )
+    }
+
+    func test_shapingZone_whenTheFingerStaysStill_sendsNothingTwice() {
+        let harmonica = harmonica()
+        _ = harmonica.shapeTone(PitchShaping(clamping: -0.5), vibrato: VibratoDepth(clamping: 0.5))
+
+        _ = harmonica.shapeTone(PitchShaping(clamping: -0.5), vibrato: VibratoDepth(clamping: 0.5))
+
+        XCTAssertEqual(engine.bends.count, 1)
+    }
+
+    func test_harmonica_whenAFingerIsOnHoleThreeBelowTheLine_soundsTheDrawReed() {
+        let harmonica = harmonica()
+
+        _ = harmonica.play(at: [PositionOnHarmonica(fractionFromLeftEdge: 0.25, fractionAboveCentreLine: -0.3)])
+
+        XCTAssertEqual(engine.soundedTones.last?.count, 1)
+        XCTAssertEqual(engine.soundedTones.last?.first?.bendableSemitones, 3)
+    }
+
+    func test_harmonica_whenAFingerCrossesToAnotherHoleAndBreath_soundsNeitherHalfwayHouse() {
+        let harmonica = harmonica()
+        _ = harmonica.play(at: [PositionOnHarmonica(fractionFromLeftEdge: 0.15, fractionAboveCentreLine: -0.3)])
+
+        _ = harmonica.play(at: [PositionOnHarmonica(fractionFromLeftEdge: 0.18, fractionAboveCentreLine: -0.03)])
+        _ = harmonica.play(at: [PositionOnHarmonica(fractionFromLeftEdge: 0.23, fractionAboveCentreLine: 0.03)])
+        _ = harmonica.play(at: [PositionOnHarmonica(fractionFromLeftEdge: 0.25, fractionAboveCentreLine: 0.2)])
+
+        let hertz = engine.soundedTones.compactMap { $0.first?.pitch.converted(to: .hertz).value.rounded() }
+        XCTAssertEqual(hertz, [392, 392], "hole 2 drawn is G4, then hole 3 blown is G4, and nothing in between")
+        XCTAssertEqual(engine.soundedTones.count, 2, "neither hole 2 blown nor hole 3 drawn ever sounded")
+    }
+
+    func test_harmonica_whenTheBreathTurnsWhileAHoleSounds_makesEveryReedSpeakAgain() {
+        let harmonica = harmonica()
+        _ = harmonica.play(at: [PositionOnHarmonica(fractionFromLeftEdge: 0.25, fractionAboveCentreLine: 0.2)])
+
+        _ = harmonica.play(at: [PositionOnHarmonica(fractionFromLeftEdge: 0.25, fractionAboveCentreLine: -0.3)])
+
+        XCTAssertEqual(engine.toneChanges, [.slide, .breathReversed])
+    }
+
+    func test_harmonica_whenTheTopmostFingerIsAboveTheLine_blowsEveryHole() {
+        let harmonica = harmonica()
+
+        _ = harmonica.play(at: [
+            PositionOnHarmonica(fractionFromLeftEdge: 0.05, fractionAboveCentreLine: 0.2),
+            PositionOnHarmonica(fractionFromLeftEdge: 0.25, fractionAboveCentreLine: -0.4)
+        ])
+
+        XCTAssertEqual(engine.soundedTones.last?.map(\.bendableSemitones), [0, 0])
+    }
+
+    func test_harmonica_whenTheTopmostFingerHasSlidOffTheStrip_leavesTheBreathToTheNext() {
+        let harmonica = harmonica()
+
+        _ = harmonica.play(at: [
+            PositionOnHarmonica(fractionFromLeftEdge: 1.4, fractionAboveCentreLine: 0.4),
+            PositionOnHarmonica(fractionFromLeftEdge: 0.25, fractionAboveCentreLine: -0.3)
+        ])
+
+        XCTAssertEqual(engine.soundedTones.last?.count, 1)
+        XCTAssertEqual(engine.soundedTones.last?.first?.bendableSemitones, 3)
+    }
+
+    // MARK: - Helpers
+
+    private func harmonica() -> PlayHarmonica {
+        PlayHarmonica(tuning: RichterTuning(), audioEngine: engine, log: SilentLog())
+    }
+
+    private func blowingHoleThree() -> PlayHarmonica {
+        let harmonica = harmonica()
+        _ = harmonica.play(at: [PositionOnHarmonica(fractionFromLeftEdge: 0.25, fractionAboveCentreLine: 0.2)])
+        return harmonica
+    }
+}

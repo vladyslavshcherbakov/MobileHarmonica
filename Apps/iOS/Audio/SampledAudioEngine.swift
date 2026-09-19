@@ -1,4 +1,5 @@
 import AVFoundation
+import HarmonicaCore
 
 final class SampledAudioEngine: AudioEngineProtocol {
     private static let amplitude: Float = 0.25

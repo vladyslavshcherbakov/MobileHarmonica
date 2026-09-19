@@ -1,4 +1,5 @@
 import Foundation
+import HarmonicaCore
 
 struct BundledScores {
     static let folder = "Scores"

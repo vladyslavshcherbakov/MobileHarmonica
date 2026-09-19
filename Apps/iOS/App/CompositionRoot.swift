@@ -1,3 +1,5 @@
+import HarmonicaCore
+
 struct CompositionRoot {
     private let audioEngine: AudioEngineProtocol
     private let tilt: TiltProtocol

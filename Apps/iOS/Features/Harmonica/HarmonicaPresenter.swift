@@ -1,4 +1,5 @@
 import Foundation
+import HarmonicaCore
 
 struct HarmonicaPresenter {
     private static let soundUnavailableText = "Sound is unavailable."

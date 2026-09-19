@@ -13,6 +13,10 @@ settings:
     CODE_SIGN_STYLE: Automatic
     DEVELOPMENT_TEAM: ""
 
+packages:
+  HarmonicaCore:
+    path: Core
+
 targets:
   MobileHarmonica:
     type: application
@@ -26,6 +30,9 @@ targets:
         type: folder
       - path: Apps/iOS/Scores
         type: folder
+    dependencies:
+      - package: HarmonicaCore
+        product: HarmonicaCore
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.vladyslavshcherbakov.mobileharmonica
@@ -46,6 +53,8 @@ targets:
       - path: Apps/iOS/Tests
     dependencies:
       - target: MobileHarmonica
+      - package: HarmonicaCore
+        product: HarmonicaCoreTestSupport
     settings:
       base:
         GENERATE_INFOPLIST_FILE: YES
