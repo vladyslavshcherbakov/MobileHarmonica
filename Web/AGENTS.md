@@ -20,6 +20,15 @@ for motion.
 `dist/`, which Safari loads itself, so a stack trace on the phone names a file that exists on
 disk. `dist/` and `node_modules/` are not committed.
 
+**Every publish moves the code to a new address.** The page is a tree of ES modules at fixed
+paths, and a browser is free to take some of them from its cache and some from the network, which
+on a Mac produced a page assembled from two builds at once: it hung on loading, and then played a
+second late, both of them faults that had already been fixed. `npm run stamp` renames `dist` to
+`dist-<commit>` and rewrites the page's one script path to match, so a publish leaves nothing
+behind that a cache can mix in. Everything else follows: the modules import each other relatively,
+and the worklet's url is built from `import.meta.url`. The recordings keep their address, since
+they change rarely and weigh nineteen megabytes.
+
 `.github/workflows/pages.yml` runs the tests and publishes this folder to GitHub Pages on every
 push that touches it. The site root is `Web/`, so `index.html` sits at the root of the published
 URL and every path in the page is relative to it.
