@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     container: swift:6.4
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install the WebAssembly SDK
         run: |
           apt-get update
@@ -41,7 +41,7 @@ jobs:
           wasm-opt --all-features -Os .build/release/HarmonicaWasm.wasm -o harmonica.wasm
           echo "linked   $(stat -c %s .build/release/HarmonicaWasm.wasm) bytes"
           echo "shrunk   $(stat -c %s harmonica.wasm) bytes"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: harmonica-wasm
           path: Core/harmonica.wasm
@@ -54,11 +54,11 @@ jobs:
       run:
         working-directory: Web
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: '22'
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: harmonica-wasm
           path: Web/core
