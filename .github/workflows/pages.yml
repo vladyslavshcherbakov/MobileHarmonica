@@ -4,6 +4,7 @@ on:
   push:
     branches: ['**']
     paths:
+      - 'Core/**'
       - 'Web/**'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
@@ -18,7 +19,28 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  core:
+    runs-on: ubuntu-latest
+    container: swift:6.4
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install the WebAssembly SDK
+        run: |
+          curl -fLO https://download.swift.org/swift-6.4-release/wasm-sdk/swift-6.4-RELEASE/swift-6.4-RELEASE_wasm.artifactbundle.tar.gz
+          swift sdk install swift-6.4-RELEASE_wasm.artifactbundle.tar.gz
+      - name: Build the instrument
+        working-directory: Core
+        run: |
+          swift build --product HarmonicaWasm --swift-sdk swift-6.4.0-RELEASE_wasm -c release \
+            -Xswiftc -Xclang-linker -Xswiftc -mexec-model=reactor -Xlinker -s
+      - uses: actions/upload-artifact@v4
+        with:
+          name: harmonica-wasm
+          path: Core/.build/release/HarmonicaWasm.wasm
+          retention-days: 1
+
   build:
+    needs: core
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -28,6 +50,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          name: harmonica-wasm
+          path: Web/core
+      - run: mv core/HarmonicaWasm.wasm core/harmonica.wasm
       - run: npm install
       - run: npm test
       - run: npm run build

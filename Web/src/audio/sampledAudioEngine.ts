@@ -1,12 +1,5 @@
-import type { AudioEngine } from '../domain/protocols/audioEngine.js'
-import type { Log } from '../domain/protocols/log.js'
-import type { Tone } from '../domain/instrument/tone.js'
-import type { ToneChange } from '../domain/playing/toneChange.js'
-import type { ReedRelease } from '../domain/playing/reedRelease.js'
-import type { BreathIntensity } from '../domain/playing/breathIntensity.js'
-import type { BendDepth } from '../domain/playing/bendDepth.js'
-import type { VibratoDepth } from '../domain/playing/vibratoDepth.js'
-import type { CupDepth } from '../domain/playing/cupDepth.js'
+import type { CoreAudio, CoreTone, CoreToneChange } from '../core/coreState.js'
+import type { Log } from '../logging/log.js'
 import type { WorkletMessage, WorkletReport } from './workletMessage.js'
 import { processorName } from './workletMessage.js'
 import { recordedHarmonica } from './recordedHarmonica.js'
@@ -16,7 +9,7 @@ const slideCrossfadeSeconds = 0.02
 const newReedCrossfadeSeconds = 0.05
 const reedStopsInSeconds = 0.02
 
-export class SampledAudioEngine implements AudioEngine {
+export class SampledAudioEngine implements CoreAudio {
     private context: AudioContext | null = null
     private node: AudioWorkletNode | null = null
     private askedToSoundAt = 0
@@ -36,7 +29,7 @@ export class SampledAudioEngine implements AudioEngine {
         }
     }
 
-    soundTones(tones: readonly Tone[], change: ToneChange): void {
+    soundTones(tones: readonly CoreTone[], change: CoreToneChange): void {
         this.askedToSoundAt = this.context?.currentTime ?? 0
         this.send({
             kind: 'sound',
@@ -46,24 +39,24 @@ export class SampledAudioEngine implements AudioEngine {
         })
     }
 
-    changeIntensity(intensity: BreathIntensity): void {
-        this.send({ kind: 'breathGain', value: intensity })
+    changeIntensity(gain: number): void {
+        this.send({ kind: 'breathGain', value: gain })
     }
 
-    changeBend(depth: BendDepth): void {
-        this.send({ kind: 'bend', value: depth })
+    changeBend(fraction: number): void {
+        this.send({ kind: 'bend', value: fraction })
     }
 
-    changeVibrato(depth: VibratoDepth): void {
-        this.send({ kind: 'vibrato', value: depth })
+    changeVibrato(fraction: number): void {
+        this.send({ kind: 'vibrato', value: fraction })
     }
 
-    cupHands(depth: CupDepth): void {
-        this.send({ kind: 'cup', value: depth })
+    cupHands(fraction: number): void {
+        this.send({ kind: 'cup', value: fraction })
     }
 
-    silence(release: ReedRelease): void {
-        this.send(release === 'ringsDown' ? { kind: 'ringDown' } : { kind: 'damp', seconds: reedStopsInSeconds })
+    silence(ringsDown: boolean): void {
+        this.send(ringsDown ? { kind: 'ringDown' } : { kind: 'damp', seconds: reedStopsInSeconds })
     }
 
     private async build(): Promise<void> {
@@ -143,7 +136,7 @@ function milliseconds(seconds: number): string {
     return Number.isFinite(seconds) ? (seconds * 1000).toFixed(1) : 'unreported'
 }
 
-function crossfadeSecondsFor(change: ToneChange): number {
+function crossfadeSecondsFor(change: CoreToneChange): number {
     return change === 'newReed' ? newReedCrossfadeSeconds : slideCrossfadeSeconds
 }
 

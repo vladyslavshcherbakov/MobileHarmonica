@@ -33,9 +33,17 @@ export interface CoreEvent {
 export interface CoreTune {
     readonly name: string
     readonly keyPosition: number
+    readonly harmonicaKeyPosition: number
     readonly position: 'first' | 'second' | 'third'
     readonly beatsPerMinute: number
     readonly events: readonly CoreEvent[]
+}
+
+export interface CoreReed {
+    readonly hole: number
+    readonly breath: 'blow' | 'draw'
+    readonly bendableSemitones: number
+    readonly overbendableSemitones: number
 }
 
 export interface CoreTone {

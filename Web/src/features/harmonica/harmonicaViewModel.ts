@@ -1,28 +1,22 @@
-import type { Harmonica } from '../../domain/instrument/harmonica.js'
-import { keyAtNearestSliderPosition } from '../../domain/instrument/harmonicaKey.js'
-import { mouthWidth } from '../../domain/playing/mouthWidth.js'
-import { cupDepth } from '../../domain/playing/cupDepth.js'
-import { pitchShaping } from '../../domain/playing/pitchShaping.js'
-import type { PlayingStyle } from '../../domain/playing/playingStyle.js'
-import type { PositionOnHarmonica } from '../../domain/playing/positionOnHarmonica.js'
-import { vibratoDepth } from '../../domain/playing/vibratoDepth.js'
-import type { Score } from '../../domain/scores/score.js'
-import type { PlayHarmonica } from '../../domain/useCases/playHarmonica.js'
-import type { PlayScore, ScorePerformance } from '../../domain/useCases/playScore.js'
-import type { Tilt } from '../../domain/protocols/tilt.js'
+import type { CoreFinger, CoreState } from '../../core/coreState.js'
+import type { HarmonicaCore } from '../../core/harmonicaCore.js'
+import type { CoreAudio } from '../../core/coreState.js'
+import type { Tilt } from '../../motion/tilt.js'
 import type { HarmonicaPresenter } from './harmonicaPresenter.js'
 import type { HarmonicaViewState, PlayingStyleChoice } from './harmonicaViewState.js'
+import type { TunePerformance } from './playTheTune.js'
+import { PlayTheTune } from './playTheTune.js'
 
 export class HarmonicaViewModel {
     private state: HarmonicaViewState = { kind: 'preparingSound' }
-    private performance: ScorePerformance | null = null
+    private performance: TunePerformance | null = null
     private show: (state: HarmonicaViewState) => void = () => {}
 
     constructor(
-        private readonly playHarmonica: PlayHarmonica,
-        private readonly playScore: PlayScore,
+        private readonly core: HarmonicaCore,
+        private readonly audio: CoreAudio & { prepare(): Promise<void> },
         private readonly tilt: Tilt,
-        private readonly tunes: readonly Score[],
+        private readonly tunePlayer: PlayTheTune,
         private readonly presenter: HarmonicaPresenter
     ) {}
 
@@ -33,7 +27,8 @@ export class HarmonicaViewModel {
 
     async prepareSound(): Promise<void> {
         try {
-            this.present(await this.playHarmonica.prepare())
+            await this.audio.prepare()
+            this.present(this.core.start())
         } catch (failure) {
             this.publish(this.presenter.presentSoundUnavailable(describe(failure)))
         }
@@ -44,49 +39,53 @@ export class HarmonicaViewModel {
         this.tilt.followTheLean(leaning => this.cupHands(leaning))
     }
 
-    playAt(positions: readonly PositionOnHarmonica[]): void {
+    playAt(fingers: readonly CoreFinger[]): void {
         if (this.state.kind !== 'ready') return
 
-        if (positions.length > 0) this.stopTheScore()
-        this.present(this.playHarmonica.playAt(positions))
+        if (fingers.length > 0) this.stopTheTune()
+        this.present(this.core.playAt(fingers))
     }
 
     changeKey(toPosition: number): void {
         if (this.state.kind !== 'ready') return
 
-        this.present(this.playHarmonica.changeKey(keyAtNearestSliderPosition(Math.round(toPosition))))
+        this.present(this.core.changeKey(Math.round(toPosition)))
     }
 
     changeStyle(choice: PlayingStyleChoice): void {
         if (this.state.kind !== 'ready') return
 
-        this.present(this.playHarmonica.changeStyle(styleChosen(choice)))
+        this.present(this.core.changeStyle(styleIndex(choice)))
     }
 
     changeMouthWidth(holesWide: number): void {
         if (this.state.kind !== 'ready') return
 
-        this.present(this.playHarmonica.changeMouthWidth(mouthWidth(holesWide)))
+        this.present(this.core.changeMouth(holesWide))
     }
 
     playTheTune(index: number): void {
-        const tune = this.tunes[index]
-        if (this.state.kind !== 'ready' || tune === undefined) return
+        if (this.state.kind !== 'ready') return
 
-        this.stopTheScore()
-        this.performance = this.playScore.play(tune, harmonica => this.present(harmonica))
+        this.stopTheTune()
+        this.performance = this.tunePlayer.play(index, harmonica => this.present(harmonica))
         void this.performance.finished.then(() => this.tuneFinished())
     }
 
     stopTheTune(): void {
+        this.performance?.cancel()
+        this.performance = null
+    }
+
+    stopTheTuneAndSilence(): void {
         if (this.state.kind !== 'ready') return
 
-        this.stopTheScore()
-        this.present(this.playHarmonica.stopPlaying('ringsDown'))
+        this.stopTheTune()
+        this.present(this.core.stopPlaying(true))
     }
 
     shapeTone(pitch: number, vibrato: number): void {
-        const harmonica = this.playHarmonica.shapeTone(pitchShaping(pitch), vibratoDepth(vibrato))
+        const harmonica = this.core.shapeTone(pitch, vibrato)
         if (this.state.kind !== 'ready') return
 
         this.present(harmonica)
@@ -97,8 +96,8 @@ export class HarmonicaViewModel {
     }
 
     stopPlaying(): void {
-        this.stopTheScore()
-        const harmonica = this.playHarmonica.stopPlaying('ringsDown')
+        this.stopTheTune()
+        const harmonica = this.core.stopPlaying(true)
         if (this.state.kind !== 'ready') return
 
         this.present(harmonica)
@@ -106,22 +105,17 @@ export class HarmonicaViewModel {
 
     private tuneFinished(): void {
         this.performance = null
-        this.present(this.playHarmonica.stopPlaying('ringsDown'))
+        this.present(this.core.stopPlaying(true))
     }
 
     private cupHands(leaning: number): void {
-        const harmonica = this.playHarmonica.cupHands(cupDepth(leaning))
+        const harmonica = this.core.cupHands(leaning)
         if (this.state.kind !== 'ready') return
 
         this.present(harmonica)
     }
 
-    private stopTheScore(): void {
-        this.performance?.cancel()
-        this.performance = null
-    }
-
-    private present(harmonica: Harmonica): void {
+    private present(harmonica: CoreState): void {
         this.publish(this.presenter.present(harmonica, this.performance !== null))
     }
 
@@ -131,14 +125,14 @@ export class HarmonicaViewModel {
     }
 }
 
-function describe(failure: unknown): string {
-    return failure instanceof Error ? `${failure.name}: ${failure.message}` : String(failure)
+function styleIndex(choice: PlayingStyleChoice): number {
+    switch (choice) {
+        case 'severalFingersSeveralNotes': return 0
+        case 'severalFingersOneNote': return 1
+        case 'oneFingerSeveralNotes': return 2
+    }
 }
 
-function styleChosen(choice: PlayingStyleChoice): PlayingStyle {
-    switch (choice) {
-        case 'severalFingersSeveralNotes': return 'severalFingersSeveralNotes'
-        case 'severalFingersOneNote': return 'severalFingersOneNote'
-        case 'oneFingerSeveralNotes': return 'oneFingerSeveralNotes'
-    }
+function describe(failure: unknown): string {
+    return failure instanceof Error ? `${failure.name}: ${failure.message}` : String(failure)
 }

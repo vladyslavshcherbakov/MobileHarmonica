@@ -1,5 +1,4 @@
-import type { PositionOnHarmonica } from '../../domain/playing/positionOnHarmonica.js'
-import { isOnTheHarmonica, topmostOf } from '../../domain/playing/positionOnHarmonica.js'
+import type { CoreFinger } from '../../core/coreState.js'
 import type { FingerMark } from './fingerCircles.js'
 import { FingerCircles, restingDiameter } from './fingerCircles.js'
 import { HarmonicaRenderer } from './harmonicaRenderer.js'
@@ -79,7 +78,7 @@ export class HarmonicaScreen {
 
             chosen.value = ''
         })
-        element('stopTune').addEventListener('click', () => this.viewModel.stopTheTune())
+        element('stopTune').addEventListener('click', () => this.viewModel.stopTheTuneAndSilence())
         this.listenToTheFullScreenButton()
         element('startButton').addEventListener('click', () => void this.startSound())
         document.addEventListener('visibilitychange', () => {
@@ -133,7 +132,7 @@ export class HarmonicaScreen {
 
     private stripMarks(
         contacts: readonly Contact[],
-        positions: readonly PositionOnHarmonica[],
+        positions: readonly CoreFinger[],
         width: number
     ): FingerMark[] {
         const deciding = topmostOf(positions.filter(isOnTheHarmonica))
@@ -185,11 +184,26 @@ export class HarmonicaScreen {
     }
 }
 
-function positionOf(contact: Contact, width: number, height: number): PositionOnHarmonica {
+function positionOf(contact: Contact, width: number, height: number): CoreFinger {
     return {
         fractionFromLeftEdge: contact.x / width,
-        fractionAboveCentreLine: (height / 2 - contact.y) / height
+        fractionAboveCentreLine: (height / 2 - contact.y) / height,
+        fractionCoveredEitherSide: 0
     }
+}
+
+function isOnTheHarmonica(finger: CoreFinger): boolean {
+    return finger.fractionFromLeftEdge >= 0 && finger.fractionFromLeftEdge <= 1
+}
+
+function topmostOf(fingers: readonly CoreFinger[]): CoreFinger | null {
+    let topmost: CoreFinger | null = null
+    for (const finger of fingers) {
+        if (topmost === null || finger.fractionAboveCentreLine > topmost.fractionAboveCentreLine) {
+            topmost = finger
+        }
+    }
+    return topmost
 }
 
 function topmostContact(contacts: readonly Contact[]): Contact | undefined {

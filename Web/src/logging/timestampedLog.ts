@@ -1,4 +1,4 @@
-import type { Log } from '../domain/protocols/log.js'
+import type { Log } from './log.js'
 
 export class TimestampedLog implements Log {
     record(line: string): void {

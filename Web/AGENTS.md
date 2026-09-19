@@ -45,18 +45,35 @@ Web/
   index.html      the whole markup, no template engine
   styles.css      the whole style
   src/
-    domain/       ported from Core/ line for line
+    core/         the WASI shim, the loader, and the wrapper around HarmonicaCore
     audio/        the AudioWorkletProcessor and the engine that talks to it
     motion/       devicemotion behind its permission prompt
-    features/     view state, presenter, view model, renderer, touch adapter
+    features/     view state, presenter, view model, renderer, touch adapter, tune player
     logging/      the timestamped log
     app/          composition root and entry point
-  tests/          the app's tests, same names, same numbers
+  tests/          what the page itself promises: the presenter and the oscillator
 ```
 
-The domain is a rewrite, not a port of a port: every file under `src/domain` was written by
-reading its Swift original, and the tests carry the Swift test names and the Swift numbers
-across, which is what makes the two instruments the same instrument.
+**The instrument is not here any more.** It is `Core/`, compiled to WebAssembly, and the page
+loads it. There is no second copy of the rules to keep in step, no second set of tunes, and the
+tests that check bend ranges and overbends live with the Swift that implements them. What is
+left here is what only a browser has: the sound, the screen, the fingers, and the clock.
+
+**The boundary is narrow on purpose.** Fingers go in as one buffer of doubles, because they
+move on every touch. The harmonica's state comes out as JSON, because it is read once per change
+and a declared type beats a hand-written bag. The core calls back out for two things only, the
+audio engine and the log, declared in Swift with `@_extern` and provided here as the `harmonica`
+import module.
+
+**WASI is shimmed rather than depended on.** Foundation inside the module asks for a clock,
+random bytes, an environment and somewhere to write; the shim answers those and refuses the rest,
+so the page carries no WASI package. `_initialize` is what the loader calls after instantiating:
+the module is built as a reactor, so it survives its own start and keeps its exports.
+
+**The clock stays on this side.** `PlayTheTune` walks a tune's events, sleeping between them, and
+drives the instrument through the same calls a finger does. The core has no executor to sleep on,
+and the project's own rule already says time lives in the player. What it cannot know by itself,
+how far a reed bends, it asks the core for once at startup.
 
 ## What is deliberately different
 

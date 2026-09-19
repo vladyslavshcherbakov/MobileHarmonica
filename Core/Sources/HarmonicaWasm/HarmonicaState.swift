@@ -67,11 +67,28 @@ struct SoundingHoleState: Encodable {
     }
 }
 
+// MARK: - ReedState
+
+struct ReedState: Encodable {
+    let hole: Int
+    let breath: String
+    let bendableSemitones: Double
+    let overbendableSemitones: Double
+
+    init(hole: Hole, breath: Breath, tuning: RichterTuning) {
+        self.hole = hole.number
+        self.breath = breath == .blow ? "blow" : "draw"
+        bendableSemitones = tuning.bendableSemitones(for: Reed(hole: hole, breath: breath))
+        overbendableSemitones = tuning.overbendableSemitones(for: Reed(hole: hole, breath: breath))
+    }
+}
+
 // MARK: - TuneState
 
 struct TuneState: Encodable {
     let name: String
     let keyPosition: Int
+    let harmonicaKeyPosition: Int
     let position: String
     let beatsPerMinute: Double
     let events: [EventState]
@@ -79,6 +96,7 @@ struct TuneState: Encodable {
     init(_ score: Score) {
         name = score.name
         keyPosition = score.key.sliderPosition
+        harmonicaKeyPosition = score.harmonicaKey.sliderPosition
         position = Self.name(of: score.position)
         beatsPerMinute = score.beatsPerMinute
         events = score.events.map(EventState.init)

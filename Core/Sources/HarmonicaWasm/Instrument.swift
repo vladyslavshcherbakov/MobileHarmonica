@@ -75,6 +75,15 @@ final class Instrument {
         write(Score.tunes.map(TuneState.init))
     }
 
+    func reeds() -> Int32 {
+        let tuning = RichterTuning()
+        return write(
+            Hole.allCases.flatMap { hole in
+                [Breath.blow, .draw].map { ReedState(hole: hole, breath: $0, tuning: tuning) }
+            }
+        )
+    }
+
     // MARK: - Private
 
     private func positions(of fingers: Int) -> [PositionOnHarmonica] {

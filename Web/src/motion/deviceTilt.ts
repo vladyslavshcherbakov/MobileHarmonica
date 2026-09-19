@@ -1,4 +1,4 @@
-import type { Tilt } from '../domain/protocols/tilt.js'
+import type { Tilt } from './tilt.js'
 
 const slackAroundLevel = 0.05
 const gravityWhenFullyTilted = 0.5

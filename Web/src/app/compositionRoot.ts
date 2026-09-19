@@ -1,31 +1,32 @@
-import type { AudioEngine } from '../domain/protocols/audioEngine.js'
-import type { Log } from '../domain/protocols/log.js'
-import type { Tilt } from '../domain/protocols/tilt.js'
-import { tunes } from '../domain/scores/tunes.js'
-import { PlayHarmonica } from '../domain/useCases/playHarmonica.js'
-import { PlayScore } from '../domain/useCases/playScore.js'
+import type { CoreAudio } from '../core/coreState.js'
+import { HarmonicaCore } from '../core/harmonicaCore.js'
+import type { Log } from '../logging/log.js'
+import type { Tilt } from '../motion/tilt.js'
 import { HarmonicaPresenter } from '../features/harmonica/harmonicaPresenter.js'
 import { HarmonicaViewModel } from '../features/harmonica/harmonicaViewModel.js'
 import { HarmonicaScreen } from '../features/harmonica/harmonicaScreen.js'
+import { PlayTheTune } from '../features/harmonica/playTheTune.js'
 
 export class CompositionRoot {
     constructor(
-        private readonly audioEngine: AudioEngine,
+        private readonly coreUrl: string,
+        private readonly audioEngine: CoreAudio & { prepare(): Promise<void> },
         private readonly tilt: Tilt,
         private readonly log: Log
     ) {}
 
-    harmonicaScreen(): HarmonicaScreen {
-        return new HarmonicaScreen(this.harmonicaViewModel())
+    async harmonicaScreen(): Promise<HarmonicaScreen> {
+        const core = await HarmonicaCore.load(this.coreUrl, this.audioEngine, line => this.log.record(line))
+        return new HarmonicaScreen(this.harmonicaViewModel(core))
     }
 
-    private harmonicaViewModel(): HarmonicaViewModel {
-        const playHarmonica = new PlayHarmonica(this.audioEngine, this.log)
+    private harmonicaViewModel(core: HarmonicaCore): HarmonicaViewModel {
+        const tunes = core.tunes()
         return new HarmonicaViewModel(
-            playHarmonica,
-            new PlayScore(playHarmonica, this.log),
+            core,
+            this.audioEngine,
             this.tilt,
-            tunes,
+            new PlayTheTune(core, tunes, core.reeds()),
             new HarmonicaPresenter(tunes)
         )
     }

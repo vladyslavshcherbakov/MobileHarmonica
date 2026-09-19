@@ -1,98 +1,90 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { PlayHarmonica } from '../src/domain/useCases/playHarmonica.js'
-import { pitchShaping } from '../src/domain/playing/pitchShaping.js'
-import { vibratoOff } from '../src/domain/playing/vibratoDepth.js'
-import type { PositionOnHarmonica } from '../src/domain/playing/positionOnHarmonica.js'
+import type { CoreSoundingHole, CoreState } from '../src/core/coreState.js'
 import { HarmonicaPresenter } from '../src/features/harmonica/harmonicaPresenter.js'
 import type { HarmonicaViewState, HoleViewState } from '../src/features/harmonica/harmonicaViewState.js'
-import { RecordingAudioEngine } from './support/recordingAudioEngine.js'
-import { SilentLog } from './support/silentLog.js'
 
 const presenter = new HarmonicaPresenter([])
 
 test('noteRow_whenNoHoleSounds_namesNothing', () => {
-    const harmonica = playing()
-
-    const state = presenter.present(harmonica.playAt([]), false)
+    const state = presenter.present(harmonica([]), false)
 
     assert.equal(hole(4, state)?.note, '')
     assert.equal(hole(4, state)?.effect, '')
 })
 
-test('noteRow_whenTheFingerIsAboveTheLine_namesTheBlowReed', () => {
-    const harmonica = playing()
+test('noteRow_whenAHoleSounds_namesItsNote', () => {
+    const state = presenter.present(harmonica([sounding({ hole: 4, pitch: 72, unbent: 72 })]), false)
 
-    const state = presenter.present(harmonica.playAt([finger(0.35, 0.2)]), false)
-
-    assert.equal(hole(4, state)?.note, 'C5')
+    assert.equal(hole(4, state)?.note, 'C5', 'hole 4 blown on a C harmonica is C5')
+    assert.equal(hole(4, state)?.effect, '')
 })
 
-test('noteRow_whenTheFingerIsBelowTheLine_namesTheDrawReed', () => {
-    const harmonica = playing()
+test('noteRow_whenTheReedIsBent_namesTheBentNoteAndTheReedBehindIt', () => {
+    const bent = sounding({ hole: 4, breath: 'draw', pitch: 73, unbent: 74, isShifted: true })
 
-    const state = presenter.present(harmonica.playAt([finger(0.35, -0.3)]), false)
-
-    assert.equal(hole(4, state)?.note, 'D5')
-})
-
-test('noteRow_whenTheDrawReedIsBentToItsLimit_namesTheBentNoteAndTheReedBehindIt', () => {
-    const harmonica = playing()
-    harmonica.playAt([finger(0.35, -0.3)])
-
-    const state = presenter.present(harmonica.shapeTone(pitchShaping(-1), vibratoOff), false)
+    const state = presenter.present(harmonica([bent]), false)
 
     assert.equal(hole(4, state)?.note, 'D♭5')
     assert.equal(hole(4, state)?.effect, '(D5 bend)')
 })
 
 test('noteRow_whenTheBlowReedIsOverbent_namesTheOverblow', () => {
-    const harmonica = playing()
-    harmonica.playAt([finger(0.25, 0.2)])
+    const overblown = sounding({ hole: 3, pitch: 72, unbent: 67, isShifted: true, isOverbent: true })
 
-    const state = presenter.present(harmonica.shapeTone(pitchShaping(1), vibratoOff), false)
+    const state = presenter.present(harmonica([overblown]), false)
 
     assert.equal(hole(3, state)?.note, 'C5')
     assert.equal(hole(3, state)?.effect, '(G4 overblow)')
 })
 
 test('noteRow_whenTheDrawReedIsOverbent_namesTheOverdraw', () => {
-    const harmonica = playing()
-    harmonica.playAt([finger(0.85, -0.3)])
+    const overdrawn = sounding({
+        hole: 9, breath: 'draw', pitch: 92, unbent: 89, isShifted: true, isOverbent: true
+    })
 
-    const state = presenter.present(harmonica.shapeTone(pitchShaping(1), vibratoOff), false)
+    const state = presenter.present(harmonica([overdrawn]), false)
 
     assert.equal(hole(9, state)?.note, 'A♭6')
     assert.equal(hole(9, state)?.effect, '(F6 overdraw)')
 })
 
-test('noteRow_whenTheBendRoundsToNoSemitone_namesOnlyTheNote', () => {
-    const harmonica = playing()
-    harmonica.playAt([finger(0.25, -0.3)])
+test('noteRow_whenAHoleIsBlown_litsTheTopHalf', () => {
+    const state = presenter.present(harmonica([sounding({ hole: 1, pitch: 60, unbent: 60 })]), false)
 
-    const state = presenter.present(harmonica.shapeTone(pitchShaping(-0.1), vibratoOff), false)
-
-    assert.equal(hole(3, state)?.note, 'B4')
-    assert.equal(hole(3, state)?.effect, '')
+    assert.equal(hole(1, state)?.lit, 'top')
 })
 
-test('noteRow_whenTheKeyIsD_namesTheReedInThatKey', () => {
-    const harmonica = playing()
-    harmonica.playAt([finger(0.05, 0.2)])
+test('noteRow_whenAHoleIsDrawn_litsTheBottomHalf', () => {
+    const drawn = sounding({ hole: 1, breath: 'draw', pitch: 62, unbent: 62 })
 
-    const state = presenter.present(harmonica.changeKey('D'), false)
+    const state = presenter.present(harmonica([drawn]), false)
 
-    assert.equal(hole(1, state)?.note, 'D4')
+    assert.equal(hole(1, state)?.lit, 'bottom')
 })
 
-function playing(): PlayHarmonica {
-    const harmonica = new PlayHarmonica(new RecordingAudioEngine(), new SilentLog())
-    harmonica.changeMouthWidth(1)
-    return harmonica
+function sounding(hole: Partial<CoreSoundingHole> & { hole: number }): CoreSoundingHole {
+    return {
+        breath: 'blow',
+        pitch: 60,
+        unbent: 60,
+        isShifted: false,
+        isOverbent: false,
+        ...hole
+    }
 }
 
-function finger(fromLeftEdge: number, aboveCentreLine: number): PositionOnHarmonica {
-    return { fractionFromLeftEdge: fromLeftEdge, fractionAboveCentreLine: aboveCentreLine }
+function harmonica(soundingHoles: readonly CoreSoundingHole[]): CoreState {
+    return {
+        keyPosition: 5,
+        style: 'severalFingersSeveralNotes',
+        mouthHolesWide: 2,
+        cup: 0,
+        canBend: false,
+        canOverbend: false,
+        breath: soundingHoles[0]?.breath ?? null,
+        sounding: soundingHoles
+    }
 }
 
 function hole(number: number, state: HarmonicaViewState): HoleViewState | undefined {

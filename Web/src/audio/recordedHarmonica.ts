@@ -1,5 +1,5 @@
 import type { RecordedNote, SampleBank } from './sampleBank.js'
-import type { Log } from '../domain/protocols/log.js'
+import type { Log } from '../logging/log.js'
 
 const indexName = 'index.json'
 const loopStartSeconds = 1

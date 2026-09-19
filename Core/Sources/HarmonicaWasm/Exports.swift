@@ -75,4 +75,10 @@ func harmonicaStopPlaying(_ release: Int32) -> Int32 {
 func harmonicaTunes() -> Int32 {
     instrument.tunes()
 }
+
+@_expose(wasm, "harmonica_reeds")
+@_cdecl("harmonica_reeds")
+func harmonicaReeds() -> Int32 {
+    instrument.reeds()
+}
 #endif

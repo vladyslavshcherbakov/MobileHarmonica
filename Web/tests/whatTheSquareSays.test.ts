@@ -1,49 +1,60 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { PlayHarmonica } from '../src/domain/useCases/playHarmonica.js'
-import type { PositionOnHarmonica } from '../src/domain/playing/positionOnHarmonica.js'
+import type { CoreState } from '../src/core/coreState.js'
 import { HarmonicaPresenter } from '../src/features/harmonica/harmonicaPresenter.js'
 import type { ToneShapingViewState } from '../src/features/harmonica/harmonicaViewState.js'
-import { RecordingAudioEngine } from './support/recordingAudioEngine.js'
-import { SilentLog } from './support/silentLog.js'
 
 const presenter = new HarmonicaPresenter([])
 
 test('square_whenABlowReedSounds_callsTheUpperAxisTheOverblow', () => {
-    assert.equal(shaping(finger(0.25, 0.2))?.overbendLabel, 'overblow ↑', 'hole 3 blown overblows')
+    assert.equal(shaping({ breath: 'blow' })?.overbendLabel, 'overblow ↑')
 })
 
 test('square_whenADrawReedSounds_callsTheUpperAxisTheOverdraw', () => {
-    assert.equal(shaping(finger(0.85, -0.3))?.overbendLabel, 'overdraw ↑', 'hole 9 drawn overdraws')
+    assert.equal(shaping({ breath: 'draw' })?.overbendLabel, 'overdraw ↑')
 })
 
 test('square_whenNothingSounds_namesNeitherTechnique', () => {
-    assert.equal(shaping(null)?.overbendLabel, 'overbend ↑')
+    assert.equal(shaping({ breath: null })?.overbendLabel, 'overbend ↑')
 })
 
-test('square_whenTheSoundingReedOverbendsButCannotBend_dimsTheBendAlone', () => {
-    const state = shaping(finger(0.25, 0.2))
+test('square_whenTheSoundingReedCannotBend_dimsTheBend', () => {
+    const state = shaping({ breath: 'blow', canBend: false, canOverbend: true })
 
     assert.equal(state?.bendIsAvailable, false)
     assert.equal(state?.overbendIsAvailable, true)
 })
 
-test('square_whenTheSoundingReedBendsButCannotOverbend_dimsTheOverbendAlone', () => {
-    const state = shaping(finger(0.25, -0.3))
+test('square_whenTheSoundingReedCannotOverbend_dimsTheOverbend', () => {
+    const state = shaping({ breath: 'draw', canBend: true, canOverbend: false })
 
-    assert.equal(state?.bendIsAvailable, true, 'hole 3 drawn bends three semitones')
+    assert.equal(state?.bendIsAvailable, true)
     assert.equal(state?.overbendIsAvailable, false)
 })
 
-function shaping(finger: PositionOnHarmonica | null): ToneShapingViewState | undefined {
-    const harmonica = new PlayHarmonica(new RecordingAudioEngine(), new SilentLog())
-    harmonica.changeMouthWidth(1)
-    const state = presenter.present(harmonica.playAt(finger === null ? [] : [finger]), false)
+test('cup_whenTheHandsClose_showsHowFarInTheTopBar', () => {
+    const state = presenter.present(harmonica({ cup: 0.6 }), false)
+
+    assert.ok(state.kind === 'ready' && Math.abs(state.playable.cup.closed - 0.6) < 0.001)
+})
+
+function shaping(of: Partial<CoreState>): ToneShapingViewState | undefined {
+    const state = presenter.present(harmonica(of), false)
     if (state.kind !== 'ready') return undefined
 
     return state.playable.toneShaping
 }
 
-function finger(fromLeftEdge: number, aboveCentreLine: number): PositionOnHarmonica {
-    return { fractionFromLeftEdge: fromLeftEdge, fractionAboveCentreLine: aboveCentreLine }
+function harmonica(of: Partial<CoreState>): CoreState {
+    return {
+        keyPosition: 5,
+        style: 'severalFingersSeveralNotes',
+        mouthHolesWide: 2,
+        cup: 0,
+        canBend: false,
+        canOverbend: false,
+        breath: null,
+        sounding: [],
+        ...of
+    }
 }

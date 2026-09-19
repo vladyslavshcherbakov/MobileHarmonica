@@ -5,9 +5,9 @@
   "scripts": {
     "core": "node tools/buildCore.mjs",
     "samples": "node tools/prepareSamples.mjs",
-    "build": "npm run samples && tsc",
+    "build": "rm -rf dist && npm run samples && tsc",
     "stamp": "node tools/stampTheBuild.mjs",
-    "test": "tsc && node --test \"dist/tests/**/*.test.js\""
+    "test": "rm -rf dist && tsc && node --test \"dist/tests/**/*.test.js\""
   },
   "devDependencies": {
     "typescript": "^5.9.0 || ^6.0.0"
