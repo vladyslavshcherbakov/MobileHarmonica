@@ -22,8 +22,12 @@ disk. `dist/` and `node_modules/` are not committed.
 
 `.github/workflows/pages.yml` runs the tests and publishes this folder to GitHub Pages on every
 push that touches it. The site root is `Web/`, so `index.html` sits at the root of the published
-URL and every path in the page is relative to it. Pages has to be set to **GitHub Actions** as
-its source once, in the repository settings.
+URL and every path in the page is relative to it.
+
+`configure-pages` runs with `enablement: true`, which switches the repository's Pages source to
+GitHub Actions itself. Without it the first run failed on a repository still set to deploy from a
+branch, and GitHub's own `pages-build-deployment` published the repository root instead, which
+has no `index.html` and answers 404.
 
 ## Layout
 
