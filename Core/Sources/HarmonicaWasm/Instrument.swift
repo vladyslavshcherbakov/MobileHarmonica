@@ -105,7 +105,7 @@ final class Instrument {
     private func write(_ value: some Encodable) -> Int32 {
         guard let encoded = try? encoder.encode(value), encoded.count <= output.count else { return 0 }
 
-        encoded.copyBytes(to: output)
+        _ = encoded.copyBytes(to: output)
         return Int32(encoded.count)
     }
 

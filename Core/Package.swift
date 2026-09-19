@@ -17,6 +17,7 @@ let package = Package(
             name: "HarmonicaWasm",
             dependencies: ["HarmonicaCore"],
             swiftSettings: [
+                .enableExperimentalFeature("Extern"),
                 .unsafeFlags(["-Xclang-linker", "-mexec-model=reactor"], .when(platforms: [.wasi]))
             ]
         ),
