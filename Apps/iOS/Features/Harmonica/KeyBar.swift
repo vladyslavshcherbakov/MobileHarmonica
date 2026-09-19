@@ -4,6 +4,8 @@ import SwiftUI
 struct KeyBar: View {
     static let height: CGFloat = 44
 
+    private static let clearOfTheScreenEdge: CGFloat = 20
+    private static let controlHeight: CGFloat = 40
     private static let keyLabelWidth: CGFloat = 34
     private static let styleControlWidth: CGFloat = 180
     private static let demoButtonWidth: CGFloat = 64
@@ -24,8 +26,9 @@ struct KeyBar: View {
             demoControl
         }
         .padding(.horizontal)
+        .padding(.top, Self.clearOfTheScreenEdge)
         .safeAreaPadding(.leading)
-        .frame(height: Self.height)
+        .frame(height: Self.height + Self.clearOfTheScreenEdge)
     }
 
     // MARK: - Private
@@ -45,6 +48,7 @@ struct KeyBar: View {
             step: 1
         )
         .tint(.orange)
+        .frame(height: Self.controlHeight)
     }
 
     private var cupIndicator: some View {
@@ -68,8 +72,9 @@ struct KeyBar: View {
         }
         .lineLimit(1)
         .buttonStyle(.bordered)
+        .controlSize(.large)
         .tint(.orange)
-        .frame(width: Self.styleControlWidth)
+        .frame(width: Self.styleControlWidth, height: Self.controlHeight)
     }
 
     @ViewBuilder
@@ -77,8 +82,9 @@ struct KeyBar: View {
         if playable.demo.isPlaying {
             Button(playable.demo.label, action: viewModel.stopTheTune)
                 .buttonStyle(.bordered)
+                .controlSize(.large)
                 .tint(.orange)
-                .frame(width: Self.demoButtonWidth)
+                .frame(width: Self.demoButtonWidth, height: Self.controlHeight)
         } else {
             tuneMenu
         }
@@ -91,7 +97,8 @@ struct KeyBar: View {
             }
         }
         .buttonStyle(.bordered)
+        .controlSize(.large)
         .tint(.orange)
-        .frame(width: Self.demoButtonWidth)
+        .frame(width: Self.demoButtonWidth, height: Self.controlHeight)
     }
 }

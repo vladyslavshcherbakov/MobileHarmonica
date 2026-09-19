@@ -10,6 +10,8 @@
     --holeSpacing: 6px;
     --noteRowHeight: 30px;
     --keyBarHeight: 44px;
+    --keyBarTopInset: 20px;
+    --controlHeight: 40px;
     --zoneSide: 120px;
 }
 
@@ -51,9 +53,9 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
-    height: var(--keyBarHeight);
-    flex: 0 0 var(--keyBarHeight);
-    padding: 0 12px;
+    height: calc(var(--keyBarHeight) + var(--keyBarTopInset));
+    flex: 0 0 calc(var(--keyBarHeight) + var(--keyBarTopInset));
+    padding: var(--keyBarTopInset) 12px 0;
     padding-left: calc(12px + env(safe-area-inset-left));
     overflow-x: auto;
     overflow-y: hidden;
@@ -74,6 +76,7 @@ body {
 #keySlider {
     flex: 1 1 60px;
     min-width: 44px;
+    height: var(--controlHeight);
     accent-color: var(--plateLit);
 }
 
@@ -116,6 +119,7 @@ body {
 
 #keyBar select,
 #keyBar button {
+    min-height: var(--controlHeight);
     font-size: 13px;
     color: var(--plateLit);
     background: #1c1c1c;
@@ -135,7 +139,7 @@ body {
     flex: 0 0 auto;
     font-size: 17px;
     line-height: 1;
-    padding: 6px 10px;
+    padding: 6px 12px;
 }
 
 body.canFillTheScreen #fullScreen {
