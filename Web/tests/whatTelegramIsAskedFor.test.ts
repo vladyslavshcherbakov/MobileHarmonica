@@ -20,8 +20,7 @@ test('window_whenTelegramIsRecent_asksForEverythingTheInstrumentNeeds', () => {
         'ready',
         'expand',
         'disableVerticalSwipes',
-        'requestFullscreen',
-        'lockOrientation'
+        'requestFullscreen'
     ])
 })
 
@@ -38,8 +37,7 @@ test('window_whenTelegramIsTooOld_saysSoAndCarriesOn', () => {
     assert.deepEqual(asked, ['ready', 'expand'], 'nothing it cannot do is called')
     assert.deepEqual(lines, [
         'this Telegram is too old for disableVerticalSwipes',
-        'this Telegram is too old for requestFullscreen',
-        'this Telegram is too old for lockOrientation'
+        'this Telegram is too old for requestFullscreen'
     ])
 })
 

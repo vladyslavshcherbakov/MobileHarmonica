@@ -33,7 +33,6 @@ export function fitTheWindow(telegram: TelegramWindow, log: Log): void {
     telegram.expand()
     ask(telegram, 'disableVerticalSwipes', log)
     ask(telegram, 'requestFullscreen', log)
-    ask(telegram, 'lockOrientation', log)
 }
 
 export async function fitIntoTelegram(log: Log): Promise<void> {
@@ -46,6 +45,7 @@ export async function fitIntoTelegram(log: Log): Promise<void> {
     document.body.classList.add('insideTelegram')
     fitTheWindow(telegram, log)
     followTheInsets(telegram)
+    holdTheOrientationOnceItIsLandscape(telegram, log)
 }
 
 function ask(telegram: TelegramWindow, request: WindowRequest, log: Log): void {
@@ -81,9 +81,26 @@ function loadTheScript(): Promise<boolean> {
 }
 
 function followTheInsets(telegram: TelegramWindow): void {
-    const apply = () => showTheInsets(telegram)
+    const apply = () => {
+        showTheInsets(telegram)
+        window.dispatchEvent(new Event('resize'))
+    }
     apply()
     for (const event of windowEvents) telegram.onEvent?.(event, apply)
+}
+
+function holdTheOrientationOnceItIsLandscape(telegram: TelegramWindow, log: Log): void {
+    let held = false
+    const hold = () => {
+        if (held || window.innerWidth <= window.innerHeight) return
+
+        held = true
+        ask(telegram, 'lockOrientation', log)
+    }
+    hold()
+    window.addEventListener('resize', hold)
+    window.addEventListener('orientationchange', hold)
+    telegram.onEvent?.('viewportChanged', hold)
 }
 
 function showTheInsets(telegram: TelegramWindow): void {
