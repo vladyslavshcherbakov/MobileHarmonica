@@ -12,6 +12,7 @@ public final class PlayHarmonica {
     private var recordedMouthWidth = ""
     private var key: HarmonicaKey = .c
     private var style: PlayingStyle = .severalFingersSeveralNotes
+    private var mouth: MouthMeasure = .theContactItself
 
     // MARK: - Public
 
@@ -56,6 +57,14 @@ public final class PlayHarmonica {
 
         self.style = style
         log.record("playing style changed to \(style)")
+        return stopPlaying(.ringsDown)
+    }
+
+    public func changeMouth(to mouth: MouthMeasure) -> Harmonica {
+        guard mouth != self.mouth else { return harmonica }
+
+        self.mouth = mouth
+        log.record("mouth measured as \(mouth)")
         return stopPlaying(.ringsDown)
     }
 
@@ -171,7 +180,7 @@ public final class PlayHarmonica {
     private func holesCovered(by position: PositionOnHarmonica) -> [Hole] {
         guard style.coversTheContactWidth else { return Hole(at: position).map { [$0] } ?? [] }
 
-        return Hole.allCovered(by: position)
+        return Hole.allCovered(by: position, measuring: mouth)
     }
 
     private func isCrossingTheBreathBoundary(_ positions: [PositionOnHarmonica]) -> Bool {
@@ -187,9 +196,10 @@ public final class PlayHarmonica {
     }
 
     private func recordMouthWidth(of positions: [PositionOnHarmonica]) {
-        guard style.coversTheContactWidth, let mouth = PositionOnHarmonica.topmost(of: positions) else { return }
+        guard mouth == .theContactItself, style.coversTheContactWidth else { return }
+        guard let contact = PositionOnHarmonica.topmost(of: positions) else { return }
 
-        let width = rounded(mouth.coveredHoleWidths)
+        let width = rounded(contact.coveredHoleWidths)
         guard width != recordedMouthWidth else { return }
 
         recordedMouthWidth = width
