@@ -71,5 +71,6 @@ schemes:
       config: Debug
       targets:
         - MobileHarmonicaTests
+        - package: HarmonicaCore/HarmonicaCoreTests
     archive:
       config: Release
