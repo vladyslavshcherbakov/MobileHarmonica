@@ -116,6 +116,13 @@ turn the phone, because a ten hole strip across a portrait screen is not an inst
 square sits in the leading inset; the strip keeps its trailing and bottom insets, exactly as the
 app does.
 
+**The top bar cannot push a control off the screen.** The page has no scrolling and no zoom, so
+anything that overflows is simply cut off, and on a phone the bar is squeezed twice over: the
+safe area takes a notch's width off the side, and Safari's own select controls are wider than the
+ones a desktop draws. Every control may now shrink, the two buttons may not, the bar scrolls
+sideways if even that is not enough, and the button that fills the screen sits first, at the
+leading edge, where nothing can push it out of reach.
+
 Touches arrive as pointer events, captured per surface, so the strip and the square never see
 each other's fingers. Two fingers in the square are a pinch and stop shaping the tone, which is
 what the app's recogniser does by cancelling the touches beneath it.

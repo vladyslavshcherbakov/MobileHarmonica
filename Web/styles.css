@@ -50,25 +50,35 @@ body {
 #keyBar {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     height: var(--keyBarHeight);
     flex: 0 0 var(--keyBarHeight);
-    padding: 0 16px;
-    padding-left: calc(16px + env(safe-area-inset-left));
+    padding: 0 12px;
+    padding-left: calc(12px + env(safe-area-inset-left));
+    overflow-x: auto;
+    overflow-y: hidden;
+    touch-action: pan-x;
+    scrollbar-width: none;
+}
+
+#keyBar::-webkit-scrollbar {
+    display: none;
 }
 
 #keyLabel {
+    flex: 0 0 auto;
     width: 34px;
     font: 600 17px ui-monospace, Menlo, monospace;
 }
 
 #keySlider {
-    flex: 1;
-    min-width: 60px;
+    flex: 1 1 60px;
+    min-width: 44px;
     accent-color: var(--plateLit);
 }
 
 #cup {
+    flex: 0 0 auto;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -94,6 +104,16 @@ body {
     color: var(--effect);
 }
 
+#keyBar select {
+    flex: 0 1 auto;
+    min-width: 0;
+    text-overflow: ellipsis;
+}
+
+#keyBar button {
+    flex: 0 0 auto;
+}
+
 #keyBar select,
 #keyBar button {
     font-size: 13px;
@@ -103,6 +123,7 @@ body {
     border-radius: 8px;
     padding: 6px 8px;
     max-width: 190px;
+    white-space: nowrap;
 }
 
 #stopTune {
