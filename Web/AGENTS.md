@@ -252,10 +252,12 @@ The window gets in the instrument's way in three places, and each has an answer 
 Bot API 7.7 or 8.0, so each is asked for only if the client has it and named in the log if it
 does not. A vertical swipe closes a mini app, and a vertical drag is how the instrument takes a
 breath, so `disableVerticalSwipes` turns that gesture off. The window opens as a portrait sheet,
-so it asks for full screen. And a mini app does not turn with the phone by itself, which is the
-opposite of what the adapter first assumed: it locked the orientation, which nailed the window to
-portrait, where the honest call is `unlockOrientation` and then letting the phone decide, since
-the page already says to turn it. Telegram also reports where its own controls sit, so its insets
+so it asks for full screen. And the orientation needs both of their calls in the right
+order. The adapter first locked at launch, which nailed the window to the portrait sheet it opens
+in: the phone was never seen to turn. It now asks to unlock, so the window may follow the phone
+at all, and locks once the viewport is landscape, so a turn of the wrist mid-phrase cannot take
+the instrument away. Locking at launch and locking after the turn are the same call a second
+apart, and only the second one is right. Telegram also reports where its own controls sit, so its insets
 reach the key bar as two custom properties, and its viewport events reach the page as a resize,
 because the window that changed is theirs while the screen listens for the browser's.
 
