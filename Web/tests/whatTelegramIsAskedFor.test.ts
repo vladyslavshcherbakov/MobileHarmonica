@@ -20,7 +20,8 @@ test('window_whenTelegramIsRecent_asksForEverythingTheInstrumentNeeds', () => {
         'ready',
         'expand',
         'disableVerticalSwipes',
-        'requestFullscreen'
+        'requestFullscreen',
+        'unlockOrientation'
     ])
 })
 
@@ -37,7 +38,8 @@ test('window_whenTelegramIsTooOld_saysSoAndCarriesOn', () => {
     assert.deepEqual(asked, ['ready', 'expand'], 'nothing it cannot do is called')
     assert.deepEqual(lines, [
         'this Telegram is too old for disableVerticalSwipes',
-        'this Telegram is too old for requestFullscreen'
+        'this Telegram is too old for requestFullscreen',
+        'this Telegram is too old for unlockOrientation'
     ])
 })
 
@@ -47,7 +49,7 @@ function recent(asked: string[]): TelegramWindow {
         expand: () => asked.push('expand'),
         disableVerticalSwipes: () => asked.push('disableVerticalSwipes'),
         requestFullscreen: () => asked.push('requestFullscreen'),
-        lockOrientation: () => asked.push('lockOrientation')
+        unlockOrientation: () => asked.push('unlockOrientation')
     }
 }
 
