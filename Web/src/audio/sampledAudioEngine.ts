@@ -42,7 +42,11 @@ export class SampledAudioEngine implements AudioEngine {
         this.context = context
         this.node = node
         await this.resume()
-        this.log.record(`audio started at ${context.sampleRate} Hz`)
+        this.log.record(
+            `audio started at ${context.sampleRate} Hz,`
+            + ` ${milliseconds(context.baseLatency)} ms of buffer`
+            + ` and ${milliseconds(context.outputLatency)} ms out to the speaker`
+        )
         await this.loadTheRecordings(context)
     }
 
@@ -91,6 +95,10 @@ export class SampledAudioEngine implements AudioEngine {
     private send(message: WorkletMessage): void {
         this.node?.port.postMessage(message)
     }
+}
+
+function milliseconds(seconds: number): string {
+    return Number.isFinite(seconds) ? (seconds * 1000).toFixed(1) : 'unreported'
 }
 
 function crossfadeSecondsFor(change: ToneChange): number {

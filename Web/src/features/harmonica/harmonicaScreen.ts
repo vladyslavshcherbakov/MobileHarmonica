@@ -111,6 +111,8 @@ export class HarmonicaScreen {
         const button = element<HTMLButtonElement>('startButton')
         button.disabled = true
         button.textContent = loadingLabel
+        if (theScreenCanBeFilled()) void fillTheScreen()
+
         await this.viewModel.prepareSound()
         document.body.classList.remove('preparing')
         this.layOutTheZone()
