@@ -7,6 +7,10 @@ export interface SoundingTone {
     readonly bendableSemitones: number
 }
 
+export type WorkletReport =
+    | { readonly kind: 'took'; readonly at: number }
+    | { readonly kind: 'speaking'; readonly at: number }
+
 export type WorkletMessage =
     | {
         readonly kind: 'samples'

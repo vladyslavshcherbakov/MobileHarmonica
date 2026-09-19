@@ -1,4 +1,4 @@
-import type { SoundingTone, WorkletMessage } from './workletMessage.js'
+import type { SoundingTone, WorkletMessage, WorkletReport } from './workletMessage.js'
 import type { RecordedNote, SampleBank } from './sampleBank.js'
 
 const processorName = 'harmonica'
@@ -322,6 +322,7 @@ export function registerHarmonicaProcessor(): void {
     class HarmonicaProcessor extends AudioWorkletProcessor {
         private readonly oscillator: Oscillator
         private readonly amplitude: number
+        private waitingToSpeak = false
 
         constructor(options?: { processorOptions?: unknown }) {
             super(options)
@@ -337,10 +338,27 @@ export function registerHarmonicaProcessor(): void {
             if (channel === undefined) return true
 
             this.oscillator.render(channel, this.amplitude)
+            this.reportSpeaking(channel)
             for (let index = 1; index < (output?.length ?? 0); index += 1) {
                 output?.[index]?.set(channel)
             }
             return true
+        }
+
+        private reportSpeaking(channel: Float32Array): void {
+            if (!this.waitingToSpeak) return
+
+            for (const sample of channel) {
+                if (sample === 0) continue
+
+                this.waitingToSpeak = false
+                this.report({ kind: 'speaking', at: currentTime })
+                return
+            }
+        }
+
+        private report(report: WorkletReport): void {
+            this.port.postMessage(report)
         }
 
         private receive(message: WorkletMessage): void {
@@ -350,6 +368,8 @@ export function registerHarmonicaProcessor(): void {
                     return
                 case 'sound':
                     this.oscillator.sound(message.tones, message.crossfadeSeconds, message.everyReedSpeaksAgain)
+                    this.waitingToSpeak = message.tones.length > 0
+                    this.report({ kind: 'took', at: currentTime })
                     return
                 case 'breathGain':
                     this.oscillator.changeBreathGain(message.value)

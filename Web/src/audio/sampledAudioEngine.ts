@@ -7,7 +7,7 @@ import type { BreathIntensity } from '../domain/playing/breathIntensity.js'
 import type { BendDepth } from '../domain/playing/bendDepth.js'
 import type { VibratoDepth } from '../domain/playing/vibratoDepth.js'
 import type { CupDepth } from '../domain/playing/cupDepth.js'
-import type { WorkletMessage } from './workletMessage.js'
+import type { WorkletMessage, WorkletReport } from './workletMessage.js'
 import { processorName } from './workletMessage.js'
 import { recordedHarmonica } from './recordedHarmonica.js'
 
@@ -19,6 +19,7 @@ const reedStopsInSeconds = 0.02
 export class SampledAudioEngine implements AudioEngine {
     private context: AudioContext | null = null
     private node: AudioWorkletNode | null = null
+    private askedToSoundAt = 0
 
     constructor(
         private readonly workletUrl: string,
@@ -36,6 +37,7 @@ export class SampledAudioEngine implements AudioEngine {
     }
 
     soundTones(tones: readonly Tone[], change: ToneChange): void {
+        this.askedToSoundAt = this.context?.currentTime ?? 0
         this.send({
             kind: 'sound',
             tones: tones.map(tone => ({ hertz: tone.hertz, bendableSemitones: tone.bendableSemitones })),
@@ -97,6 +99,7 @@ export class SampledAudioEngine implements AudioEngine {
             processorOptions: { amplitude }
         })
         node.connect(context.destination)
+        node.port.onmessage = event => this.readTheReport(event.data as WorkletReport)
         this.node = node
         this.log.record('worklet connected to the speaker')
     }
@@ -109,6 +112,15 @@ export class SampledAudioEngine implements AudioEngine {
             [samples.frames.buffer]
         )
         this.log.record(`loaded ${samples.notes.length} recorded notes`)
+    }
+
+    private readTheReport(report: WorkletReport): void {
+        const since = (report.at - this.askedToSoundAt) * 1000
+        this.log.recordSample(
+            report.kind === 'took'
+                ? `the worklet took the reeds ${since.toFixed(1)} ms after they were asked for`
+                : `the first sample left ${since.toFixed(1)} ms after they were asked for`
+        )
     }
 
     private async resume(): Promise<void> {
