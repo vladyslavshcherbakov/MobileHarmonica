@@ -2,6 +2,7 @@ import { SampledAudioEngine } from '../audio/sampledAudioEngine.js'
 import { DeviceTilt } from '../motion/deviceTilt.js'
 import { TimestampedLog } from '../logging/timestampedLog.js'
 import { CompositionRoot } from './compositionRoot.js'
+import { fitIntoTelegram } from './telegram.js'
 
 const log = new TimestampedLog()
 const samplesFolder = 'samples'
@@ -14,6 +15,7 @@ const compositionRoot = new CompositionRoot(
     log
 )
 
+await fitIntoTelegram(log)
 document.body.classList.add('preparing')
 const startButton = document.getElementById('startButton') as HTMLButtonElement
 const startLabel = startButton.textContent

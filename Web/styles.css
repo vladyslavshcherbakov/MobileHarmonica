@@ -11,6 +11,8 @@
     --noteRowHeight: 30px;
     --keyBarHeight: 44px;
     --keyBarTopInset: 20px;
+    --telegramTopInset: 0px;
+    --telegramLeftInset: 0px;
     --controlHeight: 40px;
     --zoneSide: 120px;
 }
@@ -53,10 +55,12 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
-    height: calc(var(--keyBarHeight) + var(--keyBarTopInset));
-    flex: 0 0 calc(var(--keyBarHeight) + var(--keyBarTopInset));
-    padding: var(--keyBarTopInset) 12px 0;
-    padding-left: calc(12px + env(safe-area-inset-left));
+    height: calc(var(--keyBarHeight) + var(--keyBarTopInset) + var(--telegramTopInset));
+    flex: 0 0 calc(var(--keyBarHeight) + var(--keyBarTopInset) + var(--telegramTopInset));
+    padding-top: calc(var(--keyBarTopInset) + var(--telegramTopInset));
+    padding-right: 12px;
+    padding-bottom: 0;
+    padding-left: calc(12px + env(safe-area-inset-left) + var(--telegramLeftInset));
     overflow-x: auto;
     overflow-y: hidden;
     touch-action: pan-x;
@@ -144,6 +148,11 @@ body {
 
 body.canFillTheScreen #fullScreen {
     display: block;
+}
+
+body.insideTelegram #fullScreen,
+body.insideTelegram #howToFillTheScreen {
+    display: none;
 }
 
 #instrument {
