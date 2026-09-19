@@ -12,6 +12,7 @@ final class Instrument {
     )
     private let output = UnsafeMutableBufferPointer<UInt8>.allocate(capacity: outputBytes)
     private let encoder = JSONEncoder()
+    private let log = JavaScriptLog()
     private let playHarmonica = PlayHarmonica(
         tuning: RichterTuning(),
         audioEngine: JavaScriptAudioEngine(),
@@ -98,7 +99,17 @@ final class Instrument {
     }
 
     private func holes(of count: Int) -> [Hole] {
-        (0..<min(count, Hole.allCases.count)).compactMap { Hole(rawValue: Int(input[$0])) }
+        (0..<min(count, Hole.allCases.count)).compactMap(hole(at:))
+    }
+
+    private func hole(at index: Int) -> Hole? {
+        let written = input[index]
+        guard let number = Int(exactly: written.rounded()), let hole = Hole(rawValue: number) else {
+            log.record("the page asked to sound \(written), which is not a hole")
+            return nil
+        }
+
+        return hole
     }
 
     private func mouth(holesWide: Int) -> MouthMeasure {

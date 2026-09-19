@@ -1,6 +1,7 @@
 import type { CoreFinger, CoreState } from '../../core/coreState.js'
 import type { HarmonicaCore } from '../../core/harmonicaCore.js'
 import type { CoreAudio } from '../../core/coreState.js'
+import type { Log } from '../../logging/log.js'
 import type { Tilt } from '../../motion/tilt.js'
 import type { HarmonicaPresenter } from './harmonicaPresenter.js'
 import type { HarmonicaViewState, PlayingStyleChoice } from './harmonicaViewState.js'
@@ -17,7 +18,8 @@ export class HarmonicaViewModel {
         private readonly audio: CoreAudio & { prepare(): Promise<void> },
         private readonly tilt: Tilt,
         private readonly tunePlayer: PlayTheTune,
-        private readonly presenter: HarmonicaPresenter
+        private readonly presenter: HarmonicaPresenter,
+        private readonly log: Log
     ) {}
 
     onStateChanged(show: (state: HarmonicaViewState) => void): void {
@@ -68,8 +70,11 @@ export class HarmonicaViewModel {
         if (this.state.kind !== 'ready') return
 
         this.stopTheTune()
+        this.log.record(`the tune ${this.nameOfTune(index)} started`)
         this.performance = this.tunePlayer.play(index, harmonica => this.present(harmonica))
-        void this.performance.finished.then(() => this.tuneFinished())
+        void this.performance.finished
+            .then(() => this.tuneFinished())
+            .catch(failure => this.tuneFailed(failure))
     }
 
     stopTheTune(): void {
@@ -103,7 +108,23 @@ export class HarmonicaViewModel {
         this.present(harmonica)
     }
 
+    private nameOfTune(index: number): string {
+        if (this.state.kind !== 'ready') return String(index)
+
+        return this.state.playable.demo.tunes.find(tune => tune.id === index)?.name ?? String(index)
+    }
+
     private tuneFinished(): void {
+        this.log.record('the tune ended')
+        this.silenceTheTune()
+    }
+
+    private tuneFailed(failure: unknown): void {
+        this.log.record(`the tune stopped: ${describe(failure)}`)
+        this.silenceTheTune()
+    }
+
+    private silenceTheTune(): void {
         this.performance = null
         this.present(this.core.stopPlaying(true))
     }

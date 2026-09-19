@@ -92,6 +92,14 @@ trap rejects the promise the player is waiting on. So both states that carry an 
 out their keys and encode them with `encode` rather than `encodeIfPresent`, and the page's types
 stay true: `number | null`, never `undefined`.
 
+**A hole that is not a hole is refused, and a tune that dies says so.** The core reads the holes
+it is asked for out of a buffer of doubles, and turning one into an integer used to be enough to
+bring the whole module down: one `NaN` from this side and nothing worked again until the page was
+reloaded. It now takes only a value that is exactly a hole number and writes the rest to the log.
+The player's failures reach the log too: the promise a tune runs on had no `catch`, so a module
+that trapped mid-tune left a reed sounding and said nothing anywhere. A tune now names itself
+when it starts, when it ends, and when it stops because something threw.
+
 **The clock stays on this side.** `PlayTheTune` walks a tune's events, sleeping between them, and
 drives the instrument through the same calls a finger does. The core has no executor to sleep on,
 and the project's own rule already says time lives in the player. What it cannot know by itself,
