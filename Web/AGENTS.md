@@ -83,6 +83,15 @@ every one of preview1's forty-six calls: a dozen it answers, the rest return `EN
 test lists the specification's names beside what the shim exports, because the one thing that
 cannot be found by reading our own code is what Foundation decided to import.
 
+**Nothing that is nil crosses as missing.** Swift's synthesized encoder writes an optional with
+`encodeIfPresent`, so a nil leaves the key out altogether, and `undefined` is not `null`: a note
+with no `shakenWith` was read on this side as a note that is shaken, every note stepped as a
+shake, and the odd steps sounded a hole of `undefined`, which reaches the core as a `NaN` hole
+number and traps the module. One note kept sounding and the tune never moved again, because a
+trap rejects the promise the player is waiting on. So both states that carry an optional spell
+out their keys and encode them with `encode` rather than `encodeIfPresent`, and the page's types
+stay true: `number | null`, never `undefined`.
+
 **The clock stays on this side.** `PlayTheTune` walks a tune's events, sleeping between them, and
 drives the instrument through the same calls a finger does. The core has no executor to sleep on,
 and the project's own rule already says time lives in the player. What it cannot know by itself,

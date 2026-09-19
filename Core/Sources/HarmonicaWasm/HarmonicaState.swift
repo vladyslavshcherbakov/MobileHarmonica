@@ -24,6 +24,22 @@ struct HarmonicaState: Encodable {
             .sorted { $0.hole < $1.hole }
     }
 
+    enum CodingKeys: String, CodingKey {
+        case keyPosition, style, mouthHolesWide, cup, canBend, canOverbend, breath, sounding
+    }
+
+    func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(keyPosition, forKey: .keyPosition)
+        try container.encode(style, forKey: .style)
+        try container.encode(mouthHolesWide, forKey: .mouthHolesWide)
+        try container.encode(cup, forKey: .cup)
+        try container.encode(canBend, forKey: .canBend)
+        try container.encode(canOverbend, forKey: .canOverbend)
+        try container.encode(breath, forKey: .breath)
+        try container.encode(sounding, forKey: .sounding)
+    }
+
     private static func name(of style: PlayingStyle) -> String {
         switch style {
         case .severalFingersSeveralNotes: "severalFingersSeveralNotes"
@@ -124,6 +140,11 @@ struct EventState: Encodable {
     let shakenWith: Int?
     let bendEndsAtSemitones: Double?
 
+    enum CodingKeys: String, CodingKey {
+        case holes, breath, beats, bentBySemitones, isOverbent, vibrato, slideFrom, shakenWith
+        case bendEndsAtSemitones
+    }
+
     init(_ event: ScoreEvent) {
         switch event {
         case .rest(let beats):
@@ -147,6 +168,19 @@ struct EventState: Encodable {
             shakenWith = note.shakenWith?.number
             bendEndsAtSemitones = note.bendEndsAtSemitones
         }
+    }
+
+    func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(holes, forKey: .holes)
+        try container.encode(breath, forKey: .breath)
+        try container.encode(beats, forKey: .beats)
+        try container.encode(bentBySemitones, forKey: .bentBySemitones)
+        try container.encode(isOverbent, forKey: .isOverbent)
+        try container.encode(vibrato, forKey: .vibrato)
+        try container.encode(slideFrom, forKey: .slideFrom)
+        try container.encode(shakenWith, forKey: .shakenWith)
+        try container.encode(bendEndsAtSemitones, forKey: .bendEndsAtSemitones)
     }
 }
 #endif
