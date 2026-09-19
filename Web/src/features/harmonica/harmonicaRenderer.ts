@@ -22,6 +22,8 @@ export interface HarmonicaElements {
     readonly soundUnavailable: HTMLElement
 }
 
+const smallestNoteScale = 0.6
+
 export class HarmonicaRenderer {
     private readonly noteCells: NoteCell[] = []
     private readonly plates: Plate[] = []
@@ -39,6 +41,10 @@ export class HarmonicaRenderer {
         if (state.kind !== 'ready') return
 
         this.renderPlayable(state.playable)
+    }
+
+    fitTheNoteRow(): void {
+        for (const cell of this.noteCells) fitToTheHole(cell)
     }
 
     private renderPlayable(playable: PlayableHarmonica): void {
@@ -75,6 +81,7 @@ export class HarmonicaRenderer {
 
             cell.name.textContent = hole.note
             cell.effect.textContent = hole.effect
+            fitToTheHole(cell)
             plate.top.classList.toggle('lit', hole.lit === 'top')
             plate.bottom.classList.toggle('lit', hole.lit === 'bottom')
             plate.number.classList.toggle('lit', hole.lit !== null)
@@ -146,6 +153,19 @@ function sameShaping(drawn: PlayableHarmonica, playable: PlayableHarmonica): boo
     return drawn.toneShaping.overbendLabel === playable.toneShaping.overbendLabel
         && drawn.toneShaping.overbendIsAvailable === playable.toneShaping.overbendIsAvailable
         && drawn.toneShaping.bendIsAvailable === playable.toneShaping.bendIsAvailable
+}
+
+function fitToTheHole(cell: NoteCell): void {
+    shrinkToFit(cell.name)
+    shrinkToFit(cell.effect)
+}
+
+function shrinkToFit(text: HTMLElement): void {
+    const room = text.parentElement?.clientWidth ?? 0
+    if (room === 0) return
+
+    const wanted = text.offsetWidth
+    text.style.transform = wanted <= room ? '' : `scale(${Math.max(smallestNoteScale, room / wanted)})`
 }
 
 function addedNoteCell(row: HTMLElement): NoteCell {

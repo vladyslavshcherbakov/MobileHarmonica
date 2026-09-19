@@ -183,6 +183,7 @@ export class HarmonicaScreen {
         document.documentElement.style.setProperty('--zoneSide', `${Math.round(side)}px`)
         this.strip.refreshBounds()
         this.zone.refreshBounds()
+        this.renderer.fitTheNoteRow()
     }
 }
 

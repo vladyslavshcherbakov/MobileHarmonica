@@ -104,6 +104,15 @@ of a double.
 `PlayingStyle` keeps its three cases and its two questions, so the width is the third control
 rather than a fourth style. One mouth at one hole is still not offered.
 
+**A note name shrinks to its hole, because CSS has no `minimumScaleFactor`.** The app writes the
+rule as `.lineLimit(1)` and `.minimumScaleFactor(0.6)`, and a hole on a phone in full screen is
+about 54 points wide while `(G4 overblow)` at ten pixels wants about 69. Here each label is a
+flex item as wide as its own text, and the renderer compares that width with the hole's and
+applies a `scale()` down to the same floor of 0.6. The cell clips what is still too long, as the
+app does. The measurement is a forced layout read, so it happens only where the text changed,
+which the renderer already knows, and once more from `layOutTheZone` because a pinch changes the
+hole's width without changing a word in it.
+
 **The recordings reach the page over the network, not out of a bundle.** The app enumerates its
 `Samples` folder; a browser can fetch a name but cannot list a directory, so the folder carries
 `index.json` and both the page and the copy step read that. `npm run samples` copies
