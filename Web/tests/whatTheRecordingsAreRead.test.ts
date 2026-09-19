@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { loopBoundsIn, midiNumberOf, rootHertzOf } from '../src/audio/recordedHarmonica.js'
+import { loopBoundsIn, midiNumberOf, rootHertzOf, withASmoothedLoop } from '../src/audio/recordedHarmonica.js'
 
 test('recording_whenItsNameEndsInAPitch_soundsAnOctaveAboveTheLabel', () => {
     assert.ok(
@@ -30,3 +30,29 @@ test('loop_whenTheRecordingRunsOutEarly_endsWhereTheFramesDo', () => {
 test('loop_whenTheRecordingIsTooShortToHoldOne_namesItself', () => {
     assert.throws(() => loopBoundsIn(Math.round(1.1 * 44100), 44100, 'hrmnca novbA2'), /hrmnca novbA2/)
 })
+
+test('loop_whenItWraps_arrivesFromWhereItLeftOff', () => {
+    const rate = 44100
+    const [loopStart, loopEnd] = [rate, 4 * rate]
+    const played = withASmoothedLoop(recordedTone(loopEnd, rate), loopStart, loopEnd, rate)
+
+    const wrap = Math.abs((played[loopStart] as number) - (played[loopEnd - 1] as number))
+    const ordinary = Math.abs((played[loopStart] as number) - (played[loopStart - 1] as number))
+    assert.ok(wrap <= ordinary * 1.001, `the wrap steps ${wrap}, an ordinary frame steps ${ordinary}`)
+})
+
+test('loop_whenTheRecordingCannotSpareACrossfade_isLeftAlone', () => {
+    const frames = recordedTone(100, 44100)
+    const before = Array.from(frames)
+
+    assert.deepEqual(Array.from(withASmoothedLoop(frames, 1, 100, 44100)), before)
+})
+
+function recordedTone(frameCount: number, framesPerSecond: number): Float32Array {
+    const frames = new Float32Array(frameCount)
+    for (let frame = 0; frame < frameCount; frame += 1) {
+        const seconds = frame / framesPerSecond
+        frames[frame] = Math.sin(2 * Math.PI * 220 * seconds) * Math.exp(-seconds / 8)
+    }
+    return frames
+}

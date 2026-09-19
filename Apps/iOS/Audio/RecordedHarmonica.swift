@@ -7,6 +7,7 @@ enum RecordedHarmonica {
     private static let loopStartSeconds = 1.0
     private static let loopEndSeconds = 4.0
     private static let shortestLoopSeconds = 0.2
+    private static let loopCrossfadeSeconds = 0.15
     private static let semitonesAboveTheLabel = 12
     private static let semitonesAboveC = ["C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11]
 
@@ -29,8 +30,10 @@ enum RecordedHarmonica {
     private static func read(_ url: URL, appendingTo frames: inout [Float]) throws -> RecordedNote {
         let name = url.deletingPathExtension().lastPathComponent
         let file = try AVAudioFile(forReading: url)
-        let mono = try monoFrames(of: file, named: name)
-        let loop = try loopBounds(framesPerSecond: file.processingFormat.sampleRate, within: mono.count, named: name)
+        let recorded = try monoFrames(of: file, named: name)
+        let framesPerSecond = file.processingFormat.sampleRate
+        let loop = try loopBounds(framesPerSecond: framesPerSecond, within: recorded.count, named: name)
+        let mono = withASmoothedLoop(recorded, loop: loop, framesPerSecond: framesPerSecond)
 
         let start = frames.count
         frames.append(contentsOf: mono[0..<loop.upperBound])
@@ -41,6 +44,24 @@ enum RecordedHarmonica {
             rootHertz: try rootHertz(of: name),
             sampleRate: file.processingFormat.sampleRate
         )
+    }
+
+    private static func withASmoothedLoop(
+        _ mono: [Float],
+        loop: Range<Int>,
+        framesPerSecond: Double
+    ) -> [Float] {
+        let width = min(Int(loopCrossfadeSeconds * framesPerSecond), loop.lowerBound, loop.count)
+        guard width > 1 else { return mono }
+
+        var smoothed = mono
+        for step in 0..<width {
+            let angle = 0.5 * Float.pi * Float(step) / Float(width - 1)
+            let leaving = mono[loop.upperBound - width + step]
+            let arriving = mono[loop.lowerBound - width + step]
+            smoothed[loop.upperBound - width + step] = leaving * cos(angle) + arriving * sin(angle)
+        }
+        return smoothed
     }
 
     private static func monoFrames(of file: AVAudioFile, named name: String) throws -> [Float] {

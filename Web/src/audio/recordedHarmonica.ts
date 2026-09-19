@@ -5,6 +5,7 @@ const indexName = 'index.json'
 const loopStartSeconds = 1
 const loopEndSeconds = 4
 const shortestLoopSeconds = 0.2
+const loopCrossfadeSeconds = 0.15
 const semitonesAboveTheLabel = 12
 const concertPitchHertz = 440
 const concertPitchNumber = 69
@@ -46,6 +47,28 @@ export function loopBoundsIn(frameCount: number, framesPerSecond: number, name: 
     return [start, end]
 }
 
+export function withASmoothedLoop(
+    frames: Float32Array,
+    loopStart: number,
+    loopEnd: number,
+    framesPerSecond: number
+): Float32Array {
+    const width = Math.min(
+        Math.round(loopCrossfadeSeconds * framesPerSecond),
+        loopStart,
+        loopEnd - loopStart
+    )
+    if (width < 2) return frames
+
+    for (let step = 0; step < width; step += 1) {
+        const angle = (0.5 * Math.PI * step) / (width - 1)
+        const leaving = frames[loopEnd - width + step] as number
+        const arriving = frames[loopStart - width + step] as number
+        frames[loopEnd - width + step] = leaving * Math.cos(angle) + arriving * Math.sin(angle)
+    }
+    return frames
+}
+
 export function midiNumberOf(name: string): number | null {
     const pitch = /([A-G])(#?)(-?\d)$/.exec(name)
     if (pitch === null) return null
@@ -82,7 +105,8 @@ async function read(
     log.recordSample(`${name} decoded, ${decoded.length} frames at ${decoded.sampleRate} Hz`)
     const played = withoutTheExtension(name)
     const [loopStart, loopEnd] = loopBoundsIn(decoded.length, decoded.sampleRate, played)
-    const frames = mono(decoded).subarray(0, loopEnd)
+    const smoothed = withASmoothedLoop(mono(decoded), loopStart, loopEnd, decoded.sampleRate)
+    const frames = smoothed.subarray(0, loopEnd)
     const rootHertz = rootHertzOf(played)
     return {
         frames,

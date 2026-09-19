@@ -569,6 +569,22 @@ mapping, and frames past second 4 are never loaded. A note plays from frame 0, s
 recorded attack, then repeats that window for as long as the finger is down. A file too short
 to hold the window throws and names itself.
 
+**The loop's tail is blended into its own approach when the file is read**, 150 ms of equal
+power, so that the last frame of the loop is the frame that precedes its start and the wrap is
+an ordinary step in the waveform. Without it the loop jumped by up to 1.15 of full scale on the
+19 recordings here, where an ordinary step between two frames inside a note never passes 0.32:
+that jump is the click. A reed also decays across three seconds, so the wrap stepped the level
+by up to 2.3 dB, and the blend turns that step into a glide over the same 150 ms.
+
+150 ms is 16 periods of the lowest recording, A2 at 110 Hz, which is enough that the two copies
+do not comb, and 5 per cent of the loop, which is little enough that whatever expression the
+recording holds there is not averaged away. Measured across the library, a longer fade does not
+cancel less: the interference between two moments of one steady note is about 2 dB whatever the
+length, so the length is chosen for how long that colouring lasts, not for how deep it is.
+
+The blend happens once, when the file is read, so the render thread is untouched: it still wraps
+by moving an index.
+
 **Mixing.** One mouth gives one breath, and up to about four chambers it is enough for all of
 them: the voices are summed and scaled only by the breath gain, so a chord really is louder
 than one note, by the square root of the reeds sounding. Past four the sum is divided down, so
