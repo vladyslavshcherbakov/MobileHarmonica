@@ -53,10 +53,9 @@ Web/
   src/
     core/         the WASI shim, the loader, and the wrapper around HarmonicaCore
     audio/        the AudioWorkletProcessor and the engine that talks to it
-    motion/       devicemotion behind its permission prompt
     features/     view state, presenter, view model, renderer, touch adapter, tune player
     logging/      the timestamped log
-    app/          composition root and entry point
+    app/          composition root, entry point, and the adapter for Telegram
   tests/          what the page itself promises: the presenter and the oscillator
 ```
 
@@ -102,8 +101,10 @@ when it starts, when it ends, and when it stops because something threw.
 
 **The clock stays on this side.** `PlayTheTune` walks a tune's events, sleeping between them, and
 drives the instrument through the same calls a finger does. The core has no executor to sleep on,
-and the project's own rule already says time lives in the player. What it cannot know by itself,
-how far a reed bends, it asks the core for once at startup.
+and the project's own rule already says time lives in the player. What it cannot know by itself
+it asks the core for once at startup: how far each reed bends, and the four lengths in
+`ScoreTiming` that say how a written note is articulated, slid, shaken and bent. Those are the
+music's, not the page's, so they are read rather than repeated.
 
 ## What is deliberately different
 
@@ -129,6 +130,15 @@ applies a `scale()` down to the same floor of 0.6. The cell clips what is still 
 app does. The measurement is a forced layout read, so it happens only where the text changed,
 which the renderer already knows, and once more from `layOutTheZone` because a pinch changes the
 hole's width without changing a word in it.
+
+**There are no cupped hands here.** The phone closes them by leaning, read through CoreMotion,
+which asks nobody. A browser gives the same reading only through `devicemotion`, and iOS hands it
+over only if `requestPermission` is called inside the gesture that started everything, which is
+the same tap that starts the audio. It never worked in Safari and does not work inside Telegram
+either, so the page lost the control, the reading and the bar in the top row. What stays is the
+low pass in the worklet: it is the phone's own code, it is tested, and the module imports
+`cupHands` whether or not anything calls it, so removing that would refuse the core at link time.
+On the page the hands simply never close.
 
 **The recordings reach the page over the network, not out of a bundle.** The app enumerates its
 `Samples` folder; a browser can fetch a name but cannot list a directory, so the folder carries
@@ -231,17 +241,40 @@ and those are absolutely positioned elements moved by `transform`. Swapping the 
 or a canvas means replacing `render(state)` and the pointer adapter, and nothing below them
 notices.
 
+## Inside Telegram
+
+**The mini app is this page.** Telegram opens it in its own window, so the same core, the same
+worklet and the same recordings serve both; what it needed was an adapter for that window, in
+`app/telegram.ts`. A bot in BotFather points at the published address, and nothing runs anywhere
+else.
+
+The window gets in the instrument's way in three places, and each has an answer that arrived in
+Bot API 7.7 or 8.0, so each is asked for only if the client has it and named in the log if it
+does not. A vertical swipe closes a mini app, and a vertical drag is how the instrument takes a
+breath, so `disableVerticalSwipes` turns that gesture off. The window opens as a portrait sheet,
+so it asks for full screen. And a mini app does not turn with the phone by itself, which is the
+opposite of what the adapter first assumed: it locked the orientation, which nailed the window to
+portrait, where the honest call is `unlockOrientation` and then letting the phone decide, since
+the page already says to turn it. Telegram also reports where its own controls sit, so its insets
+reach the key bar as two custom properties, and its viewport events reach the page as a resize,
+because the window that changed is theirs while the screen listens for the browser's.
+
+The script is fetched from telegram.org only when the address carries their launch mark, so a
+page opened in a browser loads nothing from them and behaves exactly as before.
+
 ## Verified, and not
 
-Run on node: the domain, the use cases, the oscillator and how a recording's name is read, 71
-tests. Run in Chromium through
+Run on node: the presenter, the oscillator, how a recording is read and looped, what a stopped
+tune leaves behind, what the module asks the browser for and what Telegram is asked for, 38
+tests. The instrument itself is tested in the package, since the page runs that same code. Run in
+Chromium through
 Playwright: the page lays out, the plates light, the note row names the bent and overbent notes,
 the pinch resizes the square, a tune plays, and the worklet renders 440 Hz, bends it three
 semitones to 370 and rings down to silence. On the real library: nineteen recordings load in
 under two seconds, hole 4 blown comes out as 522 Hz with its partials at 1044 and 1572, and a
 full bend on a three semitone reed moves all of them by 1.19, which is the three semitones.
 
-Not run anywhere yet: **Safari on an iPhone**, and **the tilt**. The lean reads
-`accelerationIncludingGravity.y` and flips its sign on `screen.orientation.angle === 90`, and
-which way round that lands on a real phone has not been checked. If leaning the wrong way closes
-the cup, the fix is that one comparison in `deviceTilt.ts`.
+Not run anywhere yet: **Telegram**. No client exists in the container the page is built in, so
+every call in the adapter is written from their documentation and from what a device reported
+back. A test holds the adapter to what an old client can do, which is the one part of it that can
+be proven here: it asks for nothing the client lacks and says in the log what was missing.

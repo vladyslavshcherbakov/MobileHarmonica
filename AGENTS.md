@@ -345,6 +345,13 @@ holes for the whole note and arrives nowhere. Written as a chain of slides it wo
 sixteen events, each re-attacking and each cut short for articulation, which is a burst of
 staccato rather than a warble.
 
+**How a written note is timed lives in `ScoreTiming`**, which the package exports: how much of a
+note is given up so the next one re-attacks, how long a slide rests on each hole it passes, how
+fast a shake rocks and how finely a bend envelope steps. Those four numbers are music rather than
+platform, and the page has its own player because the core has no executor to sleep on, so it
+asks the core for them at startup through the same door it already asks for the reed ranges.
+They were written out twice until then.
+
 A score says a bend in **semitones**, not in axis travel, because a score should not know that
 hole 3 draw bends three semitones and hole 4 draw bends one. `PlayScore` asks `RichterTuning`
 for the range and divides. Each note is cut short by up to 50 ms so the next one re-attacks;
@@ -464,6 +471,13 @@ finger in it drives both. Lifting out returns pitch and vibrato to rest. When th
 reed cannot bend, the bend label dims; the vibrato label does not, because the horizontal
 axis still works.
 
+**The top bar stands clear of the screen's edge.** A tap or a drag that starts in the first few
+points below the top belongs to the system, which reads it as a pull for Notification Centre, so
+the bar keeps 20 points of nothing above it and its controls are 40 points tall rather than the
+28 a bordered menu takes. The middle of a control, which is what a thumb aims at, then sits
+around 40 points down instead of 22. The bar grows by those 20 points and the strip gives them
+up, which changes no hole's width.
+
 **Safe area.** Only the leading edge is ignored, and only the square sits there. The strip
 keeps its trailing and bottom insets, so no plate goes under the notch or under the home
 indicator, and the draw half of every hole stays reachable.
@@ -565,7 +579,10 @@ octave out, and the note row is the check: hole 4 blown on a C harmonica says C5
 either agrees or the constant goes.
 
 **The loop is seconds 1 to 4 of each file**, chosen rather than read from the library's EXS
-mapping, and frames past second 4 are never loaded. A note plays from frame 0, so it keeps its
+mapping, and frames past second 4 are never loaded. The files themselves are cut to those four
+seconds, because what is never loaded was still being carried to the phone and to the page: the
+library's takes ran from 4.4 to 12.7 seconds and cost 18.9 MB, where the four seconds that are
+read cost 10.1. Nothing is re-encoded, so they are still 24-bit mono at 44.1 kHz. A note plays from frame 0, so it keeps its
 recorded attack, then repeats that window for as long as the finger is down. A file too short
 to hold the window throws and names itself.
 
@@ -745,6 +762,14 @@ arithmetic: 440 Hz swung by 1.5 per cent covers 13 Hz, so a spread over 5 Hz is 
 under 2 Hz is the estimator wandering; B4 pulled three semitones is A♭4, 415.30 Hz.
 
 Everything else drives the app's own graph with the leaves swapped.
+
+**Where a rule exists on both platforms, both sides test it.** The page had tests for reading a
+recording and the phone had none, although both readers follow the same rules, so
+`WhatTheRecordingsAreReadTests` now says the same things on this side. What the instrument itself
+promises is tested once, in the package, because the page runs that same code as WebAssembly and
+a second copy of those tests would only prove the two builds agree with each other. And because
+the audio layer is written twice on purpose, a test on the page reads both trees and fails if a
+constant of the same name has drifted apart: 21 of them are written twice today.
 
 ## Known limits
 
