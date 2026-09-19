@@ -16,10 +16,7 @@ let package = Package(
         .executableTarget(
             name: "HarmonicaWasm",
             dependencies: ["HarmonicaCore"],
-            swiftSettings: [
-                .enableExperimentalFeature("Extern"),
-                .unsafeFlags(["-Xclang-linker", "-mexec-model=reactor"], .when(platforms: [.wasi]))
-            ]
+            swiftSettings: [.enableExperimentalFeature("Extern")]
         ),
         .testTarget(
             name: "HarmonicaCoreTests",

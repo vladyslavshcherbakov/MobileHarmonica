@@ -8,9 +8,15 @@ const core = resolve(here, '../../Core')
 const served = resolve(here, '../core')
 const sdk = process.env.SWIFT_WASM_SDK ?? 'swift-6.4.0-RELEASE_wasm'
 
+const reactor = ['-Xswiftc', '-Xclang-linker', '-Xswiftc', '-mexec-model=reactor']
+const stripped = ['-Xlinker', '-s']
+
 const built = spawnSync(
     'swift',
-    ['build', '--package-path', core, '--product', 'HarmonicaWasm', '--swift-sdk', sdk, '-c', 'release'],
+    [
+        'build', '--package-path', core, '--product', 'HarmonicaWasm',
+        '--swift-sdk', sdk, '-c', 'release', ...reactor, ...stripped
+    ],
     { stdio: 'inherit' }
 )
 if (built.status !== 0) {
