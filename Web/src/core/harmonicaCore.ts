@@ -36,14 +36,18 @@ export class HarmonicaCore {
     static async load(url: string, audio: CoreAudio, log: (line: string) => void): Promise<HarmonicaCore> {
         const wasi = wasiHost(log)
         const instrument = new HarmonicaHost(audio, log)
+        const started = performance.now()
+        log(`reading the instrument from ${url}`)
         const { instance } = await WebAssembly.instantiateStreaming(fetch(url), {
             wasi_snapshot_preview1: wasi.imports,
             harmonica: instrument.imports
         })
+        log(`instrument compiled, took ${Math.round(performance.now() - started)} ms`)
         const exports = instance.exports as unknown as CoreExports
         wasi.useMemory(exports.memory)
         instrument.useMemory(exports.memory)
         exports._initialize?.()
+        log('instrument ready')
         return new HarmonicaCore(exports)
     }
 

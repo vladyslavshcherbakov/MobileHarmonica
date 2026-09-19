@@ -51,6 +51,7 @@ targets:
     platform: iOS
     sources:
       - path: Apps/iOS/Tests
+      - path: Core/Tests/HarmonicaCoreTests
     dependencies:
       - target: MobileHarmonica
       - package: HarmonicaCore
@@ -71,6 +72,5 @@ schemes:
       config: Debug
       targets:
         - MobileHarmonicaTests
-        - package: HarmonicaCore/HarmonicaCoreTests
     archive:
       config: Release

@@ -16,6 +16,12 @@ Then open `http://<this machine>:8123` on the phone, in landscape. The page open
 **tap to play** button because an `AudioContext` only starts inside a gesture; the same tap asks
 for motion.
 
+The button says **loading the instrument** and refuses the tap until the core has been fetched
+and compiled, because nothing is listening to it before that: the markup is served in one hit and
+the module behind it weighs tens of megabytes, so on a phone there were seconds in which the
+button looked ready and did nothing. The loader says the same thing in the log, naming the
+address it reads and how long the compile took.
+
 `npm run build` is `tsc` alone. There is no bundler: TypeScript compiles to ES modules under
 `dist/`, which Safari loads itself, so a stack trace on the phone names a file that exists on
 disk. `dist/` and `node_modules/` are not committed.
@@ -141,6 +147,14 @@ all, so the only way to lose the browser's own bars there is to be started from 
 16.4 that manifest is what Safari reads; the old `apple-mobile-web-app-capable` meta tag stays
 beside it as the fallback Safari uses when it cannot load the manifest. Started that way, the
 page hides its own advice about installing, because there is nothing left to install.
+
+**That advice is hidden until the page knows it is needed.** It asks for a positive answer to
+two questions, that the browser carries no Fullscreen API and that the page is not already
+running from the home screen, and only then does the start screen show it. It used to be shown
+by default and taken away by whichever answer came first, and the markup stands long before any
+script has run: a desktop browser read the whole advice while it downloaded the core, and a
+phone that had installed the page read it too whenever the standalone check was the one that had
+not arrived yet.
 
 **Filling the screen and starting the sound are two taps, not one.** They were one for a
 while, and it hung the page: entering fullscreen spends the transient user activation, and

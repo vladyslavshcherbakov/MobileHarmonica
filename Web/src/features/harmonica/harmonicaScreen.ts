@@ -97,9 +97,11 @@ export class HarmonicaScreen {
     }
 
     private listenToTheFullScreenButton(): void {
-        if (runsAsAnApp()) document.body.classList.add('runsAsAnApp')
+        if (!theScreenCanBeFilled()) {
+            if (!runsAsAnApp()) document.body.classList.add('cannotFillTheScreen')
 
-        if (!theScreenCanBeFilled()) return
+            return
+        }
 
         document.body.classList.add('canFillTheScreen')
         element('fullScreen').addEventListener('click', () => void fillTheScreen())

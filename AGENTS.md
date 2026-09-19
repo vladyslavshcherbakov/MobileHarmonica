@@ -114,6 +114,14 @@ app or a simulator; what tests the presenter, the oscillator or the screen stays
 `Apps/iOS/Tests`. The doubles they share, `RecordingAudioEngine` and `SilentLog`, are a second
 product of the package, `HarmonicaCoreTestSupport`.
 
+**The package's tests are compiled into the app's test bundle, not listed in the scheme.** A
+SwiftPM test target has no host application, and Xcode refuses to run a tool-hosted bundle on a
+phone: `Tool-hosted testing is unavailable on device destinations`. So `project.yml` gives
+`MobileHarmonicaTests` a second source folder, `Core/Tests/HarmonicaCoreTests`, and the scheme
+names that one bundle. The tests reach the package's internals through `@testable import`, which
+the Debug configuration's testability already allows. `swift test` inside `Core/` still runs them
+as the package's own target, on any machine with no simulator at all.
+
 **Enforced boundaries.** Nothing under `Core/` or `Features/` imports AVFoundation or will
 import AudioKit. No domain type imports `os`; it reaches the log through `LogProtocol`. Only
 values cross a boundary.

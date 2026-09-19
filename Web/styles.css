@@ -324,12 +324,8 @@ body.canFillTheScreen #fullScreen {
     color: var(--effect);
 }
 
-body:not(.canFillTheScreen) #howToFillTheScreen {
+body.cannotFillTheScreen #howToFillTheScreen {
     display: block;
-}
-
-body.runsAsAnApp #howToFillTheScreen {
-    display: none;
 }
 
 #startButton {
