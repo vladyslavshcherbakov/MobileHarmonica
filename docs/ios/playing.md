@@ -42,8 +42,10 @@ the pinch, which moves a hole's width between 70 and 44 points.
 
 ## Settings
 
-A gear at the right end of the top bar opens the settings screen. What is chosen there is kept
-between launches and applies when the harmonica screen is back.
+A gear at the right end of the top bar opens the settings screen. Opening it silences the
+harmonica, as leaving the app does, even with a finger still on the strip, and the fingers it held
+are forgotten. What is chosen there is kept between launches and applies when the harmonica screen
+is back.
 
 | Setting | Choices | Out of the box |
 |---|---|---|

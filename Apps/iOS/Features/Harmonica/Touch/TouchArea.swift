@@ -41,6 +41,13 @@ final class TouchTrackingView: UIView {
         return nil
     }
 
+    override func didMoveToWindow() {
+        super.didMoveToWindow()
+        guard window == nil else { return }
+
+        touchesChanged([])
+    }
+
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         reportTouches(of: event)
     }

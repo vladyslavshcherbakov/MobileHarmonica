@@ -29,6 +29,7 @@ struct HarmonicaScreen: View {
                 await viewModel.followTheTilt()
             }
             .onAppear { viewModel.applyTheSettings() }
+            .onDisappear { silence() }
     }
 
     // MARK: - Private
@@ -114,8 +115,12 @@ struct HarmonicaScreen: View {
         case .active:
             await viewModel.prepareSound()
         default:
-            viewModel.stopPlaying()
-            viewModel.stopShapingTone()
+            silence()
         }
+    }
+
+    private func silence() {
+        viewModel.stopPlaying()
+        viewModel.stopShapingTone()
     }
 }
