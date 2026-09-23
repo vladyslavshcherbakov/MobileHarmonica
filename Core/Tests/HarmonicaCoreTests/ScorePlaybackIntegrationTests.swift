@@ -23,6 +23,18 @@ final class ScorePlaybackIntegrationTests: XCTestCase {
         )
     }
 
+    func test_score_whenANoteNamesItsBreathIntensity_isBlownThatHard() async {
+        await play([.note(ScoreNote(holes: [.four], breath: .blow, beats: 1, breathIntensity: 0.5))])
+
+        XCTAssertEqual(environment.engine.intensities, [BreathIntensity(gain: 0.5)])
+    }
+
+    func test_score_whenANoteNamesNoBreathIntensity_isBlownAtFullPressure() async {
+        await play([.note(ScoreNote(holes: [.four], breath: .blow, beats: 1))])
+
+        XCTAssertEqual(environment.engine.intensities, [.full])
+    }
+
     func test_score_whenANoteIsOverbent_soundsTheOverblow() async {
         await play([.note(ScoreNote(holes: [.three], breath: .blow, beats: 1, isOverbent: true))])
 

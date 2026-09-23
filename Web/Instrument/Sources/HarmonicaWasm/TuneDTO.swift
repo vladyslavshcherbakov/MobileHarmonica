@@ -36,12 +36,13 @@ struct ScoreEventDTO: Encodable {
     let bentBySemitones: Double
     let isOverbent: Bool
     let vibrato: Double
+    let breathIntensity: Double
     let slideFrom: Int?
     let shakenWith: Int?
     let bendEndsAtSemitones: Double?
 
     enum CodingKeys: String, CodingKey {
-        case holes, breath, beats, bentBySemitones, isOverbent, vibrato, slideFrom, shakenWith
+        case holes, breath, beats, bentBySemitones, isOverbent, vibrato, breathIntensity, slideFrom, shakenWith
         case bendEndsAtSemitones
     }
 
@@ -54,6 +55,7 @@ struct ScoreEventDTO: Encodable {
             bentBySemitones = 0
             isOverbent = false
             vibrato = 0
+            breathIntensity = 0
             slideFrom = nil
             shakenWith = nil
             bendEndsAtSemitones = nil
@@ -64,6 +66,7 @@ struct ScoreEventDTO: Encodable {
             bentBySemitones = note.bentBySemitones
             isOverbent = note.isOverbent
             vibrato = note.vibrato
+            breathIntensity = note.breathIntensity
             slideFrom = note.slideFrom?.number
             shakenWith = note.shakenWith?.number
             bendEndsAtSemitones = note.bendEndsAtSemitones
@@ -78,6 +81,7 @@ struct ScoreEventDTO: Encodable {
         try container.encode(bentBySemitones, forKey: .bentBySemitones)
         try container.encode(isOverbent, forKey: .isOverbent)
         try container.encode(vibrato, forKey: .vibrato)
+        try container.encode(breathIntensity, forKey: .breathIntensity)
         try container.encode(slideFrom, forKey: .slideFrom)
         try container.encode(shakenWith, forKey: .shakenWith)
         try container.encode(bendEndsAtSemitones, forKey: .bendEndsAtSemitones)

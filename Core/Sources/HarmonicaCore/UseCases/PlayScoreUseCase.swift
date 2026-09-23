@@ -67,7 +67,7 @@ public final class PlayScoreUseCase {
         let step = min(ScoreTiming.slideStepSeconds, seconds / 2 / Double(passing.count))
         continuation.yield(harmonica.shapeTone(.rest, vibrato: .off))
         for hole in passing where !Task.isCancelled {
-            continuation.yield(harmonica.play([hole], breathing: note.breath))
+            continuation.yield(harmonica.play([hole], breathing: note.breath, at: Self.intensity(of: note)))
             await wait(step)
         }
         return step * Double(passing.count)
@@ -87,13 +87,19 @@ public final class PlayScoreUseCase {
                 shaping(for: note, at: Self.fraction(step, of: steps)),
                 vibrato: VibratoDepth(clamping: note.vibrato)
             )
-            continuation.yield(harmonica.play(Self.holes(of: note, at: step), breathing: note.breath))
+            continuation.yield(
+                harmonica.play(Self.holes(of: note, at: step), breathing: note.breath, at: Self.intensity(of: note))
+            )
             await wait(until: started, plus: sounding * Double(step + 1) / Double(steps))
         }
         guard !Task.isCancelled else { return }
 
         continuation.yield(harmonica.stopPlaying(.damped))
         await wait(gap)
+    }
+
+    private static func intensity(of note: ScoreNote) -> BreathIntensity {
+        BreathIntensity(gain: note.breathIntensity)
     }
 
     private static func steps(of note: ScoreNote, within seconds: Double) -> Int {

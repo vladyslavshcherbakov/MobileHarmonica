@@ -155,7 +155,7 @@ to the harmonica it needs when it starts.
 **How a tune is played.**
 
 - A note names holes, not a hole, because a mouth covers two to four of them: chords carry the
-  rhythm and single notes the melody. Every hole sounds on the note's breath, at full pressure.
+  rhythm and single notes the melody. Every hole sounds on the note's breath, at the pressure the note names, and at full pressure when it names none.
 - A slide sounds every hole between where it starts and the note it arrives at, about 40 ms each,
   taken from the front of the arriving note.
 - A shake rocks between two holes for the whole note, about every 60 ms, as fast as a mouth moves.

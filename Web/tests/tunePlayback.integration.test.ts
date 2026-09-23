@@ -17,6 +17,15 @@ test('tune_whenItPlaysToTheEnd_leavesNothingSounding', { skip: withoutTheBuiltCo
     assert.deepEqual(reported[reported.length - 1]?.sounding, [])
 })
 
+test('tune_whenANoteNamesItsBreathIntensity_isBlownThatHard', { skip: withoutTheBuiltCore }, async () => {
+    const environment = new TestEnvironment()
+    const core = await environment.core()
+
+    await new PlayTheTuneUseCase(core, [oneNote(0.5)], core.reeds(), core.timing()).play(0, () => {}).finished
+
+    assert.deepEqual(environment.audio.intensities, [0.5])
+})
+
 test('tune_whenItIsNotThere_isRefusedNamingIt', { skip: withoutTheBuiltCore }, async () => {
     const core = await new TestEnvironment().core()
 
@@ -28,7 +37,7 @@ test('tune_whenItIsNotThere_isRefusedNamingIt', { skip: withoutTheBuiltCore }, a
     )
 })
 
-function oneNote(): TuneDTO {
+function oneNote(breathIntensity = 1): TuneDTO {
     return {
         name: 'one note',
         keyPosition: 5,
@@ -43,6 +52,7 @@ function oneNote(): TuneDTO {
                 bentBySemitones: 0,
                 isOverbent: false,
                 vibrato: 0,
+                breathIntensity,
                 slideFrom: null,
                 shakenWith: null,
                 bendEndsAtSemitones: null

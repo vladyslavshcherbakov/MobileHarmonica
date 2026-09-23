@@ -17,7 +17,7 @@ interface CoreExports {
     readonly harmonica_output_buffer: () => number
     readonly harmonica_start: () => number
     readonly harmonica_play_at: (fingers: number) => number
-    readonly harmonica_play_holes: (count: number, breath: number) => number
+    readonly harmonica_play_holes: (count: number, breath: number, breathIntensity: number) => number
     readonly harmonica_change_key: (sliderPosition: number) => number
     readonly harmonica_change_style: (index: number) => number
     readonly harmonica_change_mouth: (holesWide: number) => number
@@ -77,10 +77,10 @@ export class HarmonicaCore {
         return this.read(this.exports.harmonica_play_at(fingers.length))
     }
 
-    play(holes: readonly number[], breath: 'blow' | 'draw'): HarmonicaDTO {
+    play(holes: readonly number[], breath: 'blow' | 'draw', breathIntensity: number): HarmonicaDTO {
         const holeDoubles = new Float64Array(this.exports.memory.buffer, this.inputAddress, holes.length)
         holeDoubles.set(holes)
-        return this.read(this.exports.harmonica_play_holes(holes.length, breath === 'blow' ? 0 : 1))
+        return this.read(this.exports.harmonica_play_holes(holes.length, breath === 'blow' ? 0 : 1, breathIntensity))
     }
 
     changeKey(sliderPosition: number): HarmonicaDTO {

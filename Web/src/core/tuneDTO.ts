@@ -14,6 +14,7 @@ export interface ScoreEventDTO {
     readonly bentBySemitones: number
     readonly isOverbent: boolean
     readonly vibrato: number
+    readonly breathIntensity: number
     readonly slideFrom: number | null
     readonly shakenWith: number | null
     readonly bendEndsAtSemitones: number | null

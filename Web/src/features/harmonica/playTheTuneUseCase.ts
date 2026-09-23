@@ -78,7 +78,7 @@ export class PlayTheTuneUseCase {
         for (const hole of passing) {
             if (cancellation.stopped) break
 
-            report(this.core.play([hole], note.breath ?? 'blow'))
+            report(this.core.play([hole], note.breath ?? 'blow', note.breathIntensity))
             await wait(step)
         }
         return step * passing.length
@@ -98,7 +98,7 @@ export class PlayTheTuneUseCase {
             if (cancellation.stopped) break
 
             this.core.shapeTone(this.shapingFor(note, fractionOf(step, steps)), note.vibrato)
-            report(this.core.play(holesOf(note, step), note.breath ?? 'blow'))
+            report(this.core.play(holesOf(note, step), note.breath ?? 'blow', note.breathIntensity))
             await waitUntil(started + (sounding * (step + 1)) / steps)
         }
         if (cancellation.stopped) return

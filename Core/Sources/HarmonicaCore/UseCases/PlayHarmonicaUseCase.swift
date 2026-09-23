@@ -49,9 +49,9 @@ public final class PlayHarmonicaUseCase {
         return harmonica
     }
 
-    public func play(_ holes: [Hole], breathing breath: Breath) -> Harmonica {
+    public func play(_ holes: [Hole], breathing breath: Breath, at intensity: BreathIntensity = .full) -> Harmonica {
         let reeds = holes.map { Reed(hole: $0, breath: breath) }
-        applyBreathIntensity(.full)
+        applyBreathIntensity(intensity)
         guard reeds != soundingReeds else { return harmonica }
 
         sound(reeds, as: breathTurns(into: reeds) ? .breathReversed : .slide)
