@@ -73,20 +73,20 @@ Telegram's window.
 
 | To build | You need |
 |---|---|
-| The iPhone app | macOS with Xcode carrying the iOS 18 SDK or later, and [XcodeGen](https://github.com/yonaskolb/XcodeGen) |
+| The iPhone app | macOS with Xcode carrying the iOS 18 SDK or later, and [Tuist](https://docs.tuist.dev/en/guides/install-tuist) 4 |
 | HarmonicaCore's tests | Swift 6 on a Mac, with no simulator |
 | The page | Node.js 22, and the Swift 6.4 toolchain with the `swift-6.4.0-RELEASE_wasm` SDK for the WebAssembly core |
 
 ### The iPhone app
 
 ```sh
-./build.sh                    # generates MobileHarmonica.xcodeproj from project.yml
-open MobileHarmonica.xcodeproj
+./build.sh                    # generates MobileHarmonica.xcworkspace from Project.swift
+open MobileHarmonica.xcworkspace
 ```
 
-Run the `MobileHarmonica` scheme on an iPhone or a simulator. Rerun `./build.sh` after cloning
-and after any change to `project.yml`. The Xcode project and `Apps/iOS/Info.plist` are generated
-and not committed. Audio latency can only be judged on a device: the log names the buffer the
+Run the `MobileHarmonica` scheme on an iPhone or a simulator. Rerun `./build.sh` after cloning,
+after adding or removing a file, and after any change to `Project.swift`. The Xcode project, the
+workspace and `Derived/` are generated and not committed. Audio latency can only be judged on a device: the log names the buffer the
 phone granted and the latency to the speaker.
 
 ### The page
@@ -140,8 +140,9 @@ Web/
   Scripts/              the build steps build.sh runs
 Resources/Samples/      the recordings both platforms play
 docs/                   how the instrument behaves, with ios/ and web/ per platform
-build.sh                generates the Xcode project
-project.yml             targets, platform and build settings
+build.sh                generates the Xcode project with Tuist
+Project.swift           targets, platform, build settings and Info.plist
+Tuist.swift             Tuist's own configuration
 ```
 
 ## Documentation

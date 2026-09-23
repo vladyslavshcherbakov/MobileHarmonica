@@ -20,7 +20,7 @@ contradicts it is a change to the product and is agreed first.
 | `Core/` | `swift test` inside `Core/`, and the page's tests, which run the core as WebAssembly |
 | `Apps/iOS/` | The `MobileHarmonica` scheme's tests in Xcode, which include the core's |
 | `Web/` | `./build.sh page` inside `Web/` |
-| `project.yml` | `./build.sh`, then a build in Xcode |
+| `Project.swift` | `./build.sh`, then a build in Xcode |
 
 **CI** is the Pages workflow. Every branch compiles `Core/` to WebAssembly and runs the page's
 tests. Only `master` publishes the page. No XCTest suite runs in CI, so the app is built in Xcode.
@@ -31,7 +31,7 @@ requirements, platforms and features are in the README. Behaviour shared by both
 here or in Web/AGENTS.md. None of them records history, git does.
 
 **Constraints.** Swift 6 language mode everywhere, so a data race is a compile error. The app
-targets iOS 18, which `Synchronization` needs. No dependencies and no tools beyond XcodeGen and
+targets iOS 18, which `Synchronization` needs. No dependencies and no tools beyond Tuist and
 the build scripts without asking. Everything committed is in English.
 
 ## Architecture
@@ -109,11 +109,12 @@ Apps/iOS/
 Web/                    the page, see Web/AGENTS.md
 Resources/Samples/      the recordings, shared by both platforms
 docs/                   how the product behaves
-project.yml             targets, settings, Info.plist
-build.sh                generates MobileHarmonica.xcodeproj
+Project.swift           targets, settings, Info.plist
+Tuist.swift             Tuist's configuration
+build.sh                generates MobileHarmonica.xcworkspace with Tuist
 ```
 
-The Xcode project and `Apps/iOS/Info.plist` are generated from `project.yml` and not committed.
+The Xcode project, the workspace and `Derived/` are generated from `Project.swift` and not committed.
 The app's test bundle also compiles `Core/Tests`, because Xcode will not run a package's test
 target on a device.
 
