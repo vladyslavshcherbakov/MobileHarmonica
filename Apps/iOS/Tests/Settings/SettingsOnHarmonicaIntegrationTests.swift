@@ -3,7 +3,7 @@ import XCTest
 @testable import MobileHarmonica
 
 @MainActor
-final class WhatTheSettingsChangeOnTheHarmonicaIntegrationTests: XCTestCase {
+final class SettingsOnHarmonicaIntegrationTests: XCTestCase {
     private let environment = TestEnvironment()
 
     // MARK: - Tests

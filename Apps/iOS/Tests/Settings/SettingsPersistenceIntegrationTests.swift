@@ -2,7 +2,7 @@ import XCTest
 @testable import MobileHarmonica
 
 @MainActor
-final class WhatTheSettingsKeepIntegrationTests: XCTestCase {
+final class SettingsPersistenceIntegrationTests: XCTestCase {
     private let environment = TestEnvironment()
 
     // MARK: - Tests

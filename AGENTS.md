@@ -128,10 +128,10 @@ target on a device.
 
 ## Tests
 
-- Names are `test_subject_whenCondition_outcome`. A file is named for the promise it holds and ends in `UnitTests` or `IntegrationTests`.
+- Names are `test_subject_whenCondition_outcome`. A unit test file is named after the type it tests, an integration test file after the feature or the part of it that it covers, and each ends in `UnitTests` or `IntegrationTests`.
 - Integration tests run the real graph through `TestEnvironment` or `InstrumentEnvironment`, with doubles only where the process ends.
 - The instrument is tested once, in the package. A rule each platform implements is tested on both.
 - Whatever starts work has a test that it stops and one that it is released.
 - Sound is checked on the real sampler, rendered offline.
-- `WhatFastPlayingCostsIntegrationTests` is a budget that can fail, not a baseline.
+- `FastPlayingBudgetIntegrationTests` is a budget that can fail, not a baseline.
 - Wait on a named condition with `waitUntil`, never on a duration.

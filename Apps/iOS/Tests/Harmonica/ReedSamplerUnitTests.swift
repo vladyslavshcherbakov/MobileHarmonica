@@ -3,7 +3,7 @@ import HarmonicaCoreTestSupport
 import XCTest
 @testable import MobileHarmonica
 
-final class WhatTheSamplerPlaysUnitTests: XCTestCase {
+final class ReedSamplerUnitTests: XCTestCase {
     // MARK: - Tests
 
     func test_vibrato_whenAtFullDepth_makesThePitchWobble() throws {

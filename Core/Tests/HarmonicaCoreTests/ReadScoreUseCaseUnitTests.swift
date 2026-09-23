@@ -1,7 +1,7 @@
 import XCTest
 @testable import HarmonicaCore
 
-final class WhatAWrittenScoreBecomesUnitTests: XCTestCase {
+final class ReadScoreUseCaseUnitTests: XCTestCase {
     private let header = "key C\nposition first\ntempo 120\n"
     private let readScore = ReadScoreUseCase(tuning: RichterTuning())
 

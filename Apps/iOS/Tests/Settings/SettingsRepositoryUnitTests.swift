@@ -2,7 +2,7 @@ import HarmonicaCoreTestSupport
 import XCTest
 @testable import MobileHarmonica
 
-final class WhatTheStoredSettingsReadUnitTests: XCTestCase {
+final class SettingsRepositoryUnitTests: XCTestCase {
     private let storedSettings = IsolatedDefaults()
     private let log = RecordingLog()
 

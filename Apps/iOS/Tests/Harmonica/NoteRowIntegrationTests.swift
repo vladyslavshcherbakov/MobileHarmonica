@@ -2,7 +2,7 @@ import XCTest
 @testable import MobileHarmonica
 
 @MainActor
-final class WhatTheNoteRowSaysIntegrationTests: XCTestCase {
+final class NoteRowIntegrationTests: XCTestCase {
     private let environment = TestEnvironment()
 
     // MARK: - Tests

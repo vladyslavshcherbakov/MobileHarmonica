@@ -3,7 +3,7 @@ import XCTest
 @testable import MobileHarmonica
 
 @MainActor
-final class WhatCuppingTheHandsDoesIntegrationTests: XCTestCase {
+final class CuppingIntegrationTests: XCTestCase {
     private let environment = TestEnvironment()
 
     // MARK: - Tests

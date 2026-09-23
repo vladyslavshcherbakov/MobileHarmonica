@@ -2,7 +2,7 @@ import CoreGraphics
 import XCTest
 @testable import MobileHarmonica
 
-final class WhatTheSquareSizeMeansUnitTests: XCTestCase {
+final class SquareSizingUnitTests: XCTestCase {
     private let wideArea = SquareSizing(in: CGSize(width: 1000, height: 100))
 
     // MARK: - Tests

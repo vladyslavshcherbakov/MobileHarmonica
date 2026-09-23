@@ -3,7 +3,7 @@ import HarmonicaCore
 import XCTest
 @testable import MobileHarmonica
 
-final class WhatAnUnavailableSoundSaysUnitTests: XCTestCase {
+final class HarmonicaPresenterUnitTests: XCTestCase {
     private let presenter = HarmonicaPresenter(locale: Locale(identifier: "en_US_POSIX"), tunes: [])
 
     // MARK: - Tests

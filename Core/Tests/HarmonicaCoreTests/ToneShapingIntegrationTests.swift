@@ -3,7 +3,7 @@ import XCTest
 @testable import HarmonicaCore
 
 @MainActor
-final class WhatTheShapingZoneChangesIntegrationTests: XCTestCase {
+final class ToneShapingIntegrationTests: XCTestCase {
     private let environment = InstrumentEnvironment()
 
     // MARK: - Tests

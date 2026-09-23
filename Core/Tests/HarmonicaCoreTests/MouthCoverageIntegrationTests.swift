@@ -3,7 +3,7 @@ import XCTest
 import HarmonicaCoreTestSupport
 
 @MainActor
-final class WhatAMouthCoversIntegrationTests: XCTestCase {
+final class MouthCoverageIntegrationTests: XCTestCase {
     private let environment = InstrumentEnvironment()
 
     // MARK: - Tests

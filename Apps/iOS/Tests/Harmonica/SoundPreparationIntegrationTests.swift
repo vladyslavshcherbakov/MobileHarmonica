@@ -2,7 +2,7 @@ import XCTest
 @testable import MobileHarmonica
 
 @MainActor
-final class WhatPreparingTheSoundShowsIntegrationTests: XCTestCase {
+final class SoundPreparationIntegrationTests: XCTestCase {
     private let environment = TestEnvironment()
 
     // MARK: - Tests

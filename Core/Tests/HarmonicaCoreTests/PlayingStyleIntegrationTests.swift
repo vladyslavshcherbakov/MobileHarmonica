@@ -3,7 +3,7 @@ import XCTest
 @testable import HarmonicaCore
 
 @MainActor
-final class WhatEachPlayingStyleCoversIntegrationTests: XCTestCase {
+final class PlayingStyleIntegrationTests: XCTestCase {
     private let environment = InstrumentEnvironment()
 
     // MARK: - Tests

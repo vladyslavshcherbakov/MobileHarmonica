@@ -1,7 +1,7 @@
 import XCTest
 @testable import MobileHarmonica
 
-final class WhatTheRecordingsAreReadUnitTests: XCTestCase {
+final class RecordedHarmonicaUnitTests: XCTestCase {
     private let framesPerSecond = 44100.0
 
     // MARK: - Tests

@@ -3,7 +3,7 @@ import XCTest
 @testable import MobileHarmonica
 
 @MainActor
-final class WhatStopsATuneIntegrationTests: XCTestCase {
+final class TuneStoppingIntegrationTests: XCTestCase {
     private static let scoreStoppedLine = "score stopped early"
 
     private let environment = TestEnvironment()

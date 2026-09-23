@@ -2,7 +2,7 @@ import XCTest
 @testable import MobileHarmonica
 
 @MainActor
-final class WhatTheSquareSaysIntegrationTests: XCTestCase {
+final class SquareLabelsIntegrationTests: XCTestCase {
     private let environment = TestEnvironment()
 
     // MARK: - Tests

@@ -3,7 +3,7 @@ import XCTest
 @testable import MobileHarmonica
 
 @MainActor
-final class WhatFastPlayingCostsIntegrationTests: XCTestCase {
+final class FastPlayingBudgetIntegrationTests: XCTestCase {
     private static let gestures = 2000
     private static let longestAverageSecondsPerGesture = 0.002
     private static let shortBufferFrames = 64

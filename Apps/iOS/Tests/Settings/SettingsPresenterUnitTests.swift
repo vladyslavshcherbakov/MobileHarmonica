@@ -1,7 +1,7 @@
 import XCTest
 @testable import MobileHarmonica
 
-final class WhatTheSettingsSayUnitTests: XCTestCase {
+final class SettingsPresenterUnitTests: XCTestCase {
     // MARK: - Tests
 
     func test_styleChoices_nameEveryStyleAsAFullSentence() {
