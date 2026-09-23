@@ -1,19 +1,10 @@
-enum HarmonicaViewState: Equatable {
-    case preparingSound
-    case ready(Playable)
-    case soundUnavailable(String)
-
-    // MARK: - Playable
-
-    struct Playable: Equatable {
-        let holes: [Hole]
-        let key: Key
-        let fingerMarks: FingerMarks
-        let cup: Cup?
-        let demo: Demo
-        let toneShaping: ToneShaping
-        let square: Square
-    }
+struct HarmonicaViewState: Equatable {
+    let holes: [Hole]
+    let key: Key
+    let fingerMarks: FingerMarks
+    let cup: Cup
+    let demo: Demo
+    let toneShaping: ToneShaping
 
     // MARK: - Hole
 
@@ -77,12 +68,5 @@ enum HarmonicaViewState: Equatable {
         let vibratoLabel: String
         let isOverbendAvailable: Bool
         let isBendAvailable: Bool
-    }
-
-    // MARK: - Square
-
-    struct Square: Equatable {
-        let placement: SquarePlacement
-        let size: SquareSize
     }
 }

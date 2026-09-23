@@ -12,7 +12,8 @@ struct KeyBar: View {
     private static let cupBarWidth: CGFloat = 40
     private static let cupBarHeight: CGFloat = 6
 
-    let playable: HarmonicaViewState.Playable
+    let state: HarmonicaViewState
+    let isCupShown: Bool
     let clearOf: Edge.Set
     let openSettings: @MainActor () -> Void
     @ObservedObject var viewModel: HarmonicaViewModel
@@ -36,7 +37,7 @@ struct KeyBar: View {
     // MARK: - Private
 
     private var keyLabel: some View {
-        Text(playable.key.label)
+        Text(state.key.label)
             .font(.headline)
             .monospaced()
             .foregroundStyle(.white)
@@ -45,8 +46,8 @@ struct KeyBar: View {
 
     private var keySlider: some View {
         Slider(
-            value: Binding(get: { playable.key.position }, set: viewModel.changeKey(toPosition:)),
-            in: 0...playable.key.highestPosition,
+            value: Binding(get: { state.key.position }, set: viewModel.changeKey(toPosition:)),
+            in: 0...state.key.highestPosition,
             step: 1
         )
         .tint(.orange)
@@ -55,14 +56,14 @@ struct KeyBar: View {
 
     @ViewBuilder
     private var cupIndicator: some View {
-        if let cup = playable.cup {
+        if isCupShown {
             VStack(spacing: 2) {
                 ZStack(alignment: .leading) {
                     Capsule().fill(Color(white: 0.22))
-                    Capsule().fill(Color.orange).frame(width: Self.cupBarWidth * cup.closed)
+                    Capsule().fill(Color.orange).frame(width: Self.cupBarWidth * state.cup.closed)
                 }
                 .frame(width: Self.cupBarWidth, height: Self.cupBarHeight)
-                Text(cup.label)
+                Text(state.cup.label)
                     .font(.caption2)
                     .foregroundStyle(Color(white: 0.5))
             }
@@ -81,8 +82,8 @@ struct KeyBar: View {
 
     @ViewBuilder
     private var demoControl: some View {
-        if playable.demo.isPlaying {
-            Button(playable.demo.label, action: viewModel.stopTheTune)
+        if state.demo.isPlaying {
+            Button(state.demo.label, action: viewModel.stopTheTune)
                 .buttonStyle(.bordered)
                 .controlSize(.large)
                 .tint(.orange)
@@ -93,8 +94,8 @@ struct KeyBar: View {
     }
 
     private var tuneMenu: some View {
-        Menu(playable.demo.label) {
-            ForEach(playable.demo.tunes) { tune in
+        Menu(state.demo.label) {
+            ForEach(state.demo.tunes) { tune in
                 Button(tune.name) { viewModel.playTheTune(at: tune.id) }
             }
         }

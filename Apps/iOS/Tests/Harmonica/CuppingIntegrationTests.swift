@@ -33,43 +33,37 @@ final class CuppingIntegrationTests: XCTestCase {
 
         environment.phone.lean(to: 0.6)
 
-        let shown = await waitUntil { screen.playable?.cup?.closed == 0.6 }
+        let shown = await waitUntil { screen.playable?.cup.closed == 0.6 }
         XCTAssertTrue(shown)
     }
 
-    func test_cup_whenTheScreenStopsFollowingThePhone_stopsWatchingIt() async {
-        let screen = await environment.harmonicaScreen()
-        let following = Task { await screen.followThePhone() }
-        _ = await waitUntil { self.environment.phone.isWatched }
+    func test_cup_whenTheUserLeavesTheScreen_stopsWatchingThePhone() async {
+        let screen = await followingThePhone()
 
-        following.cancel()
-        await following.value
+        await screen.leave()
 
-        XCTAssertFalse(environment.phone.isWatched)
+        let stopped = await waitUntil { !self.environment.phone.isWatched }
+        XCTAssertTrue(stopped)
     }
 
     func test_harmonicaScreen_whenLeftWhileFollowingThePhone_isReleased() async {
-        let viewModelLeftBehind = await leaveTheScreenWhileFollowingThePhone()
+        let leftBehind = await leaveTheScreenWhileFollowingThePhone()
 
-        XCTAssertNil(viewModelLeftBehind())
+        let released = await waitUntil { leftBehind() == nil }
+        XCTAssertTrue(released)
     }
 
     // MARK: - Helpers
 
     private func followingThePhone() async -> HarmonicaScreenDriver {
         let screen = await environment.harmonicaScreen()
-        let following = Task { await screen.followThePhone() }
-        addTeardownBlock { following.cancel() }
         _ = await waitUntil { self.environment.phone.isWatched }
         return screen
     }
 
     private func leaveTheScreenWhileFollowingThePhone() async -> () -> HarmonicaViewModel? {
-        let screen = await environment.harmonicaScreen()
-        let following = Task { await screen.followThePhone() }
-        _ = await waitUntil { self.environment.phone.isWatched }
-        following.cancel()
-        await following.value
+        let screen = await followingThePhone()
+        await screen.leave()
         return { [weak viewModel = screen.viewModel] in viewModel }
     }
 }

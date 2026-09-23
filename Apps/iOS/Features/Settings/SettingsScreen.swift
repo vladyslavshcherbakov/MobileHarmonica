@@ -1,13 +1,16 @@
+import ComposableArchitecture
 import SwiftUI
 
 @MainActor
 struct SettingsScreen: View {
-    @StateObject private var viewModel: SettingsViewModel
+    @State private var sizeWhileDragging: Double?
+
+    private let store: StoreOf<SettingsFeature>
 
     // MARK: - Public
 
-    init(viewModel: @autoclosure @escaping @MainActor () -> SettingsViewModel) {
-        _viewModel = StateObject(wrappedValue: MainActor.assumeIsolated { viewModel() })
+    init(store: StoreOf<SettingsFeature>) {
+        self.store = store
     }
 
     var body: some View {
@@ -17,20 +20,20 @@ struct SettingsScreen: View {
             placementControl
             sizeControl
         }
-        .navigationTitle(viewModel.state.title)
+        .navigationTitle(state.title)
         .tint(.orange)
     }
 
     // MARK: - Private
 
     private var state: SettingsViewState {
-        viewModel.state
+        SettingsPresenter().present(store.settings)
     }
 
     private var styleControl: some View {
         Picker(
             state.style.label,
-            selection: Binding(get: { state.style.chosen }, set: viewModel.chooseStyle)
+            selection: Binding(get: { state.style.chosen }, set: { store.send(.styleChosen($0)) })
         ) {
             ForEach(state.style.choices) { option in
                 Text(option.name).tag(option.id)
@@ -41,7 +44,7 @@ struct SettingsScreen: View {
     private var cuppingControl: some View {
         Toggle(
             state.cupping.label,
-            isOn: Binding(get: { state.cupping.isOn }, set: viewModel.turnCupping(on:))
+            isOn: Binding(get: { state.cupping.isOn }, set: { store.send(.cuppingTurned(on: $0)) })
         )
     }
 
@@ -49,7 +52,7 @@ struct SettingsScreen: View {
         LabeledContent(state.squarePlacement.label) {
             Picker(
                 state.squarePlacement.label,
-                selection: Binding(get: { state.squarePlacement.chosen }, set: viewModel.placeSquare)
+                selection: Binding(get: { state.squarePlacement.chosen }, set: { store.send(.squarePlaced($0)) })
             ) {
                 ForEach(state.squarePlacement.choices) { option in
                     Text(option.name).tag(option.id)
@@ -62,9 +65,17 @@ struct SettingsScreen: View {
     private var sizeControl: some View {
         LabeledContent(state.squareSize.label) {
             Slider(
-                value: Binding(get: { state.squareSize.fraction }, set: viewModel.resizeSquare(to:)),
-                in: 0...1
+                value: Binding(get: { sizeWhileDragging ?? state.squareSize.fraction }, set: { sizeWhileDragging = $0 }),
+                in: 0...1,
+                onEditingChanged: { isEditing in finishResizing(isEditing: isEditing) }
             )
         }
+    }
+
+    private func finishResizing(isEditing: Bool) {
+        guard !isEditing, let fraction = sizeWhileDragging else { return }
+
+        store.send(.squareResized(fraction))
+        sizeWhileDragging = nil
     }
 }

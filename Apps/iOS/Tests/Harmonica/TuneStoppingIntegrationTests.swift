@@ -40,7 +40,8 @@ final class TuneStoppingIntegrationTests: XCTestCase {
     func test_harmonicaScreen_whenLeftWhileATunePlays_isReleased() async {
         let viewModelLeftBehind = await leaveTheScreenWhileTheFirstTunePlays()
 
-        XCTAssertNil(viewModelLeftBehind())
+        let released = await waitUntil { viewModelLeftBehind() == nil }
+        XCTAssertTrue(released)
     }
 
     // MARK: - Helpers
@@ -54,6 +55,7 @@ final class TuneStoppingIntegrationTests: XCTestCase {
 
     private func leaveTheScreenWhileTheFirstTunePlays() async -> () -> HarmonicaViewModel? {
         let screen = await playingTheFirstTune()
+        await screen.leave()
         return { [weak viewModel = screen.viewModel] in viewModel }
     }
 }

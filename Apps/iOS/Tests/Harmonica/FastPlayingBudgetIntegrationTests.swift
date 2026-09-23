@@ -83,8 +83,6 @@ final class FastPlayingBudgetIntegrationTests: XCTestCase {
 
     private func followingThePhone() async -> HarmonicaScreenDriver {
         let screen = await environment.harmonicaScreen()
-        let following = Task { await screen.followThePhone() }
-        addTeardownBlock { following.cancel() }
         _ = await waitUntil { self.environment.phone.isWatched }
         return screen
     }

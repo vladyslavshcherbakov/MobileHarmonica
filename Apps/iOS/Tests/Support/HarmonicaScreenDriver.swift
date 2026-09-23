@@ -1,4 +1,6 @@
+import ComposableArchitecture
 import CoreGraphics
+import HarmonicaCoreTestSupport
 @testable import MobileHarmonica
 
 @MainActor
@@ -7,24 +9,63 @@ final class HarmonicaScreenDriver {
     private static let squareSize = CGSize(width: 100, height: 100)
     private static let playingArea = CGSize(width: 1000, height: 100)
 
+    let store: StoreOf<AppFeature>
     let viewModel: HarmonicaViewModel
 
     // MARK: - Public
 
-    init(_ viewModel: HarmonicaViewModel) {
+    init(store: StoreOf<AppFeature>, viewModel: HarmonicaViewModel) {
+        self.store = store
         self.viewModel = viewModel
     }
 
-    var playable: HarmonicaViewState.Playable? {
-        guard case .ready(let playable) = viewModel.state else { return nil }
+    var playable: HarmonicaViewState? {
+        guard store.harmonica.sound == .ready else { return nil }
 
-        return playable
+        return viewModel.state
     }
 
     var unavailableText: String? {
-        guard case .soundUnavailable(let text) = viewModel.state else { return nil }
+        guard case .unavailable(let text) = store.harmonica.sound else { return nil }
 
         return text
+    }
+
+    var isCupShown: Bool {
+        store.harmonica.settings.isCuppingEnabled
+    }
+
+    var squarePlacement: SquarePlacement {
+        store.harmonica.settings.squarePlacement
+    }
+
+    var squareSize: SquareSize {
+        store.harmonica.settings.squareSize
+    }
+
+    func open() async {
+        store.send(.harmonica(.appeared))
+        store.send(.harmonica(.sceneBecameActive))
+        _ = await waitUntil { self.store.harmonica.sound != .preparing }
+    }
+
+    func leave() async {
+        await store.send(.harmonica(.disappeared)).finish()
+    }
+
+    func openTheSettings() async -> SettingsScreenDriver {
+        store.send(.harmonica(.settingsButtonTapped))
+        await leave()
+        return SettingsScreenDriver(store: store)
+    }
+
+    func comeBackFromTheSettings() {
+        guard let settings = store.path.ids.last else {
+            preconditionFailure("the settings screen is not open")
+        }
+
+        store.send(.path(.popFrom(id: settings)))
+        store.send(.harmonica(.appeared))
     }
 
     func hole(_ number: Int) -> HarmonicaViewState.Hole? {
@@ -57,12 +98,9 @@ final class HarmonicaScreenDriver {
         viewModel.shapeTone(with: [], across: Self.squareSize)
     }
 
-    func pinchTheSquare(by magnification: CGFloat) {
-        viewModel.resizeSquare(by: magnification, within: Self.playingArea)
-    }
-
-    func comeBackFromTheSettings() {
-        viewModel.applyTheSettings()
+    func pinchTheSquare(by magnification: CGFloat) async {
+        let size = SquareSizing(in: Self.playingArea).size(afterPinching: squareSize, by: magnification)
+        await store.send(.harmonica(.squareResized(size))).finish()
     }
 
     func moveTheKeySlider(to position: Double) {
@@ -75,10 +113,6 @@ final class HarmonicaScreenDriver {
 
     func stopTheTune() {
         viewModel.stopTheTune()
-    }
-
-    func followThePhone() async {
-        await viewModel.followTheTilt()
     }
 
     // MARK: - Private

@@ -5,6 +5,7 @@ let project = Project(
     options: .options(automaticSchemesOptions: .disabled),
     packages: [
         .package(path: "Core"),
+        .package(url: "https://github.com/pointfreeco/swift-composable-architecture", from: "1.26.2"),
     ],
     settings: .settings(
         base: [
@@ -44,6 +45,7 @@ let project = Project(
             ],
             dependencies: [
                 .package(product: "HarmonicaCore"),
+                .package(product: "ComposableArchitecture"),
             ]
         ),
         .target(
@@ -57,6 +59,7 @@ let project = Project(
             dependencies: [
                 .target(name: "MobileHarmonica"),
                 .package(product: "HarmonicaCoreTestSupport"),
+                .package(product: "ComposableArchitecture"),
             ]
         ),
     ],

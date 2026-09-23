@@ -4,14 +4,16 @@ import UIKit
 struct TouchArea: UIViewRepresentable {
     let touchesChanged: @MainActor ([FingerTouch]) -> Void
     var pinched: (@MainActor (CGFloat) -> Void)?
+    var pinchEnded: (@MainActor () -> Void)?
 
     func makeUIView(context: Context) -> TouchTrackingView {
-        TouchTrackingView(touchesChanged: touchesChanged, pinched: pinched)
+        TouchTrackingView(touchesChanged: touchesChanged, pinched: pinched, pinchEnded: pinchEnded)
     }
 
     func updateUIView(_ view: TouchTrackingView, context: Context) {
         view.touchesChanged = touchesChanged
         view.pinched = pinched
+        view.pinchEnded = pinchEnded
     }
 }
 
@@ -20,15 +22,18 @@ struct TouchArea: UIViewRepresentable {
 final class TouchTrackingView: UIView {
     var touchesChanged: @MainActor ([FingerTouch]) -> Void
     var pinched: (@MainActor (CGFloat) -> Void)?
+    var pinchEnded: (@MainActor () -> Void)?
 
     // MARK: - Public
 
     init(
         touchesChanged: @escaping @MainActor ([FingerTouch]) -> Void,
-        pinched: (@MainActor (CGFloat) -> Void)?
+        pinched: (@MainActor (CGFloat) -> Void)?,
+        pinchEnded: (@MainActor () -> Void)?
     ) {
         self.touchesChanged = touchesChanged
         self.pinched = pinched
+        self.pinchEnded = pinchEnded
         super.init(frame: .zero)
         isMultipleTouchEnabled = true
         guard pinched != nil else { return }
@@ -67,10 +72,15 @@ final class TouchTrackingView: UIView {
     // MARK: - Private
 
     @objc private func reportPinch(_ recogniser: UIPinchGestureRecognizer) {
-        guard recogniser.state == .changed else { return }
-
-        pinched?(recogniser.scale)
-        recogniser.scale = 1
+        switch recogniser.state {
+        case .changed:
+            pinched?(recogniser.scale)
+            recogniser.scale = 1
+        case .ended, .cancelled, .failed:
+            pinchEnded?()
+        default:
+            break
+        }
     }
 
     private func reportTouches(of event: UIEvent?) {

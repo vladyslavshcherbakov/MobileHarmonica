@@ -1,20 +1,19 @@
+import ComposableArchitecture
 import SwiftUI
 
 @MainActor
 struct HarmonicaScreen: View {
     @Environment(\.scenePhase) private var scenePhase
-    @StateObject private var viewModel: HarmonicaViewModel
+    @ObservedObject private var viewModel: HarmonicaViewModel
+    @State private var pinchedSize: SquareSize?
 
-    private let openSettings: @MainActor () -> Void
+    private let store: StoreOf<HarmonicaFeature>
 
     // MARK: - Public
 
-    init(
-        viewModel: @autoclosure @escaping @MainActor () -> HarmonicaViewModel,
-        openSettings: @escaping @MainActor () -> Void
-    ) {
-        _viewModel = StateObject(wrappedValue: MainActor.assumeIsolated { viewModel() })
-        self.openSettings = openSettings
+    init(store: StoreOf<HarmonicaFeature>, viewModel: HarmonicaViewModel) {
+        self.store = store
+        _viewModel = ObservedObject(wrappedValue: viewModel)
     }
 
     var body: some View {
@@ -22,14 +21,11 @@ struct HarmonicaScreen: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .ignoresSafeArea(edges: edgeUnderTheSquare)
             .background(Color.black.ignoresSafeArea())
-            .task(id: scenePhase) {
-                await prepareOrSilence(for: scenePhase)
+            .onChange(of: scenePhase, initial: true) { _, phase in
+                store.send(phase == .active ? .sceneBecameActive : .sceneLeftTheForeground)
             }
-            .task(id: isCupShown) {
-                await viewModel.followTheTilt()
-            }
-            .onAppear { viewModel.applyTheSettings() }
-            .onDisappear { silence() }
+            .onAppear { store.send(.appeared) }
+            .onDisappear { store.send(.disappeared) }
     }
 
     // MARK: - Private
@@ -41,86 +37,88 @@ struct HarmonicaScreen: View {
         }
     }
 
-    private var playable: HarmonicaViewState.Playable? {
-        guard case .ready(let playable) = viewModel.state else { return nil }
-
-        return playable
-    }
-
-    private var isCupShown: Bool {
-        playable?.cup != nil
-    }
-
     private var edgeUnderTheSquare: Edge.Set {
-        Self.edge(under: playable?.square.placement ?? PlayerSettings.atFirstLaunch.squarePlacement)
+        Self.edge(under: store.settings.squarePlacement)
+    }
+
+    private var shownSquareSize: SquareSize {
+        pinchedSize ?? store.settings.squareSize
     }
 
     @ViewBuilder
     private var content: some View {
-        switch viewModel.state {
-        case .preparingSound:
-            ProgressView()
-                .tint(.white)
-        case .ready(let playable):
-            playableHarmonica(playable)
-        case .soundUnavailable(let text):
+        switch store.sound {
+        case .preparing:
+            waiting
+        case .ready:
+            if let state = viewModel.state {
+                playableHarmonica(state)
+            } else {
+                waiting
+            }
+        case .unavailable(let text):
             Text(text)
                 .foregroundStyle(.white)
         }
     }
 
-    private func playableHarmonica(_ playable: HarmonicaViewState.Playable) -> some View {
+    private var waiting: some View {
+        ProgressView()
+            .tint(.white)
+    }
+
+    private func playableHarmonica(_ state: HarmonicaViewState) -> some View {
         VStack(spacing: 0) {
             KeyBar(
-                playable: playable,
-                clearOf: Self.edge(under: playable.square.placement),
-                openSettings: openSettings,
+                state: state,
+                isCupShown: store.settings.isCuppingEnabled,
+                clearOf: edgeUnderTheSquare,
+                openSettings: { store.send(.settingsButtonTapped) },
                 viewModel: viewModel
             )
             GeometryReader { geometry in
                 HStack(spacing: HarmonicaStrip.holeSpacing) {
-                    switch playable.square.placement {
+                    switch store.settings.squarePlacement {
                     case .left:
-                        square(playable, within: geometry.size)
-                        strip(playable)
+                        square(state, within: geometry.size)
+                        strip(state)
                     case .right:
-                        strip(playable)
-                        square(playable, within: geometry.size)
+                        strip(state)
+                        square(state, within: geometry.size)
                     }
                 }
             }
         }
     }
 
-    private func square(_ playable: HarmonicaViewState.Playable, within area: CGSize) -> some View {
-        let side = SquareSizing(in: area).side(for: playable.square.size)
+    private func square(_ state: HarmonicaViewState, within area: CGSize) -> some View {
+        let sizing = SquareSizing(in: area)
+        let side = sizing.side(for: shownSquareSize)
         return ToneShapingZone(
-            state: playable.toneShaping,
-            pinched: { viewModel.resizeSquare(by: $0, within: area) },
+            state: state.toneShaping,
+            pinched: { pinch(by: $0, sizing: sizing) },
+            pinchEnded: finishPinching,
             viewModel: viewModel
         )
         .frame(width: side, height: side)
     }
 
-    private func strip(_ playable: HarmonicaViewState.Playable) -> some View {
+    private func strip(_ state: HarmonicaViewState) -> some View {
         HarmonicaStrip(
-            holes: playable.holes,
-            fingerMarks: playable.fingerMarks,
+            holes: state.holes,
+            fingerMarks: state.fingerMarks,
             viewModel: viewModel
         )
     }
 
-    private func prepareOrSilence(for phase: ScenePhase) async {
-        switch phase {
-        case .active:
-            await viewModel.prepareSound()
-        default:
-            silence()
-        }
+    private func pinch(by magnification: CGFloat, sizing: SquareSizing) {
+        pinchedSize = sizing.size(afterPinching: shownSquareSize, by: magnification)
     }
 
-    private func silence() {
-        viewModel.stopPlaying()
-        viewModel.stopShapingTone()
+    private func finishPinching() {
+        guard let size = pinchedSize else { return }
+
+        store.send(.squareResized(size))
+        pinchedSize = nil
     }
 }

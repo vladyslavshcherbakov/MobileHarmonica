@@ -1,3 +1,4 @@
+import ComposableArchitecture
 import Foundation
 import HarmonicaCore
 
@@ -26,23 +27,11 @@ struct CompositionRoot {
     }
 
     @MainActor
-    func harmonicaScreen(openSettings: @escaping @MainActor () -> Void) -> HarmonicaScreen {
-        HarmonicaScreen(viewModel: self.harmonicaViewModel(), openSettings: openSettings)
-    }
-
-    @MainActor
-    func settingsScreen() -> SettingsScreen {
-        SettingsScreen(viewModel: self.settingsViewModel())
-    }
-
-    @MainActor
     func harmonicaViewModel() -> HarmonicaViewModel {
         let instrument = InstrumentGraph(audioEngine: audioEngine, log: log)
         return HarmonicaViewModel(
             playHarmonica: instrument.playHarmonica,
             playScore: instrument.playScore,
-            tilt: tilt,
-            settingsRepository: settingsRepository,
             tunes: tunes,
             presenter: HarmonicaPresenter(locale: locale, tunes: tunes),
             log: log
@@ -50,7 +39,14 @@ struct CompositionRoot {
     }
 
     @MainActor
-    func settingsViewModel() -> SettingsViewModel {
-        SettingsViewModel(repository: settingsRepository, presenter: SettingsPresenter(), log: log)
+    func appStore(playingOn harmonica: HarmonicaViewModel) -> StoreOf<AppFeature> {
+        let initialState = AppFeature.State(harmonica: HarmonicaFeature.State(settings: settingsRepository.settings()))
+        return Store(initialState: initialState) {
+            AppFeature()
+        } withDependencies: { [tilt, settingsRepository, log] dependencies in
+            dependencies.instrument = .playing(on: harmonica)
+            dependencies.tilt = .following(tilt)
+            dependencies.settingsClient = .storing(in: settingsRepository, log: log)
+        }
     }
 }

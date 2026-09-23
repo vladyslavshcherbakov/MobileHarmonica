@@ -1,3 +1,4 @@
+import ComposableArchitecture
 import Foundation
 import HarmonicaCore
 import HarmonicaCoreTestSupport
@@ -34,13 +35,21 @@ final class TestEnvironment {
 
     @MainActor
     func harmonicaScreen() async -> HarmonicaScreenDriver {
-        let screen = HarmonicaScreenDriver(compositionRoot.harmonicaViewModel())
-        await screen.viewModel.prepareSound()
+        let screen = launched()
+        await screen.open()
         return screen
     }
 
     @MainActor
-    func settingsScreen() -> SettingsScreenDriver {
-        SettingsScreenDriver(compositionRoot.settingsViewModel())
+    func settingsScreen() async -> SettingsScreenDriver {
+        await launched().openTheSettings()
+    }
+
+    // MARK: - Private
+
+    @MainActor
+    private func launched() -> HarmonicaScreenDriver {
+        let harmonica = compositionRoot.harmonicaViewModel()
+        return HarmonicaScreenDriver(store: compositionRoot.appStore(playingOn: harmonica), viewModel: harmonica)
     }
 }

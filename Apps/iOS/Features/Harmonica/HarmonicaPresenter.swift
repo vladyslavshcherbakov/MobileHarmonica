@@ -28,33 +28,26 @@ struct HarmonicaPresenter {
         holeLabels = Hole.allCases.map { $0.number.formatted(.number.locale(locale)) }
     }
 
-    func present(_ harmonica: Harmonica, settings: PlayerSettings, playingAScore: Bool) -> HarmonicaViewState {
-        .ready(
-            HarmonicaViewState.Playable(
-                holes: holes(of: harmonica),
-                key: keyState(harmonica.key),
-                fingerMarks: fingerMarksState(harmonica.style),
-                cup: settings.isCuppingEnabled ? Self.cupState(harmonica.cup) : nil,
-                demo: demoState(playingAScore),
-                toneShaping: toneShaping(harmonica),
-                square: HarmonicaViewState.Square(placement: settings.squarePlacement, size: settings.squareSize)
-            )
-        )
-    }
-
-    func presentSoundUnavailable(because failure: AudioEngineError) -> HarmonicaViewState {
-        .soundUnavailable(Self.reason(for: failure))
-    }
-
-    // MARK: - Private
-
-    private static func reason(for failure: AudioEngineError) -> String {
+    static func unavailableText(because failure: AudioEngineError) -> String {
         switch failure {
         case .noRecordings: noRecordingsText
         case .recordingUnreadable(let name): "Sound is unavailable: the recording \(name) could not be read."
         case .outputRefused: outputRefusedText
         }
     }
+
+    func present(_ harmonica: Harmonica, playingAScore: Bool) -> HarmonicaViewState {
+        HarmonicaViewState(
+            holes: holes(of: harmonica),
+            key: keyState(harmonica.key),
+            fingerMarks: fingerMarksState(harmonica.style),
+            cup: Self.cupState(harmonica.cup),
+            demo: demoState(playingAScore),
+            toneShaping: toneShaping(harmonica)
+        )
+    }
+
+    // MARK: - Private
 
     private func holes(of harmonica: Harmonica) -> [HarmonicaViewState.Hole] {
         zip(Hole.allCases, holeLabels).map { hole, label in

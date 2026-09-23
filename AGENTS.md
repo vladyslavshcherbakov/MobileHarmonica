@@ -31,8 +31,8 @@ requirements, platforms and features are in the README. Behaviour shared by both
 here or in Web/AGENTS.md. None of them records history, git does.
 
 **Constraints.** Swift 6 language mode everywhere, so a data race is a compile error. The app
-targets iOS 18, which `Synchronization` needs. No dependencies and no tools beyond Tuist and
-the build scripts without asking. Everything committed is in English.
+targets iOS 18, which `Synchronization` needs. No dependencies beyond ComposableArchitecture and no tools beyond
+Tuist and the build scripts without asking. Everything committed is in English.
 
 ## Architecture
 
@@ -59,6 +59,13 @@ test runs the app's own graph with doubles at the edges.
 **One use case plays the instrument.** `PlayHarmonicaUseCase` covers playing, changing key and
 shaping the tone, because all three change the reeds sounding now. Every action returns the whole
 `Harmonica`, and what the player hears is derived from it, never stored beside it.
+
+**Screens are ComposableArchitecture reducers, the instrument is not.** `AppFeature` owns
+navigation, `HarmonicaFeature` the sound's preparation, the settings the harmonica screen follows
+and the lean, `SettingsFeature` the settings. Touches, the square, the key slider and tunes go
+straight to `HarmonicaViewModel` on the main actor, because an effect would put a task between a
+touch and its sound and could reorder two of them. The reducers reach the instrument, the lean and
+the stored settings through the clients in `Dependencies/`.
 
 **Presentation.** A presenter turns domain values into a view state that names no domain type.
 Views hand raw touches to the view model, and touch mappers turn them into positions and shaping,
@@ -103,7 +110,8 @@ Apps/iOS/
   Features/Harmonica/   screen, view model, presenter, view state, with Views/ and Touch/
   Features/Settings/    the settings screen, view model, presenter, view state
   Settings/             PlayerSettings and SettingsRepository over UserDefaults
-  Navigation/           AppCoordinator and AppRoute
+  Navigation/           AppFeature and AppScreen, the navigation stack
+  Dependencies/         the clients the reducers reach the instrument, the lean and the settings through
   Scores/               .score files read at launch, not committed
   Tests/                the app's tests and their support
 Web/                    the page, see Web/AGENTS.md

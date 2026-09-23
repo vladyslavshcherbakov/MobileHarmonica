@@ -1,3 +1,4 @@
+import ComposableArchitecture
 import Foundation
 import HarmonicaCore
 import SwiftUI
@@ -7,11 +8,12 @@ struct MobileHarmonicaApp: App {
     private static let logCategory = "harmonica"
     private static let subsystemWithoutABundleIdentifier = "com.vladyslavshcherbakov.mobileharmonica"
 
-    private let compositionRoot: CompositionRoot
+    private let harmonica: HarmonicaViewModel
+    private let store: StoreOf<AppFeature>
 
     init() {
         let log = Self.harmonicaLog()
-        compositionRoot = CompositionRoot(
+        let compositionRoot = CompositionRoot(
             audioEngine: SampledAudioEngine(log: log),
             tilt: DeviceTilt(),
             defaults: .standard,
@@ -19,11 +21,14 @@ struct MobileHarmonicaApp: App {
             locale: .current,
             writtenTunes: [BundledScoreRepository(tuning: RichterTuning(), log: log).first()].compactMap { $0 }
         )
+        let harmonica = compositionRoot.harmonicaViewModel()
+        self.harmonica = harmonica
+        store = compositionRoot.appStore(playingOn: harmonica)
     }
 
     var body: some Scene {
         WindowGroup {
-            SceneRoot(compositionRoot: compositionRoot)
+            AppScreen(store: store, harmonica: harmonica)
         }
     }
 

@@ -4,16 +4,13 @@ import HarmonicaCore
 
 @MainActor
 final class HarmonicaViewModel: ObservableObject {
-    @Published private(set) var state: HarmonicaViewState = .preparingSound
+    @Published private(set) var state: HarmonicaViewState?
 
     private let playHarmonica: PlayHarmonicaUseCase
     private let playScore: PlayScoreUseCase
-    private let tilt: TiltProtocol
-    private let settingsRepository: SettingsRepository
     private let tunes: [Score]
     private let presenter: HarmonicaPresenter
     private let log: LogProtocol
-    private var settings: PlayerSettings
     private var performance: Task<Void, Never>?
 
     // MARK: - Public
@@ -21,39 +18,35 @@ final class HarmonicaViewModel: ObservableObject {
     init(
         playHarmonica: PlayHarmonicaUseCase,
         playScore: PlayScoreUseCase,
-        tilt: TiltProtocol,
-        settingsRepository: SettingsRepository,
         tunes: [Score],
         presenter: HarmonicaPresenter,
         log: LogProtocol
     ) {
         self.playHarmonica = playHarmonica
         self.playScore = playScore
-        self.tilt = tilt
-        self.settingsRepository = settingsRepository
         self.tunes = tunes
         self.presenter = presenter
         self.log = log
-        settings = settingsRepository.settings()
     }
 
     deinit {
         performance?.cancel()
     }
 
-    func prepareSound() async {
+    func prepare(adopting settings: PlayerSettings) async throws(AudioEngineError) {
         do throws(AudioEngineError) {
             _ = try await playHarmonica.prepare()
-            show(adoptTheStoredSettings())
         } catch {
-            publish(presenter.presentSoundUnavailable(because: error))
+            state = nil
+            throw error
         }
+        show(harmonica(adopting: settings))
     }
 
-    func applyTheSettings() {
+    func adopt(_ settings: PlayerSettings) {
         guard isReady(toTake: "the settings") else { return }
 
-        show(adoptTheStoredSettings())
+        show(harmonica(adopting: settings))
     }
 
     func play(_ touches: [FingerTouch], across size: CGSize) {
@@ -77,15 +70,10 @@ final class HarmonicaViewModel: ObservableObject {
         SquareTouchMapper(touches, across: size).marks
     }
 
-    func followTheTilt() async {
-        guard settings.isCuppingEnabled else {
-            log.record("cupping is off in the settings, the lean of the phone is not followed")
-            return
-        }
+    func cupHands(toLeaning leaning: Double) {
+        guard isReady(toTake: "a lean of the phone") else { return }
 
-        for await leaning in tilt.tiltToTheRight() {
-            cupHands(to: CupDepth(clamping: leaning))
-        }
+        show(playHarmonica.cupHands(to: CupDepth(clamping: leaning)))
     }
 
     func changeKey(toPosition position: Double) {
@@ -124,41 +112,32 @@ final class HarmonicaViewModel: ObservableObject {
         shapeTone(shaping, vibrato: vibrato)
     }
 
-    func resizeSquare(by magnification: CGFloat, within area: CGSize) {
-        guard isReady(toTake: "a pinch on the square") else { return }
-
-        let size = SquareSizing(in: area).size(afterPinching: settings.squareSize, by: magnification)
-        guard size != settings.squareSize else { return }
-
-        settings.squareSize = size
-        settingsRepository.save(settings)
-        log.recordSample("square resized to \(size.fraction) of its range")
-        show(playHarmonica.harmonica)
-    }
-
     func stopShapingTone() {
         shapeTone(.rest, vibrato: .off)
     }
 
-    func stopPlaying() {
-        guard isReady(toTake: "stopping the sound") else { return }
+    func silence() {
+        guard isReady(toTake: "silencing the harmonica") else { return }
 
         stopTheScore()
         show(playHarmonica.stopPlaying(.ringsDown))
+        stopShapingTone()
     }
 
     // MARK: - Private
 
-    private func adoptTheStoredSettings() -> Harmonica {
-        settings = settingsRepository.settings()
+    private func harmonica(adopting settings: PlayerSettings) -> Harmonica {
         let styled = playHarmonica.changeStyle(to: settings.style)
         guard !settings.isCuppingEnabled else { return styled }
 
+        log.record("cupping is off in the settings, the hands stay open")
         return playHarmonica.cupHands(to: .open)
     }
 
     private func perform(_ tune: Score) -> Task<Void, Never> {
         Task { [weak self, playScore] in
+            guard !Task.isCancelled else { return }
+
             for await harmonica in playScore.play(tune) {
                 guard let self else { return }
 
@@ -181,14 +160,8 @@ final class HarmonicaViewModel: ObservableObject {
         show(playHarmonica.shapeTone(shaping, vibrato: vibrato))
     }
 
-    private func cupHands(to cup: CupDepth) {
-        guard isReady(toTake: "a lean of the phone") else { return }
-
-        show(playHarmonica.cupHands(to: cup))
-    }
-
     private func isReady(toTake action: String) -> Bool {
-        guard case .ready = state else {
+        guard state != nil else {
             log.recordSample("\(action) arrived while the sound was not ready, nothing changed")
             return false
         }
@@ -202,10 +175,7 @@ final class HarmonicaViewModel: ObservableObject {
     }
 
     private func show(_ harmonica: Harmonica) {
-        publish(presenter.present(harmonica, settings: settings, playingAScore: performance != nil))
-    }
-
-    private func publish(_ updated: HarmonicaViewState) {
+        let updated = presenter.present(harmonica, playingAScore: performance != nil)
         guard updated != state else { return }
 
         state = updated

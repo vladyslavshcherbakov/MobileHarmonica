@@ -6,6 +6,7 @@ struct ToneShapingZone: View {
 
     let state: HarmonicaViewState.ToneShaping
     let pinched: @MainActor (CGFloat) -> Void
+    let pinchEnded: @MainActor () -> Void
     @ObservedObject var viewModel: HarmonicaViewModel
     @State private var touches: [FingerTouch] = []
 
@@ -53,7 +54,8 @@ struct ToneShapingZone: View {
                 self.touches = touches
                 viewModel.shapeTone(with: touches, across: size)
             },
-            pinched: pinched
+            pinched: pinched,
+            pinchEnded: pinchEnded
         )
     }
 }
