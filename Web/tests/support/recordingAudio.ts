@@ -4,6 +4,7 @@ import type { CoreTone, CoreToneChange } from '../../src/core/coreAudio.js'
 export class RecordingAudio implements AudioEngine {
     readonly soundedTones: (readonly CoreTone[])[] = []
     readonly releases: ('ringsDown' | 'damped')[] = []
+    readonly intensities: number[] = []
     preparationFailure: AudioEngineFailure | null = null
 
     async prepare(): Promise<void> {
@@ -14,7 +15,9 @@ export class RecordingAudio implements AudioEngine {
         this.soundedTones.push(tones)
     }
 
-    changeIntensity(): void {}
+    changeIntensity(gain: number): void {
+        this.intensities.push(gain)
+    }
 
     changeBend(): void {}
 

@@ -39,12 +39,12 @@ it brings back the number of notes chosen before. A force click does not open Lo
 and Telegram do not grant in a way the page can use, so the hands never close on the page and the
 top bar has no control for them.
 
-**No written scores.** The page plays the seven built-in tunes, the same notes the phone plays.
+**No written scores.** The page plays the eight built-in tunes, the same notes the phone plays.
 
 ## The screen
 
 **It fills the visible area in either landscape** and never scrolls or rubber-bands. In portrait
-the page asks to turn the phone. Only the square extends under the notch. The strip stays clear
+the page asks to turn the phone. Only the shaping pad extends under the notch. The strip stays clear
 of it and of the home indicator.
 
 **The top bar keeps every control reachable.** Controls shrink to fit, the bar scrolls sideways
@@ -54,5 +54,5 @@ push it off.
 **A note name shrinks to fit its hole**, down to 0.6 of its size, and what is still too long is
 clipped, as on the phone.
 
-**Touches are per surface.** The strip and the square each see only their own fingers. A mouse
-plays as one finger. Two fingers in the square are a pinch and stop shaping the tone.
+**Touches are per surface.** The strip and the shaping pad each see only their own fingers. A
+mouse plays as one finger. Two fingers on the pad are a pinch and stop shaping the tone.

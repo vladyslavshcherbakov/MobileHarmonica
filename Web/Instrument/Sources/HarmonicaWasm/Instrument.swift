@@ -40,8 +40,14 @@ final class Instrument {
         publish(playHarmonica.play(at: positions(of: fingers)))
     }
 
-    func play(holes: Int, blowing: Bool) -> Int32 {
-        publish(playHarmonica.play(self.holes(of: holes), breathing: blowing ? .blow : .draw))
+    func play(holes: Int, blowing: Bool, intensity: Double) -> Int32 {
+        publish(
+            playHarmonica.play(
+                self.holes(of: holes),
+                breathing: blowing ? .blow : .draw,
+                at: BreathIntensity(gain: intensity)
+            )
+        )
     }
 
     func changeKey(toSliderPosition position: Int) -> Int32 {

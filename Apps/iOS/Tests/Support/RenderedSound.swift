@@ -19,9 +19,9 @@ struct RenderedSound {
         render(3, from: sampler)
     }
 
-    static func render(_ buffers: Int, from sampler: ReedSampler) {
+    static func render(_ buffers: Int, from sampler: ReedSampler, amplitude: Float = 1) {
         for _ in 0..<buffers {
-            _ = buffer(from: sampler)
+            _ = buffer(from: sampler, amplitude: amplitude)
         }
     }
 
@@ -45,7 +45,7 @@ struct RenderedSound {
         }
     }
 
-    private static func buffer(from sampler: ReedSampler) -> [Float] {
+    private static func buffer(from sampler: ReedSampler, amplitude: Float = 1) -> [Float] {
         var samples = [Float](repeating: 0, count: framesPerBuffer)
         let list = AudioBufferList.allocate(maximumBuffers: 1)
         defer { free(list.unsafeMutablePointer) }
@@ -59,7 +59,7 @@ struct RenderedSound {
             sampler.render(
                 frameCount: framesPerBuffer,
                 sampleRate: sampleRate,
-                amplitude: 1,
+                amplitude: amplitude,
                 into: list
             )
         }

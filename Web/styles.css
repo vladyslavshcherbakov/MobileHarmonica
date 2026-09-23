@@ -2,7 +2,7 @@
     --black: #000;
     --plate: #383838;
     --plateLit: #ff9500;
-    --zone: #212121;
+    --shapingPad: #212121;
     --label: #8c8c8c;
     --labelDim: #4d4d4d;
     --note: #fff;
@@ -14,7 +14,7 @@
     --telegramTopInset: 0px;
     --telegramLeftInset: 0px;
     --controlHeight: 40px;
-    --zoneSide: 120px;
+    --shapingPadSide: 120px;
 }
 
 * {
@@ -139,29 +139,24 @@ body.insideTelegram #howToFillTheScreen {
     min-height: 0;
 }
 
-#zone {
+#shapingPad {
     position: relative;
-    flex: 0 0 var(--zoneSide);
-    height: var(--zoneSide);
+    flex: 0 0 var(--shapingPadSide);
+    height: var(--shapingPadSide);
     align-self: center;
-    background: var(--zone);
+    background: var(--shapingPad);
     border-radius: 12px;
     touch-action: none;
 }
 
-#zone span {
+#shapingPad span {
     position: absolute;
     font-size: 12px;
     color: var(--label);
 }
 
-#overbendLabel {
+#pitchLabel {
     top: 8px;
-    left: 8px;
-}
-
-#bendLabel {
-    bottom: 8px;
     left: 8px;
 }
 
@@ -267,7 +262,7 @@ body.insideTelegram #howToFillTheScreen {
 }
 
 #stripMarks,
-#zoneMarks {
+#shapingPadMarks {
     position: absolute;
     inset: 0;
     pointer-events: none;

@@ -2,13 +2,8 @@ import SwiftUI
 
 @MainActor
 struct HarmonicaScreen: View {
-    private static let zoneWidthFraction: CGFloat = 0.22
-    private static let smallestZoneScale: CGFloat = 0.45
-    private static let largestZoneScale: CGFloat = 2.0
-
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var viewModel: HarmonicaViewModel
-    @State private var zoneScale: CGFloat = 1
 
     // MARK: - Public
 
@@ -19,20 +14,37 @@ struct HarmonicaScreen: View {
     var body: some View {
         content
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .ignoresSafeArea(edges: .leading)
+            .ignoresSafeArea(edges: edgeUnderTheShapingPad)
             .background(Color.black.ignoresSafeArea())
-            .task(id: scenePhase) {
-                await prepareOrSilence(for: scenePhase)
-            }
-            .task {
-                await viewModel.followTheTilt()
-            }
+            .onChange(of: scenePhase, initial: true) { _, phase in viewModel.send(Self.action(for: phase)) }
+            .onAppear { viewModel.send(.screenAppeared) }
+            .onDisappear { viewModel.send(.screenDisappeared) }
     }
 
     // MARK: - Private
 
-    private static func zoneSide(in size: CGSize, scaledBy scale: CGFloat) -> CGFloat {
-        min(size.height, min(size.height, size.width * Self.zoneWidthFraction) * scale)
+    private static func action(for phase: ScenePhase) -> HarmonicaAction {
+        switch phase {
+        case .active: .appBecameActive
+        default: .appLeftTheForeground
+        }
+    }
+
+    private static func edge(under placement: ShapingPadPlacement) -> Edge.Set {
+        switch placement {
+        case .left: .leading
+        case .right: .trailing
+        }
+    }
+
+    private var playable: HarmonicaViewState.Playable? {
+        guard case .ready(let playable) = viewModel.state else { return nil }
+
+        return playable
+    }
+
+    private var edgeUnderTheShapingPad: Edge.Set {
+        Self.edge(under: playable?.shapingPad.placement ?? PlayerSettings.atFirstLaunch.shapingPadPlacement)
     }
 
     @ViewBuilder
@@ -51,39 +63,37 @@ struct HarmonicaScreen: View {
 
     private func playableHarmonica(_ playable: HarmonicaViewState.Playable) -> some View {
         VStack(spacing: 0) {
-            KeyBar(playable: playable, viewModel: viewModel)
+            KeyBar(
+                playable: playable,
+                clearOf: Self.edge(under: playable.shapingPad.placement),
+                viewModel: viewModel
+            )
             GeometryReader { geometry in
                 HStack(spacing: HarmonicaStrip.holeSpacing) {
-                    ToneShapingZone(
-                        state: playable.toneShaping,
-                        pinched: resizeZone(by:),
-                        viewModel: viewModel
-                    )
-                    .frame(
-                        width: Self.zoneSide(in: geometry.size, scaledBy: zoneScale),
-                        height: Self.zoneSide(in: geometry.size, scaledBy: zoneScale)
-                    )
-                    HarmonicaStrip(
-                        holes: playable.holes,
-                        fingerMarks: playable.fingerMarks,
-                        viewModel: viewModel
-                    )
+                    switch playable.shapingPad.placement {
+                    case .left:
+                        shapingPad(playable, within: geometry.size)
+                        strip(playable)
+                    case .right:
+                        strip(playable)
+                        shapingPad(playable, within: geometry.size)
+                    }
                 }
             }
         }
     }
 
-    private func resizeZone(by magnification: CGFloat) {
-        zoneScale = min(Self.largestZoneScale, max(Self.smallestZoneScale, zoneScale * magnification))
+    private func shapingPad(_ playable: HarmonicaViewState.Playable, within area: CGSize) -> some View {
+        let side = ShapingPadSizing(in: area).side(for: playable.shapingPad.size)
+        return ShapingPad(state: playable.shapingPad, pinchArea: area, viewModel: viewModel)
+            .frame(width: side, height: side)
     }
 
-    private func prepareOrSilence(for phase: ScenePhase) async {
-        switch phase {
-        case .active:
-            await viewModel.prepareSound()
-        default:
-            viewModel.stopPlaying()
-            viewModel.stopShapingTone()
-        }
+    private func strip(_ playable: HarmonicaViewState.Playable) -> some View {
+        HarmonicaStrip(
+            holes: playable.holes,
+            fingerMarks: playable.fingerMarks,
+            viewModel: viewModel
+        )
     }
 }

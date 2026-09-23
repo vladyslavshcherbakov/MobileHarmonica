@@ -10,7 +10,7 @@ export interface PlayableHarmonica {
     readonly notesPerFinger: NotesPerFingerViewState
     readonly fingerMarks: FingerMarksViewState
     readonly demo: DemoViewState
-    readonly toneShaping: ToneShapingViewState
+    readonly shapingPad: ShapingPadViewState
 }
 
 export type LitHalf = 'top' | 'bottom'
@@ -85,10 +85,9 @@ export interface DemoViewState {
     readonly isPlaying: boolean
 }
 
-export interface ToneShapingViewState {
-    readonly overbendLabel: string
-    readonly bendLabel: string
+export interface ShapingPadViewState {
+    readonly pitchLabel: string
     readonly vibratoLabel: string
-    readonly isOverbendAvailable: boolean
-    readonly isBendAvailable: boolean
+    readonly isPitchShapingAvailable: boolean
+    readonly scale: number
 }

@@ -18,6 +18,8 @@ final class ReedSampler: @unchecked Sendable {
     private let requestedCup = Atomic<UInt64>(0)
     private let log: LogProtocol
 
+    let health = RenderHealth()
+
     // MARK: - Public
 
     init(samples: SampleBank, log: LogProtocol) {
@@ -74,6 +76,8 @@ final class ReedSampler: @unchecked Sendable {
         into buffers: UnsafeMutableAudioBufferListPointer
     ) {
         commands.drain { command, tones in bank.pointee.apply(command, tones: tones) }
+        health.recordVoices(bank.pointee.voiceCount)
+        health.recordStolenVoices(bank.pointee.takeStolenVoices())
         guard !bank.pointee.isSilent else {
             fillWithSilence(frameCount: frameCount, into: buffers)
             return
@@ -151,10 +155,15 @@ final class ReedSampler: @unchecked Sendable {
         into buffers: UnsafeMutableAudioBufferListPointer
     ) {
         let recordedFrames = UnsafeBufferPointer(frames)
+        var peak: Float = 0
+        var clippedSamples = 0
         for frame in 0..<frameCount {
-            let mixedSample = bank.pointee.nextSample(from: recordedFrames, in: settings)
-            write(Float(mixedSample) * amplitude, atFrame: frame, into: buffers)
+            let sample = Float(bank.pointee.nextSample(from: recordedFrames, in: settings)) * amplitude
+            peak = max(peak, abs(sample))
+            clippedSamples += abs(sample) > 1 ? 1 : 0
+            write(sample, atFrame: frame, into: buffers)
         }
+        health.recordOutput(peak: peak, clippedSamples: clippedSamples)
     }
 
     private func write(_ sample: Float, atFrame frame: Int, into buffers: UnsafeMutableAudioBufferListPointer) {
@@ -287,6 +296,7 @@ private struct VoiceBank {
     var cupped = 0.0
     var driftPhase = 0.0
     var isRingingDown = false
+    var stolenVoices = 0
 
     // MARK: - Public
 
@@ -349,6 +359,12 @@ private struct VoiceBank {
         }
         cupped += (summedVoices * gainPerReed * vibrato.gain - cupped) * settings.cupCoefficient
         return cupped
+    }
+
+    mutating func takeStolenVoices() -> Int {
+        defer { stolenVoices = 0 }
+
+        return stolenVoices
     }
 
     mutating func forgetSilentVoices() {
@@ -427,6 +443,7 @@ private struct VoiceBank {
         let voice = Voice(wanted.tone, playing: wanted.recorded)
         guard voiceCount < Self.mostVoices else {
             voices[quietestVoice] = voice
+            stolenVoices += 1
             return
         }
 

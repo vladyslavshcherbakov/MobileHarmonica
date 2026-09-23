@@ -10,6 +10,7 @@ public final class RecordingAudioEngine: AudioEngineProtocol {
     public private(set) var cups: [CupDepth] = []
     public private(set) var releases: [ReedRelease] = []
     public var preparationFailure: AudioEngineError?
+    public var toneSounded: (@MainActor () -> Void)?
 
     nonisolated public init() {}
 
@@ -30,6 +31,7 @@ public final class RecordingAudioEngine: AudioEngineProtocol {
     public func soundTones(_ tones: [Tone], as change: ToneChange) {
         soundedTones.append(tones)
         toneChanges.append(change)
+        toneSounded?()
     }
 
     public func changeIntensity(to intensity: BreathIntensity) {

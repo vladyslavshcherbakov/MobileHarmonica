@@ -3,10 +3,10 @@ set -eu
 
 cd "$(dirname "$0")"
 
-if ! command -v xcodegen >/dev/null 2>&1; then
-    echo "build.sh: xcodegen is not installed; it generates MobileHarmonica.xcodeproj from project.yml" >&2
+if ! command -v tuist >/dev/null 2>&1; then
+    echo "build.sh: tuist is not installed; it generates MobileHarmonica.xcworkspace from Project.swift" >&2
     exit 1
 fi
 
-xcodegen generate
-echo "build.sh: MobileHarmonica.xcodeproj is generated; open it and run the MobileHarmonica scheme"
+tuist generate --no-open
+echo "build.sh: MobileHarmonica.xcworkspace is generated; open it and run the MobileHarmonica scheme"

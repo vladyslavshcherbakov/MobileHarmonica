@@ -64,7 +64,7 @@ struct HarmonicaStrip: View {
     private func touchArea(across size: CGSize) -> some View {
         TouchArea { touches in
             self.touches = touches
-            viewModel.play(touches, across: size)
+            viewModel.send(.stripTouched(touches, across: size))
         }
     }
 }

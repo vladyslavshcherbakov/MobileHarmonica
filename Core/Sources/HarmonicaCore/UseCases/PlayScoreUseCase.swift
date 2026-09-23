@@ -14,37 +14,28 @@ public final class PlayScoreUseCase {
         self.log = log
     }
 
-    public func play(_ score: Score) -> AsyncStream<Harmonica> {
-        AsyncStream { continuation in
-            let performance = Task { await perform(score, into: continuation) }
-            continuation.onTermination = { _ in performance.cancel() }
+    public func play(_ score: Score, reporting report: (Harmonica) -> Void) async {
+        log.record("score started in \(score.key), \(score.position) position, calling for a harmonica in \(score.harmonicaKey)")
+        report(harmonica.changeKey(to: score.harmonicaKey))
+        for event in score.events where !Task.isCancelled {
+            await perform(event, secondsPerBeat: score.secondsPerBeat, reporting: report)
         }
+        guard !Task.isCancelled else {
+            log.record("score stopped early")
+            return
+        }
+
+        report(harmonica.shapeTone(.rest, vibrato: .off))
+        report(harmonica.stopPlaying(.ringsDown))
+        log.record("score finished")
     }
 
     // MARK: - Private
 
-    private func perform(_ score: Score, into continuation: AsyncStream<Harmonica>.Continuation) async {
-        log.record("score started in \(score.key), \(score.position) position, calling for a harmonica in \(score.harmonicaKey)")
-        continuation.yield(harmonica.changeKey(to: score.harmonicaKey))
-        for event in score.events where !Task.isCancelled {
-            await perform(event, secondsPerBeat: score.secondsPerBeat, into: continuation)
-        }
-        guard !Task.isCancelled else {
-            log.record("score stopped early")
-            continuation.finish()
-            return
-        }
-
-        continuation.yield(harmonica.shapeTone(.rest, vibrato: .off))
-        continuation.yield(harmonica.stopPlaying(.ringsDown))
-        log.record("score finished")
-        continuation.finish()
-    }
-
     private func perform(
         _ event: ScoreEvent,
         secondsPerBeat: Double,
-        into continuation: AsyncStream<Harmonica>.Continuation
+        reporting report: (Harmonica) -> Void
     ) async {
         let seconds = event.beats * secondsPerBeat
         guard case .note(let note) = event else {
@@ -52,22 +43,22 @@ public final class PlayScoreUseCase {
             return
         }
 
-        let slid = await slide(into: note, within: seconds, into: continuation)
-        await sound(note, for: seconds - slid, into: continuation)
+        let slid = await slide(into: note, within: seconds, reporting: report)
+        await sound(note, for: seconds - slid, reporting: report)
     }
 
     private func slide(
         into note: ScoreNote,
         within seconds: Double,
-        into continuation: AsyncStream<Harmonica>.Continuation
+        reporting report: (Harmonica) -> Void
     ) async -> Double {
         let passing = Self.passingHoles(of: note)
         guard !passing.isEmpty else { return 0 }
 
         let step = min(ScoreTiming.slideStepSeconds, seconds / 2 / Double(passing.count))
-        continuation.yield(harmonica.shapeTone(.rest, vibrato: .off))
+        report(harmonica.shapeTone(.rest, vibrato: .off))
         for hole in passing where !Task.isCancelled {
-            continuation.yield(harmonica.play([hole], breathing: note.breath))
+            report(harmonica.play([hole], breathing: note.breath, at: Self.intensity(of: note)))
             await wait(step)
         }
         return step * Double(passing.count)
@@ -76,7 +67,7 @@ public final class PlayScoreUseCase {
     private func sound(
         _ note: ScoreNote,
         for seconds: Double,
-        into continuation: AsyncStream<Harmonica>.Continuation
+        reporting report: (Harmonica) -> Void
     ) async {
         let gap = min(ScoreTiming.articulationSeconds, seconds / 4)
         let sounding = seconds - gap
@@ -87,13 +78,19 @@ public final class PlayScoreUseCase {
                 shaping(for: note, at: Self.fraction(step, of: steps)),
                 vibrato: VibratoDepth(clamping: note.vibrato)
             )
-            continuation.yield(harmonica.play(Self.holes(of: note, at: step), breathing: note.breath))
+            report(
+                harmonica.play(Self.holes(of: note, at: step), breathing: note.breath, at: Self.intensity(of: note))
+            )
             await wait(until: started, plus: sounding * Double(step + 1) / Double(steps))
         }
         guard !Task.isCancelled else { return }
 
-        continuation.yield(harmonica.stopPlaying(.damped))
+        report(harmonica.stopPlaying(.damped))
         await wait(gap)
+    }
+
+    private static func intensity(of note: ScoreNote) -> BreathIntensity {
+        BreathIntensity(gain: note.breathIntensity)
     }
 
     private static func steps(of note: ScoreNote, within seconds: Double) -> Int {
@@ -129,7 +126,7 @@ public final class PlayScoreUseCase {
             .max() ?? 0
         guard semitones > 0, range > 0 else { return .rest }
 
-        return PitchShaping(clamping: -semitones / range)
+        return PitchShaping(clamping: semitones / range)
     }
 
     private static func bend(of note: ScoreNote, at fraction: Double) -> Double {

@@ -17,10 +17,12 @@ on every platform. What one platform adds or does differently is in [docs/ios/](
 
 ## The screen
 
-The strip of ten holes fills the right of the screen and the shaping square sits on its left, for
+The strip of ten holes fills the right of the screen and the shaping pad sits on its left, for
 a right-handed player: the right hand picks holes, the left thumb shapes. Hole 1 is at the left
 end of the strip, where it is on the instrument. A bar along the top holds the key slider, the
-playing style menu and the tune menu, and a row above the plates names what is sounding.
+playing style menu and the tune menu, and a row above the plates names what is sounding. On the
+iPhone the shaping pad can stand on either side of the strip, and the playing style is chosen on the
+settings screen instead of in the bar, as [docs/ios/playing.md](ios/playing.md#settings) says.
 
 ## Controls
 
@@ -29,12 +31,12 @@ playing style menu and the tune menu, and a row above the plates names what is s
 | Hole | A finger on the strip | Sounds that hole. The playing style decides how many fingers count and how many holes each covers |
 | Breath direction | Height of the **topmost** finger on the strip | On or above the centre line blows, below draws |
 | Breath intensity | That finger's distance from the centre line | 0.2 on the line to 1.0 at the edge |
-| Bend | A finger below the middle of the square | From nothing at the middle to the reed's full range at the bottom |
-| Overbend | A finger above the middle of the square | Past half the travel, the reed pops to its overbend |
-| Vibrato | A finger's position across the square | None at the left to full depth at the right |
+| Bend | A finger above the middle of the shaping pad, on a reed that bends | From nothing at the middle to the reed's full range at the top |
+| Overbend | A finger above the middle of the shaping pad, on a reed that overbends | Past half the travel, the reed pops to its overbend |
+| Vibrato | A finger's position across the shaping pad | None at the left to full depth at the right |
 | Key | Slider in the top bar | Chooses which harmonica is in your hands, G to F♯ |
-| Playing style | Menu in the top bar | How many fingers count, and how many holes each one covers |
-| Square size | Pinch on the square | Resizes the square between 0.45 and 2 times its natural side, trading width with the strip |
+| Playing style | Menu in the top bar, on the settings screen on the iPhone | How many fingers count, and how many holes each one covers |
+| Shaping pad size | Pinch on the shaping pad, or the size slider on the iPhone's settings screen | Resizes the pad between 0.45 and 2 times its natural side, trading width with the strip |
 
 ## Holes and breath
 
@@ -77,20 +79,22 @@ on the platform: the iPhone measures the finger, and the page asks for a number 
 
 ## Shaping the tone
 
-**The square's vertical axis rests in the middle.** Down bends and up overbends, which mirrors the
-mouth: a bend tunes the mouth's resonance below the sounding reed, an overbend tunes it above, and
-the two are opposite adjustments on one continuum. On any hole and breath exactly one half is
-live, and the other half's label dims. The live label names the technique this reed offers:
-`overblow ↑` on holes 1 to 6 blown and `overdraw ↑` on holes 7 to 10 drawn, `bend ↓` where the
-reed bends, and `overbend ↑` when nothing is sounding.
+**Only the upper half of the shaping pad shapes the pitch.** A reed offers at most one technique:
+the higher reed of a hole bends and the lower one overbends, so no reed does both. Bend, overblow
+and overdraw therefore share the upper half, and one label at its top names what the sounding reed
+offers: `bend ↑` where the reed bends, `overblow ↑` on holes 1 to 6 blown, `overdraw ↑` on holes 7
+to 10 drawn, and `bend · overbend ↑` when nothing is sounding. The label dims when the reed offers
+neither. The lower half shapes nothing, so a thumb held low for vibrato while the other hand
+slides across the holes never bends a reed it passes over.
 
 The axis is read against the reed sounding now, not an absolute mouth shape: a bend is always the
-same move relative to the pitch under it, so one rule covers the whole instrument. Each half has
-half the travel, and pinching the square larger gives more.
+same move relative to the pitch under it, so one rule covers the whole instrument. The upper half
+is half the travel, and pinching the pad larger gives more.
 
-**A bend is continuous, an overbend pops.** The lower half pulls the reed down smoothly, up to its
-own range. The upper half does nothing until half its travel and then gives the whole overbend,
-because an overblow does not slide in on the instrument: it pops once the reed goes over. The
+**A bend is continuous, an overbend pops.** On a reed that bends, the upper half pulls it down
+smoothly, from nothing at the middle to its own range at the top. On a reed that overbends, the
+upper half does nothing until half its travel and then gives the whole overbend, because an
+overblow does not slide in on the instrument: it pops once the reed goes over. The
 reed that was sounding dies while the other one catches, over a 50 ms crossfade, so the pitch
 never passes through the notes in between. The threshold is also a deadband, so a thumb resting
 near the middle does not flicker between plain and overbent. Travel above the threshold does
@@ -100,14 +104,14 @@ nothing more.
 shallowest chamber sets how far the whole chord bends. An overbend shifts each sounding reed by
 its own range instead, because each chamber lands where its own two reeds put it.
 
-**Vibrato** runs from none at the left of the square to full depth at the right. Lifting the
-finger out of the square returns pitch and vibrato to rest. When the sounding reed cannot bend the
-bend label dims. The vibrato label never does, because vibrato works on every reed.
+**Vibrato** runs from none at the left of the pad to full depth at the right. Lifting the finger
+out of the pad returns pitch and vibrato to rest. The vibrato label never dims, because vibrato
+works on every reed.
 
-**The square's size** is its natural side, the smaller of the screen's height and 22 per cent of
-its width, times whatever the pinch chose. Two fingers in the square are a pinch and stop
-shaping, while two fingers on the strip are always a chord. The size is not remembered between
-launches.
+**The shaping pad's size** is its natural side, the smaller of the screen's height and 22 per cent
+of its width, times whatever the pinch chose. Two fingers on the pad are a pinch and stop
+shaping, while two fingers on the strip are always a chord. On the page the size is not remembered
+between launches. The iPhone keeps it with the other settings.
 
 ## What the screen shows
 
@@ -127,7 +131,7 @@ others.
 
 ## Tunes
 
-The tune menu holds seven pieces, played through the instrument itself: the plates light, the
+The tune menu holds four pieces, played through the instrument itself: the plates light, the
 note row names each note, and a bend is a fraction of that reed's own range, exactly as when a
 finger plays.
 
@@ -135,17 +139,24 @@ finger plays.
 |---|---|
 | Blues strain | Twelve bars in G, second position: train chug, the I, IV and V chords, the bent third draw, a shake in the upper fill, the hole 6 overblow |
 | Slow drag | Scoops and released bends, long notes under vibrato, a slide into a phrase, one shake |
-| Hammer song | Chugging blow and draw, tongue-block octaves on holes 1 and 4, tongue slaps, syncopation |
-| Fox chase | A gallop chug, shakes, deep bends released and horn chords, in the genre's uneven bars |
-| Nese Halia vodu | Ukrainian folk, in A, third position on a harmonica in G |
 | Oi pid vyshneiu | Ukrainian folk, in D, third position on a harmonica in C |
-| Na Ivana na Kupala | Ukrainian folk, in G, first position on a harmonica in G |
+| The Star-Spangled Banner | The American national anthem, in C, first position on a harmonica in C, arranged with chords, octaves and slides |
 
-The first four are settings written in the idiom, not transcriptions of any recording or
-published tab, and each puts one group of techniques on the instrument. The three Ukrainian songs
-are melodies to play along with: single notes, no bends or overbends, all inside holes 4 to 6, in
-keys and positions chosen so that a mouth can take every one of them. They are folk songs with no
-author, written as they are commonly sung.
+The first two are settings written in the idiom, not transcriptions of any recording or
+published tab, and each puts one group of techniques on the instrument. Oi pid vyshneiu is a
+melody to play along with: single notes, no bends or overbends, all inside holes 4 to 6, in a key
+and position chosen so that a mouth can take every note. It is a folk song with no author, written
+as it is commonly sung.
+
+The Star-Spangled Banner is John Stafford Smith's melody note for note, with the rhythm of the
+common sung version: even eighths on "Oh!", "by the" and "at the", dotted quarters on "proud-",
+"ram-", "proof", "land" and "home". Its two fermatas, on "wave" and "free", hold for twice their
+written length. The melody is always the top of what sounds. Strong and long notes carry the chord
+under them, C major on the blow side and G or G7 on the draw side, while passing notes and the two
+bent notes, F♯ on hole 2 and A on hole 3, stay single. "Glare" and "free" are the G octave on holes
+3 and 6, "brave" the C octave on holes 4 and 7, and a slide climbs into "see", "glare", "free" and
+"brave", taking its time from the front of the note it arrives at. The breath swells from the
+quiet opening to "free", the loudest note, and the long notes carry vibrato.
 
 **A tune names the key it sounds in and the position it is played in**, and the key slider moves
 to the harmonica it needs when it starts.
@@ -153,7 +164,7 @@ to the harmonica it needs when it starts.
 **How a tune is played.**
 
 - A note names holes, not a hole, because a mouth covers two to four of them: chords carry the
-  rhythm and single notes the melody. Every hole sounds on the note's breath, at full pressure.
+  rhythm and single notes the melody. Every hole sounds on the note's breath, at the pressure the note names, and at full pressure when it names none.
 - A slide sounds every hole between where it starts and the note it arrives at, about 40 ms each,
   taken from the front of the arriving note.
 - A shake rocks between two holes for the whole note, about every 60 ms, as fast as a mouth moves.
@@ -161,6 +172,8 @@ to the harmonica it needs when it starts.
   bent and lands plain, stepping every 10 ms so it glides rather than climbs in steps.
 - Each note gives up to 50 ms of its end so the next one re-attacks, and a rest is only time.
 - Every step is counted from the start of its note, so a note with many steps keeps its length.
+- Each step lights the plates in the same moment it sounds them, the way a finger's touch does, so
+  the screen never trails the sound.
 
 **A finger takes over.** Touching the strip stops the tune, and the stopped tune leaves the
 instrument as the finger has it: it does not end its note or ring the reeds down, since those are

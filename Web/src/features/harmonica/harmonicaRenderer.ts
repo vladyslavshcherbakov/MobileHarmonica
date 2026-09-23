@@ -14,8 +14,7 @@ export interface HarmonicaElements {
     readonly stopTune: HTMLElement
     readonly noteRow: HTMLElement
     readonly plates: HTMLElement
-    readonly overbendLabel: HTMLElement
-    readonly bendLabel: HTMLElement
+    readonly pitchLabel: HTMLElement
     readonly vibratoLabel: HTMLElement
     readonly soundUnavailable: HTMLElement
 }
@@ -50,7 +49,7 @@ export class HarmonicaRenderer {
         this.renderHoles(playable.holes)
         this.renderKey(playable)
         this.renderControls(playable)
-        this.renderToneShaping(playable)
+        this.renderShapingPad(playable)
         this.drawn = playable
     }
 
@@ -112,15 +111,13 @@ export class HarmonicaRenderer {
         this.elements.tunes.style.display = playable.demo.isPlaying ? 'none' : 'block'
     }
 
-    private renderToneShaping(playable: PlayableHarmonica): void {
-        const shaping = playable.toneShaping
-        if (this.drawn !== null && sameShaping(this.drawn, playable)) return
+    private renderShapingPad(playable: PlayableHarmonica): void {
+        const shapingPad = playable.shapingPad
+        if (this.drawn !== null && sameShapingPadLabels(this.drawn, playable)) return
 
-        this.elements.overbendLabel.textContent = shaping.overbendLabel
-        this.elements.bendLabel.textContent = shaping.bendLabel
-        this.elements.vibratoLabel.textContent = shaping.vibratoLabel
-        this.elements.overbendLabel.classList.toggle('dim', !shaping.isOverbendAvailable)
-        this.elements.bendLabel.classList.toggle('dim', !shaping.isBendAvailable)
+        this.elements.pitchLabel.textContent = shapingPad.pitchLabel
+        this.elements.vibratoLabel.textContent = shapingPad.vibratoLabel
+        this.elements.pitchLabel.classList.toggle('dim', !shapingPad.isPitchShapingAvailable)
     }
 }
 
@@ -144,10 +141,9 @@ function sameHole(previous: HoleViewState | undefined, hole: HoleViewState): boo
         && previous.lit === hole.lit
 }
 
-function sameShaping(drawn: PlayableHarmonica, playable: PlayableHarmonica): boolean {
-    return drawn.toneShaping.overbendLabel === playable.toneShaping.overbendLabel
-        && drawn.toneShaping.isOverbendAvailable === playable.toneShaping.isOverbendAvailable
-        && drawn.toneShaping.isBendAvailable === playable.toneShaping.isBendAvailable
+function sameShapingPadLabels(drawn: PlayableHarmonica, playable: PlayableHarmonica): boolean {
+    return drawn.shapingPad.pitchLabel === playable.shapingPad.pitchLabel
+        && drawn.shapingPad.isPitchShapingAvailable === playable.shapingPad.isPitchShapingAvailable
 }
 
 function fitToTheHole(cell: NoteCell): void {

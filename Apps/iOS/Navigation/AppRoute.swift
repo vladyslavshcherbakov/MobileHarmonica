@@ -1,3 +1,3 @@
 enum AppRoute: Hashable {
-    case harmonica
+    case settings
 }

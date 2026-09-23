@@ -8,11 +8,11 @@ public struct PitchShaping: Equatable, Sendable {
     // MARK: - Public
 
     public init(clamping value: Double) {
-        fraction = ControlPrecision.quantised(value, within: -1...1)
+        fraction = ControlPrecision.quantised(value)
     }
 
     public var bend: BendDepth {
-        BendDepth(clamping: -fraction)
+        BendDepth(clamping: fraction)
     }
 
     public var overbend: OverbendDepth {

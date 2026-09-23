@@ -23,7 +23,7 @@ export class TestEnvironment {
     async harmonicaScreen(): Promise<HarmonicaScreenDriver> {
         const core = await this.core()
         const screen = new HarmonicaScreenDriver(new CompositionRoot('', this.audio, this.log, false).harmonicaViewModel(core))
-        await screen.viewModel.prepareSound()
+        await screen.open()
         return screen
     }
 }

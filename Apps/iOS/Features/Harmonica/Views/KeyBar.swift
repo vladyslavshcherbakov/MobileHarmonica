@@ -7,12 +7,13 @@ struct KeyBar: View {
     private static let clearOfTheScreenEdge: CGFloat = 20
     private static let controlHeight: CGFloat = 40
     private static let keyLabelWidth: CGFloat = 34
-    private static let styleControlWidth: CGFloat = 180
+    private static let settingsButtonWidth: CGFloat = 52
     private static let demoButtonWidth: CGFloat = 64
     private static let cupBarWidth: CGFloat = 40
     private static let cupBarHeight: CGFloat = 6
 
     let playable: HarmonicaViewState.Playable
+    let clearOf: Edge.Set
     @ObservedObject var viewModel: HarmonicaViewModel
 
     // MARK: - Public
@@ -22,12 +23,12 @@ struct KeyBar: View {
             keyLabel
             keySlider
             cupIndicator
-            playingStyleControl
             demoControl
+            settingsButton
         }
         .padding(.horizontal)
         .padding(.top, Self.clearOfTheScreenEdge)
-        .safeAreaPadding(.leading)
+        .safeAreaPadding(clearOf)
         .frame(height: Self.height + Self.clearOfTheScreenEdge)
     }
 
@@ -43,7 +44,7 @@ struct KeyBar: View {
 
     private var keySlider: some View {
         Slider(
-            value: Binding(get: { playable.key.position }, set: viewModel.changeKey(toPosition:)),
+            value: Binding(get: { playable.key.position }, set: { viewModel.send(.keySliderMoved(toPosition: $0)) }),
             in: 0...playable.key.highestPosition,
             step: 1
         )
@@ -51,40 +52,42 @@ struct KeyBar: View {
         .frame(height: Self.controlHeight)
     }
 
+    @ViewBuilder
     private var cupIndicator: some View {
-        VStack(spacing: 2) {
-            ZStack(alignment: .leading) {
-                Capsule().fill(Color(white: 0.22))
-                Capsule().fill(Color.orange).frame(width: Self.cupBarWidth * playable.cup.closed)
+        if let cup = playable.cup {
+            VStack(spacing: 2) {
+                ZStack(alignment: .leading) {
+                    Capsule().fill(Color(white: 0.22))
+                    Capsule().fill(Color.orange).frame(width: Self.cupBarWidth * cup.closed)
+                }
+                .frame(width: Self.cupBarWidth, height: Self.cupBarHeight)
+                Text(cup.label)
+                    .font(.caption2)
+                    .foregroundStyle(Color(white: 0.5))
             }
-            .frame(width: Self.cupBarWidth, height: Self.cupBarHeight)
-            Text(playable.cup.label)
-                .font(.caption2)
-                .foregroundStyle(Color(white: 0.5))
         }
     }
 
-    private var playingStyleControl: some View {
-        Menu(playable.style.label) {
-            ForEach(playable.style.choices) { choice in
-                Button(choice.name) { viewModel.changeStyle(to: choice.id) }
-            }
+    private var settingsButton: some View {
+        Button { viewModel.send(.settingsButtonTapped) } label: {
+            Image(systemName: "gearshape")
         }
-        .lineLimit(1)
         .buttonStyle(.bordered)
         .controlSize(.large)
         .tint(.orange)
-        .frame(width: Self.styleControlWidth, height: Self.controlHeight)
+        .frame(width: Self.settingsButtonWidth, height: Self.controlHeight)
     }
 
     @ViewBuilder
     private var demoControl: some View {
         if playable.demo.isPlaying {
-            Button(playable.demo.label, action: viewModel.stopTheTune)
+            Button(playable.demo.label) { viewModel.send(.stopTuneButtonTapped) }
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
                 .buttonStyle(.bordered)
                 .controlSize(.large)
                 .tint(.orange)
-                .frame(width: Self.demoButtonWidth, height: Self.controlHeight)
+                .frame(minWidth: Self.demoButtonWidth, minHeight: Self.controlHeight)
         } else {
             tuneMenu
         }
@@ -93,7 +96,7 @@ struct KeyBar: View {
     private var tuneMenu: some View {
         Menu(playable.demo.label) {
             ForEach(playable.demo.tunes) { tune in
-                Button(tune.name) { viewModel.playTheTune(at: tune.id) }
+                Button(tune.name) { viewModel.send(.tuneChosen(at: tune.id)) }
             }
         }
         .buttonStyle(.bordered)

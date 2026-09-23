@@ -1,7 +1,8 @@
 # Scores
 
 A score is a text file with the extension `.score`. The app reads the first one it finds here at
-launch and adds it to the tune menu, ahead of the seven built-in tunes.
+launch and adds it to the tune menu after the built-in tunes, so they keep the numbers they have
+on the page.
 
 These files are not committed: what you write here is yours and its rights are yours.
 

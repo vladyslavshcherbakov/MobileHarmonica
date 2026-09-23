@@ -1,10 +1,12 @@
 import CoreGraphics
+import HarmonicaCoreTestSupport
 @testable import MobileHarmonica
 
 @MainActor
 final class HarmonicaScreenDriver {
     private static let stripSize = CGSize(width: 1000, height: 100)
-    private static let squareSize = CGSize(width: 100, height: 100)
+    private static let shapingPadSize = CGSize(width: 100, height: 100)
+    private static let playingArea = CGSize(width: 1000, height: 100)
 
     let viewModel: HarmonicaViewModel
 
@@ -30,6 +32,28 @@ final class HarmonicaScreenDriver {
         playable?.holes.first { $0.id == number }
     }
 
+    func open() async {
+        viewModel.send(.screenAppeared)
+        viewModel.send(.appBecameActive)
+        _ = await waitUntil {
+            guard case .preparingSound = self.viewModel.state else { return true }
+
+            return false
+        }
+    }
+
+    func leave() {
+        viewModel.send(.screenDisappeared)
+    }
+
+    func comeBack() {
+        viewModel.send(.screenAppeared)
+    }
+
+    func sendTheAppToTheBackground() {
+        viewModel.send(.appLeftTheForeground)
+    }
+
     func touchStrip(at fractionFromLeftEdge: Double, above fractionAboveCentreLine: Double) {
         touchStrip(
             with: [StripFinger(fractionFromLeftEdge: fractionFromLeftEdge, fractionAboveCentreLine: fractionAboveCentreLine)]
@@ -37,39 +61,43 @@ final class HarmonicaScreenDriver {
     }
 
     func touchStrip(with fingers: [StripFinger]) {
-        viewModel.play(fingers.map(Self.touch(of:)), across: Self.stripSize)
+        viewModel.send(.stripTouched(fingers.map(Self.touch(of:)), across: Self.stripSize))
     }
 
     func liftFromTheStrip() {
-        viewModel.play([], across: Self.stripSize)
+        viewModel.send(.stripTouched([], across: Self.stripSize))
     }
 
-    func touchSquare(pitch: Double, vibrato: Double) {
+    func touchShapingPad(heightAboveTheMiddle: Double, vibrato: Double) {
         let location = CGPoint(
-            x: vibrato * Self.squareSize.width,
-            y: (1 - pitch) / 2 * Self.squareSize.height
+            x: vibrato * Self.shapingPadSize.width,
+            y: (1 - heightAboveTheMiddle) / 2 * Self.shapingPadSize.height
         )
-        viewModel.shapeTone(with: [FingerTouch(location: location, radius: 0)], across: Self.squareSize)
+        viewModel.send(.shapingPadTouched([FingerTouch(location: location, radius: 0)], across: Self.shapingPadSize))
     }
 
-    func liftFromTheSquare() {
-        viewModel.shapeTone(with: [], across: Self.squareSize)
+    func liftFromTheShapingPad() {
+        viewModel.send(.shapingPadTouched([], across: Self.shapingPadSize))
+    }
+
+    func pinchTheShapingPad(by magnification: CGFloat) {
+        viewModel.send(.shapingPadPinched(by: magnification, within: Self.playingArea))
     }
 
     func moveTheKeySlider(to position: Double) {
-        viewModel.changeKey(toPosition: position)
+        viewModel.send(.keySliderMoved(toPosition: position))
     }
 
     func playTune(at index: Int) {
-        viewModel.playTheTune(at: index)
+        viewModel.send(.tuneChosen(at: index))
     }
 
     func stopTheTune() {
-        viewModel.stopTheTune()
+        viewModel.send(.stopTuneButtonTapped)
     }
 
-    func followThePhone() async {
-        await viewModel.followTheTilt()
+    func tapTheSettingsButton() {
+        viewModel.send(.settingsButtonTapped)
     }
 
     // MARK: - Private

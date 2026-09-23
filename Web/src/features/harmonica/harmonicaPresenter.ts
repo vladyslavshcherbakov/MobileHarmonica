@@ -15,17 +15,17 @@ import type {
     NotesPerFingerViewState,
     PlayingStyleChoice,
     PlayingStyleViewState,
-    ToneShapingViewState,
+    ShapingPadViewState,
     TuneViewState
 } from './harmonicaViewState.js'
 import { playingStyleChoices } from './harmonicaViewState.js'
 
 const noRecordingsText = 'Sound is unavailable: the recordings are not on the page.'
 const outputRefusedText = 'Sound is unavailable: the audio output would not start.'
-const overbendAtRestLabel = 'overbend ↑'
+const pitchAtRestLabel = 'bend · overbend ↑'
+const bendLabel = 'bend ↑'
 const overblowLabel = 'overblow ↑'
 const overdrawLabel = 'overdraw ↑'
-const bendLabel = 'bend ↓'
 const vibratoLabel = 'vibrato →'
 const playDemoLabel = '▶\uFE0E'
 const stopDemoLabel = 'stop'
@@ -51,7 +51,7 @@ export class HarmonicaPresenter {
             : playingStyleChoices.filter(choice => choice !== 'oneFingerNotesByPressure')
     }
 
-    present(harmonica: HarmonicaDTO, playingAScore: boolean): HarmonicaViewState {
+    present(harmonica: HarmonicaDTO, playingAScore: boolean, shapingPadScale: number): HarmonicaViewState {
         const style = choiceOf(harmonica)
         return {
             kind: 'ready',
@@ -62,7 +62,7 @@ export class HarmonicaPresenter {
                 notesPerFinger: notesPerFingerState(style, harmonica.mouthHolesWide),
                 fingerMarks: fingerMarksState(style, harmonica.mouthHolesWide),
                 demo: this.demoState(playingAScore),
-                toneShaping: toneShapingState(harmonica)
+                shapingPad: shapingPadState(harmonica, shapingPadScale)
             }
         }
     }
@@ -118,20 +118,20 @@ function effectNameOf(reed: SoundingHoleDTO): string {
     return reed.breath === 'blow' ? overblowEffectLabel : overdrawEffectLabel
 }
 
-function toneShapingState(harmonica: HarmonicaDTO): ToneShapingViewState {
+function shapingPadState(harmonica: HarmonicaDTO, scale: number): ShapingPadViewState {
     return {
-        overbendLabel: overbendLabelFor(harmonica.breath),
-        bendLabel,
+        pitchLabel: pitchLabelFor(harmonica),
         vibratoLabel,
-        isOverbendAvailable: harmonica.canOverbend,
-        isBendAvailable: harmonica.canBend
+        isPitchShapingAvailable: harmonica.canBend || harmonica.canOverbend,
+        scale
     }
 }
 
-function overbendLabelFor(breath: 'blow' | 'draw' | null): string {
-    if (breath === null) return overbendAtRestLabel
+function pitchLabelFor(harmonica: HarmonicaDTO): string {
+    if (harmonica.canBend) return bendLabel
+    if (!harmonica.canOverbend || harmonica.breath === null) return pitchAtRestLabel
 
-    return breath === 'blow' ? overblowLabel : overdrawLabel
+    return harmonica.breath === 'blow' ? overblowLabel : overdrawLabel
 }
 
 function styleState(chosen: PlayingStyleChoice, offered: readonly PlayingStyleChoice[]): PlayingStyleViewState {

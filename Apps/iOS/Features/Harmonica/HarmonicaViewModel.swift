@@ -9,10 +9,19 @@ final class HarmonicaViewModel: ObservableObject {
     private let playHarmonica: PlayHarmonicaUseCase
     private let playScore: PlayScoreUseCase
     private let tilt: TiltProtocol
+    private let settingsRepository: SettingsRepository
     private let tunes: [Score]
     private let presenter: HarmonicaPresenter
     private let log: LogProtocol
-    private var performance: Task<Void, Never>?
+    private let pauseBeforeATune: Duration
+    private let openSettings: @MainActor () -> Void
+    private var settings: PlayerSettings
+    private var isOnScreen = false
+    private var soundPreparation: Task<Void, Never>?
+    private var tiltFollowing: Task<Void, Never>?
+    private var tunePerformance: Task<Void, Never>?
+    private var playingTune: Int?
+    private var settingsSubscription: AnyCancellable?
 
     // MARK: - Public
 
@@ -20,38 +29,60 @@ final class HarmonicaViewModel: ObservableObject {
         playHarmonica: PlayHarmonicaUseCase,
         playScore: PlayScoreUseCase,
         tilt: TiltProtocol,
+        settingsRepository: SettingsRepository,
         tunes: [Score],
         presenter: HarmonicaPresenter,
-        log: LogProtocol
+        log: LogProtocol,
+        pauseBeforeATune: Duration,
+        openSettings: @escaping @MainActor () -> Void
     ) {
         self.playHarmonica = playHarmonica
         self.playScore = playScore
         self.tilt = tilt
+        self.settingsRepository = settingsRepository
         self.tunes = tunes
         self.presenter = presenter
         self.log = log
+        self.pauseBeforeATune = pauseBeforeATune
+        self.openSettings = openSettings
+        settings = settingsRepository.settings()
+        settingsSubscription = settingsRepository.savedSettings.sink { [weak self] savedSettings in self?.adopt(savedSettings) }
     }
 
     deinit {
-        performance?.cancel()
+        soundPreparation?.cancel()
+        tiltFollowing?.cancel()
+        tunePerformance?.cancel()
     }
 
-    func prepareSound() async {
-        do throws(AudioEngineError) {
-            let harmonica = try await playHarmonica.prepare()
-            show(harmonica)
-        } catch {
-            publish(presenter.presentSoundUnavailable(because: error))
+    func send(_ action: HarmonicaAction) {
+        switch action {
+        case .appBecameActive:
+            prepareSound()
+        case .appLeftTheForeground:
+            silence()
+        case .screenAppeared:
+            isOnScreen = true
+            followTheTiltIfItShould()
+        case .screenDisappeared:
+            isOnScreen = false
+            silence()
+            followTheTiltIfItShould()
+        case .stripTouched(let touches, across: let size):
+            play(touches, across: size)
+        case .keySliderMoved(toPosition: let position):
+            changeKey(toPosition: position)
+        case .tuneChosen(at: let index):
+            playTheTune(at: index)
+        case .stopTuneButtonTapped:
+            stopTheTune()
+        case .shapingPadTouched(let touches, across: let size):
+            shapeTone(with: touches, across: size)
+        case .shapingPadPinched(by: let magnification, within: let area):
+            resizeShapingPad(by: magnification, within: area)
+        case .settingsButtonTapped:
+            openSettings()
         }
-    }
-
-    func play(_ touches: [FingerTouch], across size: CGSize) {
-        guard isReady(toTake: "a touch on the strip") else { return }
-
-        if !touches.isEmpty {
-            stopTheScore()
-        }
-        show(playHarmonica.play(at: StripTouchMapper(touches, across: size).positions))
     }
 
     func marksOnTheStrip(
@@ -62,30 +93,42 @@ final class HarmonicaViewModel: ObservableObject {
         StripTouchMapper(touches, across: size).marks(drawn: style)
     }
 
-    func marksOnTheSquare(for touches: [FingerTouch], across size: CGSize) -> [FingerMark] {
-        SquareTouchMapper(touches, across: size).marks
+    func marksOnTheShapingPad(for touches: [FingerTouch], across size: CGSize) -> [FingerMark] {
+        ShapingPadTouchMapper(touches, across: size).marks
     }
 
-    func followTheTilt() async {
-        for await leaning in tilt.tiltToTheRight() {
-            cupHands(to: CupDepth(clamping: leaning))
+    // MARK: - Private
+
+    private var reasonNotToFollowTheTilt: String? {
+        guard case .ready = state else { return "the sound is not ready" }
+        guard isOnScreen else { return "the harmonica is not on screen" }
+        guard settings.isCuppingEnabled else { return "cupping is off in the settings" }
+
+        return nil
+    }
+
+    private func prepareSound() {
+        soundPreparation?.cancel()
+        soundPreparation = Task { [weak self] in await self?.prepareTheEngine() }
+    }
+
+    private func play(_ touches: [FingerTouch], across size: CGSize) {
+        guard isReady(toTake: "a touch on the strip") else { return }
+
+        if !touches.isEmpty {
+            stopTheScore()
         }
+        show(playHarmonica.play(at: StripTouchMapper(touches, across: size).positions))
     }
 
-    func changeKey(toPosition position: Double) {
+    private func changeKey(toPosition position: Double) {
         guard isReady(toTake: "a key change") else { return }
 
         let key = HarmonicaKey(nearestSliderPosition: Int(position.rounded()))
         show(playHarmonica.changeKey(to: key))
     }
 
-    func changeStyle(to choice: HarmonicaViewState.StyleChoice) {
-        guard isReady(toTake: "a playing style") else { return }
-
-        show(playHarmonica.changeStyle(to: Self.style(chosen: choice)))
-    }
-
-    func playTheTune(at index: Int) {
+    private func playTheTune(at index: Int) {
         guard isReady(toTake: "a tune") else { return }
         guard tunes.indices.contains(index) else {
             assertionFailure("the menu offered tune \(index) of \(tunes.count)")
@@ -94,19 +137,21 @@ final class HarmonicaViewModel: ObservableObject {
         }
 
         stopTheScore()
-        performance = perform(tunes[index])
+        playingTune = index
+        tunePerformance = perform(tunes[index])
+        show(playHarmonica.harmonica)
     }
 
-    func stopTheTune() {
+    private func stopTheTune() {
         guard isReady(toTake: "stopping the tune") else { return }
 
         stopTheScore()
         show(playHarmonica.stopPlaying(.ringsDown))
     }
 
-    func shapeTone(with touches: [FingerTouch], across size: CGSize) {
-        let square = SquareTouchMapper(touches, across: size)
-        guard let shaping = square.pitchShaping, let vibrato = square.vibrato else {
+    private func shapeTone(with touches: [FingerTouch], across size: CGSize) {
+        let shapingPad = ShapingPadTouchMapper(touches, across: size)
+        guard let shaping = shapingPad.pitchShaping, let vibrato = shapingPad.vibrato else {
             stopShapingTone()
             return
         }
@@ -114,26 +159,93 @@ final class HarmonicaViewModel: ObservableObject {
         shapeTone(shaping, vibrato: vibrato)
     }
 
-    func stopShapingTone() {
+    private func resizeShapingPad(by magnification: CGFloat, within area: CGSize) {
+        guard isReady(toTake: "a pinch on the shaping pad") else { return }
+
+        var settingsAfterThePinch = settings
+        settingsAfterThePinch.shapingPadSize = ShapingPadSizing(in: area)
+            .size(afterPinching: settings.shapingPadSize, by: magnification)
+        guard settingsAfterThePinch != settings else { return }
+
+        log.recordSample("shaping pad resized to \(settingsAfterThePinch.shapingPadSize.fraction) of its range")
+        settingsRepository.save(settingsAfterThePinch)
+    }
+
+    private func stopShapingTone() {
         shapeTone(.rest, vibrato: .off)
     }
 
-    func stopPlaying() {
-        guard isReady(toTake: "stopping the sound") else { return }
+    private func prepareTheEngine() async {
+        do throws(AudioEngineError) {
+            _ = try await playHarmonica.prepare()
+            show(harmonica(adopting: settings))
+        } catch {
+            publish(presenter.presentSoundUnavailable(because: error))
+        }
+        followTheTiltIfItShould()
+    }
+
+    private func adopt(_ savedSettings: PlayerSettings) {
+        settings = savedSettings
+        followTheTiltIfItShould()
+        guard isReady(toTake: "the settings") else { return }
+
+        show(harmonica(adopting: savedSettings))
+    }
+
+    private func harmonica(adopting settings: PlayerSettings) -> Harmonica {
+        let harmonicaInTheChosenStyle = playHarmonica.changeStyle(to: settings.style)
+        guard !settings.isCuppingEnabled else { return harmonicaInTheChosenStyle }
+
+        return playHarmonica.cupHands(to: .open)
+    }
+
+    private func followTheTiltIfItShould() {
+        guard let reason = reasonNotToFollowTheTilt else {
+            startFollowingTheTilt()
+            return
+        }
+
+        stopFollowingTheTilt(because: reason)
+    }
+
+    private func startFollowingTheTilt() {
+        guard tiltFollowing == nil else { return }
+
+        log.record("following the lean of the phone")
+        let leaningsOfThePhone = tilt.tiltToTheRight()
+        tiltFollowing = Task { [weak self] in
+            for await leaning in leaningsOfThePhone {
+                self?.cupHands(to: CupDepth(clamping: leaning))
+            }
+        }
+    }
+
+    private func stopFollowingTheTilt(because reason: String) {
+        guard let tiltFollowing else { return }
+
+        tiltFollowing.cancel()
+        self.tiltFollowing = nil
+        log.record("the lean of the phone is no longer followed: \(reason)")
+    }
+
+    private func silence() {
+        guard isReady(toTake: "silencing the harmonica") else { return }
 
         stopTheScore()
         show(playHarmonica.stopPlaying(.ringsDown))
+        stopShapingTone()
     }
 
-    // MARK: - Private
-
     private func perform(_ tune: Score) -> Task<Void, Never> {
-        Task { [weak self, playScore] in
-            for await harmonica in playScore.play(tune) {
-                guard let self else { return }
-
-                self.show(harmonica)
+        Task { [weak self, playScore, pauseBeforeATune] in
+            do {
+                try await Task.sleep(for: pauseBeforeATune)
+            } catch {
+                return
             }
+
+            await playScore.play(tune) { harmonica in self?.show(harmonica) }
             guard !Task.isCancelled else { return }
 
             self?.finishTheTune()
@@ -141,12 +253,13 @@ final class HarmonicaViewModel: ObservableObject {
     }
 
     private func finishTheTune() {
-        performance = nil
+        tunePerformance = nil
+        playingTune = nil
         show(playHarmonica.stopPlaying(.ringsDown))
     }
 
     private func shapeTone(_ shaping: PitchShaping, vibrato: VibratoDepth) {
-        guard isReady(toTake: "a touch on the square") else { return }
+        guard isReady(toTake: "a touch on the shaping pad") else { return }
 
         show(playHarmonica.shapeTone(shaping, vibrato: vibrato))
     }
@@ -166,21 +279,14 @@ final class HarmonicaViewModel: ObservableObject {
         return true
     }
 
-    private static func style(chosen choice: HarmonicaViewState.StyleChoice) -> PlayingStyle {
-        switch choice {
-        case .severalFingersSeveralNotes: .severalFingersSeveralNotes
-        case .severalFingersOneNote: .severalFingersOneNote
-        case .oneFingerSeveralNotes: .oneFingerSeveralNotes
-        }
-    }
-
     private func stopTheScore() {
-        performance?.cancel()
-        performance = nil
+        tunePerformance?.cancel()
+        tunePerformance = nil
+        playingTune = nil
     }
 
     private func show(_ harmonica: Harmonica) {
-        publish(presenter.present(harmonica, playingAScore: performance != nil))
+        publish(presenter.present(harmonica, settings: settings, playingTune: playingTune))
     }
 
     private func publish(_ updated: HarmonicaViewState) {

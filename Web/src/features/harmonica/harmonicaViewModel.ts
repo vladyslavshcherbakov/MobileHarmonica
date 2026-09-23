@@ -4,23 +4,28 @@ import type { HarmonicaCore } from '../../core/harmonicaCore.js'
 import type { AudioEngine, AudioEngineError } from '../../core/audioEngine.js'
 import { AudioEngineFailure } from '../../core/audioEngine.js'
 import type { Log } from '../../logging/log.js'
+import type { HarmonicaAction } from './harmonicaAction.js'
 import type { HarmonicaPresenter } from './harmonicaPresenter.js'
 import type { AreaSize } from './touch/areaSize.js'
 import type { Contact } from './touch/contact.js'
 import type { FingerMark } from './touch/fingerMark.js'
 import type { FingerMarksViewState, HarmonicaViewState, PlayingStyleChoice } from './harmonicaViewState.js'
 import { isPlayingStyleChoice } from './harmonicaViewState.js'
-import { SquareTouchMapper } from './touch/squareTouchMapper.js'
+import { ShapingPadTouchMapper } from './touch/shapingPadTouchMapper.js'
 import { StripTouchMapper } from './touch/stripTouchMapper.js'
 import type { TuneEnding, TunePerformance } from './playTheTuneUseCase.js'
 import { PlayTheTuneUseCase } from './playTheTuneUseCase.js'
 
 const startingNotesPerFinger = 1
+const smallestShapingPadScale = 0.45
+const largestShapingPadScale = 2
 
 export class HarmonicaViewModel {
     private state: HarmonicaViewState = { kind: 'preparingSound' }
     private performance: TunePerformance | null = null
     private notesPerFinger = startingNotesPerFinger
+    private shapingPadScale = 1
+    private shownHarmonica: HarmonicaDTO | null = null
     private show: (state: HarmonicaViewState) => void = () => {}
 
     constructor(
@@ -36,7 +41,30 @@ export class HarmonicaViewModel {
         show(this.state)
     }
 
-    async prepareSound(): Promise<void> {
+    send(action: HarmonicaAction): void {
+        switch (action.kind) {
+            case 'startButtonTapped': return void this.prepareSound()
+            case 'pageHidden': return this.silence()
+            case 'stripTouched': return this.play(action.contacts, action.across)
+            case 'keySliderMoved': return this.changeKey(action.position)
+            case 'styleChosen': return this.changeStyle(action.named)
+            case 'notesPerFingerChosen': return this.changeNotesPerFinger(action.notes)
+            case 'tuneChosen': return this.playTheTune(action.index)
+            case 'stopTuneButtonTapped': return this.stopTheTuneAndSilence()
+            case 'shapingPadTouched': return this.shapeTone(action.contacts, action.across)
+            case 'shapingPadPinched': return this.resizeShapingPad(action.magnification)
+        }
+    }
+
+    marksOnTheStrip(contacts: readonly Contact[], across: AreaSize, drawn: FingerMarksViewState): FingerMark[] {
+        return new StripTouchMapper(contacts, across).marks(drawn)
+    }
+
+    marksOnTheShapingPad(contacts: readonly Contact[], across: AreaSize): FingerMark[] {
+        return new ShapingPadTouchMapper(contacts, across).marks()
+    }
+
+    private async prepareSound(): Promise<void> {
         try {
             await this.audio.prepare()
         } catch (failure) {
@@ -47,28 +75,20 @@ export class HarmonicaViewModel {
         this.present(this.core.changeMouth(this.notesPerFinger))
     }
 
-    play(contacts: readonly Contact[], across: AreaSize): void {
+    private play(contacts: readonly Contact[], across: AreaSize): void {
         if (!this.isReady('a touch on the strip')) return
 
         if (contacts.length > 0) this.stopTheTune()
         this.present(this.core.playAt(new StripTouchMapper(contacts, across).positions()))
     }
 
-    marksOnTheStrip(contacts: readonly Contact[], across: AreaSize, drawn: FingerMarksViewState): FingerMark[] {
-        return new StripTouchMapper(contacts, across).marks(drawn)
-    }
-
-    marksOnTheSquare(contacts: readonly Contact[], across: AreaSize): FingerMark[] {
-        return new SquareTouchMapper(contacts, across).marks()
-    }
-
-    changeKey(toPosition: number): void {
+    private changeKey(toPosition: number): void {
         if (!this.isReady('a key change')) return
 
         this.present(this.core.changeKey(Math.round(toPosition)))
     }
 
-    changeStyle(named: string): void {
+    private changeStyle(named: string): void {
         if (!this.isReady('a playing style')) return
         if (!isPlayingStyleChoice(named)) {
             console.assert(false, `the menu offered a playing style called ${named}`)
@@ -80,14 +100,14 @@ export class HarmonicaViewModel {
         this.present(this.core.changeMouth(this.holesWideFor(named)))
     }
 
-    changeNotesPerFinger(notes: number): void {
+    private changeNotesPerFinger(notes: number): void {
         if (!this.isReady('a number of notes per finger')) return
 
         this.notesPerFinger = notes
         this.present(this.core.changeMouth(notes))
     }
 
-    playTheTune(index: number): void {
+    private playTheTune(index: number): void {
         if (!this.isReady('a tune')) return
         if (!this.offersTheTune(index)) {
             console.assert(false, `the menu offered tune ${index}, which the page does not have`)
@@ -103,33 +123,45 @@ export class HarmonicaViewModel {
             .catch(failure => this.tuneFailed(failure))
     }
 
-    stopTheTuneAndSilence(): void {
+    private stopTheTuneAndSilence(): void {
         if (!this.isReady('stopping the tune')) return
 
         this.stopTheTune()
         this.present(this.core.stopPlaying(true))
     }
 
-    shapeTone(contacts: readonly Contact[], across: AreaSize): void {
-        const shaping = new SquareTouchMapper(contacts, across).shaping()
+    private shapeTone(contacts: readonly Contact[], across: AreaSize): void {
+        const shaping = new ShapingPadTouchMapper(contacts, across).shaping()
         if (shaping === null) return this.stopShapingTone()
 
         this.shapeToneTo(shaping.pitch, shaping.vibrato)
     }
 
-    stopShapingTone(): void {
-        this.shapeToneTo(0, 0)
+    private resizeShapingPad(magnification: number): void {
+        if (!this.isReady('a pinch on the shaping pad') || this.shownHarmonica === null) return
+
+        this.shapingPadScale = Math.min(
+            largestShapingPadScale,
+            Math.max(smallestShapingPadScale, this.shapingPadScale * magnification)
+        )
+        this.log.recordSample(`shaping pad scaled to ${this.shapingPadScale.toFixed(2)} of its natural side`)
+        this.present(this.shownHarmonica)
     }
 
-    stopPlaying(): void {
-        if (!this.isReady('stopping the sound')) return
+    private silence(): void {
+        if (!this.isReady('silencing the harmonica')) return
 
         this.stopTheTune()
         this.present(this.core.stopPlaying(true))
+        this.stopShapingTone()
+    }
+
+    private stopShapingTone(): void {
+        this.shapeToneTo(0, 0)
     }
 
     private shapeToneTo(pitch: number, vibrato: number): void {
-        if (!this.isReady('a touch on the square')) return
+        if (!this.isReady('a touch on the shaping pad')) return
 
         this.present(this.core.shapeTone(pitch, vibrato))
     }
@@ -186,7 +218,8 @@ export class HarmonicaViewModel {
     }
 
     private present(harmonica: HarmonicaDTO): void {
-        this.publish(this.presenter.present(harmonica, this.performance !== null))
+        this.shownHarmonica = harmonica
+        this.publish(this.presenter.present(harmonica, this.performance !== null, this.shapingPadScale))
     }
 
     private publish(state: HarmonicaViewState): void {

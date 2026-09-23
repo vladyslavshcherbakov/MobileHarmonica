@@ -42,6 +42,10 @@ WebAssembly has one thread.
 uses. A call the shim lacks is a `LinkError` that kills the module, so a test compares the names
 with the specification.
 
+**The view model has one input**, `send(action)`, and `HarmonicaAction` lists everything the
+screen reacts to, each case named for what happened. The screen reports and the view model
+decides, as on the phone. The presenter turns the core's JSON into the view state.
+
 **The clock is on the page.** The tune player walks a tune's events and drives the instrument
 through the same calls a finger does, because the core has no executor to sleep on.
 
@@ -64,7 +68,7 @@ Web/
                         with touch/ and page/
     logging/            the timestamped log
     app/                composition root, entry point, Telegram adapter
-  tests/                one file per promise, support/ for the environment and doubles
+  tests/                the tests, support/ for the environment and doubles
   Instrument/           the Swift package that compiles Core/ to WebAssembly
   Scripts/              the steps build.sh runs
 ```
@@ -73,7 +77,7 @@ Web/
 
 ## Tests
 
-- Files end in `.unit.test.ts` or `.integration.test.ts`. Names follow `subject_whenCondition_outcome`.
+- A unit test file is named after the module it tests, an integration test file after the feature or the part of it that it covers. Files end in `.unit.test.ts` or `.integration.test.ts`. Names follow `subject_whenCondition_outcome`.
 - Integration tests run the page's own graph over the real WebAssembly module. Without `core/harmonica.wasm` they are skipped locally and fail in CI.
 - The page tests only what it adds to the core: presenter, touch mappers, sampler, recordings, the shim.
 - A test reads the audio code of both platforms and fails if a shared constant has drifted.

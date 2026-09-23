@@ -6,17 +6,23 @@ import HarmonicaCore
 final class SampledAudioEngine: AudioEngineProtocol {
     nonisolated private static let amplitude: Float = 0.25
     nonisolated private static let requestedBufferSeconds = 0.001
+    nonisolated private static let renderReportInterval = Duration.seconds(1)
 
     private let log: LogProtocol
     private var controls: ReedSamplerControls?
     private var remoteOutput: RemoteOutput?
     private var isInterrupted = false
     private var sessionObservers: [NSObjectProtocol] = []
+    private var renderReporting: Task<Void, Never>?
 
     // MARK: - Public
 
     init(log: LogProtocol) {
         self.log = log
+    }
+
+    deinit {
+        renderReporting?.cancel()
     }
 
     func prepare() async throws(AudioEngineError) {
@@ -121,6 +127,26 @@ final class SampledAudioEngine: AudioEngineProtocol {
         try startedOutput.start()
         remoteOutput = startedOutput
         log.record("remote I/O output started at \(sampleRate) Hz")
+        reportTheRenderEverySecond(from: controls.sampler.health)
+    }
+
+    private func reportTheRenderEverySecond(from health: RenderHealth) {
+        guard renderReporting == nil else { return }
+
+        renderReporting = Task { [log] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: Self.renderReportInterval)
+                Self.write(health.collect(), to: log)
+            }
+        }
+    }
+
+    private static func write(_ report: RenderReport, to log: LogProtocol) {
+        if report.hasTroubleThatCanBeHeard {
+            log.record(report.description)
+        } else if report.soundedSomething {
+            log.recordSample(report.description)
+        }
     }
 
     private func followTheSessionOnce() {
@@ -331,11 +357,16 @@ private func feedTheSpeaker(
     guard let buffers else { return noErr }
 
     let feed = Unmanaged<ReedFeed>.fromOpaque(context).takeUnretainedValue()
+    let started = clock_gettime_nsec_np(CLOCK_UPTIME_RAW)
     feed.sampler.render(
         frameCount: Int(frameCount),
         sampleRate: feed.sampleRate,
         amplitude: feed.amplitude,
         into: UnsafeMutableAudioBufferListPointer(buffers)
+    )
+    feed.sampler.health.recordBuffer(
+        tookNanoseconds: clock_gettime_nsec_np(CLOCK_UPTIME_RAW) - started,
+        periodNanoseconds: UInt64(Double(frameCount) / feed.sampleRate * 1_000_000_000)
     )
     return noErr
 }

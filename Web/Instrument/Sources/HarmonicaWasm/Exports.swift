@@ -30,8 +30,8 @@ func harmonicaPlayAt(_ fingers: Int32) -> Int32 {
 
 @_expose(wasm, "harmonica_play_holes")
 @_cdecl("harmonica_play_holes")
-func harmonicaPlayHoles(_ count: Int32, _ breath: Int32) -> Int32 {
-    MainActor.assumeIsolated { instrument.play(holes: Int(count), blowing: breath == 0) }
+func harmonicaPlayHoles(_ count: Int32, _ breath: Int32, _ intensity: Double) -> Int32 {
+    MainActor.assumeIsolated { instrument.play(holes: Int(count), blowing: breath == 0, intensity: intensity) }
 }
 
 @_expose(wasm, "harmonica_change_key")

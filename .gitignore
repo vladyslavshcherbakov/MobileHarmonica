@@ -6,7 +6,7 @@ DerivedData/
 build/
 .swiftpm/
 .build/
-Apps/iOS/Info.plist
+Derived/
 Resources/Samples/*.wav
 Apps/iOS/Scores/*.score
 Web/node_modules/

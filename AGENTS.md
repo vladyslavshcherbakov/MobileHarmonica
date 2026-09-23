@@ -20,7 +20,7 @@ contradicts it is a change to the product and is agreed first.
 | `Core/` | `swift test` inside `Core/`, and the page's tests, which run the core as WebAssembly |
 | `Apps/iOS/` | The `MobileHarmonica` scheme's tests in Xcode, which include the core's |
 | `Web/` | `./build.sh page` inside `Web/` |
-| `project.yml` | `./build.sh`, then a build in Xcode |
+| `Project.swift` | `./build.sh`, then a build in Xcode |
 
 **CI** is the Pages workflow. Every branch compiles `Core/` to WebAssembly and runs the page's
 tests. Only `master` publishes the page. No XCTest suite runs in CI, so the app is built in Xcode.
@@ -31,7 +31,7 @@ requirements, platforms and features are in the README. Behaviour shared by both
 here or in Web/AGENTS.md. None of them records history, git does.
 
 **Constraints.** Swift 6 language mode everywhere, so a data race is a compile error. The app
-targets iOS 18, which `Synchronization` needs. No dependencies and no tools beyond XcodeGen and
+targets iOS 18, which `Synchronization` needs. No dependencies and no tools beyond Tuist and
 the build scripts without asking. Everything committed is in English.
 
 ## Architecture
@@ -61,8 +61,10 @@ shaping the tone, because all three change the reeds sounding now. Every action 
 `Harmonica`, and what the player hears is derived from it, never stored beside it.
 
 **Presentation.** A presenter turns domain values into a view state that names no domain type.
-Views hand raw touches to the view model, and touch mappers turn them into positions and shaping,
-so no view imports the domain.
+A view model has one input, `send(_:)`, and its screen's `Action` lists everything the screen
+reacts to, each case named for what happened rather than for what to do. The view reports and
+the view model decides. Views hand raw touches over in those actions, and touch mappers turn them
+into positions and shaping, so no view imports the domain.
 
 **Errors are mapped at the boundary.** `prepare()` throws a typed `AudioEngineError`, and the
 audio layer logs the platform error it maps.
@@ -101,24 +103,27 @@ Apps/iOS/
   Audio/                ReedSampler and SampledAudioEngine
   Motion/               DeviceTilt
   Features/Harmonica/   screen, view model, presenter, view state, with Views/ and Touch/
+  Features/Settings/    the settings screen, view model, presenter, view state
+  Settings/             PlayerSettings and SettingsRepository over UserDefaults
   Navigation/           AppCoordinator and AppRoute
   Scores/               .score files read at launch, not committed
   Tests/                the app's tests and their support
 Web/                    the page, see Web/AGENTS.md
 Resources/Samples/      the recordings, shared by both platforms
 docs/                   how the product behaves
-project.yml             targets, settings, Info.plist
-build.sh                generates MobileHarmonica.xcodeproj
+Project.swift           targets, settings, Info.plist
+Tuist.swift             Tuist's configuration
+build.sh                generates MobileHarmonica.xcworkspace with Tuist
 ```
 
-The Xcode project and `Apps/iOS/Info.plist` are generated from `project.yml` and not committed.
+The Xcode project, the workspace and `Derived/` are generated from `Project.swift` and not committed.
 The app's test bundle also compiles `Core/Tests`, because Xcode will not run a package's test
 target on a device.
 
 ## Conventions
 
 - Names are plain English words in full, no abbreviations. One concept has one name everywhere.
-- A type ends in its role: `UseCase`, `Repository`, `Mapper`, `ViewState`, `ViewModel`, `Presenter`. Entities have no suffix.
+- A type ends in its role: `UseCase`, `Repository`, `Mapper`, `ViewState`, `ViewModel`, `Presenter`, `Action`. Entities have no suffix.
 - A type used by another file has its own file. A feature folder keeps its entry points at the root and parts in subfolders.
 - No comments. `MARK: - Public` and `MARK: - Private` on types past about forty lines.
 - No accessibility modifiers, by the user's decision.
@@ -126,10 +131,10 @@ target on a device.
 
 ## Tests
 
-- Names are `test_subject_whenCondition_outcome`. A file is named for the promise it holds and ends in `UnitTests` or `IntegrationTests`.
-- Integration tests run the real graph through `TestEnvironment` or `InstrumentEnvironment`, with doubles only where the process ends.
+- Names are `test_subject_whenCondition_outcome`. A unit test file is named after the type it tests, an integration test file after the feature or the part of it that it covers, and each ends in `UnitTests` or `IntegrationTests`.
+- Integration tests run the real graph through `TestEnvironment` or `InstrumentEnvironment`, with doubles only where the process ends. A screen driver sends the same actions the screen's view sends.
 - The instrument is tested once, in the package. A rule each platform implements is tested on both.
 - Whatever starts work has a test that it stops and one that it is released.
 - Sound is checked on the real sampler, rendered offline.
-- `WhatFastPlayingCostsIntegrationTests` is a budget that can fail, not a baseline.
+- `FastPlayingBudgetIntegrationTests` is a budget that can fail, not a baseline.
 - Wait on a named condition with `waitUntil`, never on a duration.

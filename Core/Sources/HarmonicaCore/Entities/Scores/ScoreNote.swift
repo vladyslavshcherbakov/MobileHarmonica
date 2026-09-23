@@ -5,6 +5,7 @@ public struct ScoreNote: Equatable, Sendable {
     public var bentBySemitones = 0.0
     public var isOverbent = false
     public var vibrato = 0.0
+    public var breathIntensity = 1.0
     public var slideFrom: Hole?
     public var shakenWith: Hole?
     public var bendEndsAtSemitones: Double?
@@ -16,6 +17,7 @@ public struct ScoreNote: Equatable, Sendable {
         bentBySemitones: Double = 0,
         isOverbent: Bool = false,
         vibrato: Double = 0,
+        breathIntensity: Double = 1,
         slideFrom: Hole? = nil,
         shakenWith: Hole? = nil,
         bendEndsAtSemitones: Double? = nil
@@ -26,6 +28,7 @@ public struct ScoreNote: Equatable, Sendable {
         self.bentBySemitones = bentBySemitones
         self.isOverbent = isOverbent
         self.vibrato = vibrato
+        self.breathIntensity = breathIntensity
         self.slideFrom = slideFrom
         self.shakenWith = shakenWith
         self.bendEndsAtSemitones = bendEndsAtSemitones

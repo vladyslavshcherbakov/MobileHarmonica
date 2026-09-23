@@ -11,8 +11,16 @@ struct SceneRoot: View {
 
     var body: some View {
         NavigationStack(path: $coordinator.path) {
-            compositionRoot.harmonicaScreen()
+            compositionRoot.harmonicaScreen(openSettings: coordinator.openSettings)
                 .toolbar(.hidden, for: .navigationBar)
+                .navigationDestination(for: AppRoute.self) { route in screen(for: route) }
+        }
+    }
+
+    @ViewBuilder
+    private func screen(for route: AppRoute) -> some View {
+        switch route {
+        case .settings: compositionRoot.settingsScreen()
         }
     }
 }

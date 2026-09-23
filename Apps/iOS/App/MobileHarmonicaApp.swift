@@ -6,6 +6,7 @@ import SwiftUI
 struct MobileHarmonicaApp: App {
     private static let logCategory = "harmonica"
     private static let subsystemWithoutABundleIdentifier = "com.vladyslavshcherbakov.mobileharmonica"
+    private static let pauseBeforeATune = Duration.seconds(1)
 
     private let compositionRoot: CompositionRoot
 
@@ -14,9 +15,11 @@ struct MobileHarmonicaApp: App {
         compositionRoot = CompositionRoot(
             audioEngine: SampledAudioEngine(log: log),
             tilt: DeviceTilt(),
+            defaults: .standard,
             log: log,
             locale: .current,
-            writtenTunes: [BundledScoreRepository(tuning: RichterTuning(), log: log).first()].compactMap { $0 }
+            writtenTunes: [BundledScoreRepository(tuning: RichterTuning(), log: log).first()].compactMap { $0 },
+            pauseBeforeATune: Self.pauseBeforeATune
         )
     }
 
