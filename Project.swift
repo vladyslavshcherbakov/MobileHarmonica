@@ -37,7 +37,7 @@ let project = Project(
                     "UIInterfaceOrientationLandscapeRight",
                 ],
             ]),
-            sources: .glob("Apps/iOS/**", excluding: ["Apps/iOS/Tests/**", "Apps/iOS/Scores/**"]),
+            sources: [.glob("Apps/iOS/**", excluding: ["Apps/iOS/Tests/**", "Apps/iOS/Scores/**"])],
             resources: [
                 .folderReference(path: "Resources/Samples"),
                 .folderReference(path: "Apps/iOS/Scores"),
