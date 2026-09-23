@@ -1,0 +1,77 @@
+name: MobileHarmonica
+
+options:
+  bundleIdPrefix: com.vladyslavshcherbakov
+  deploymentTarget:
+    iOS: "18.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "6"
+    TARGETED_DEVICE_FAMILY: "1"
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: ""
+
+packages:
+  HarmonicaCore:
+    path: Core
+
+targets:
+  MobileHarmonica:
+    type: application
+    platform: iOS
+    sources:
+      - path: Apps/iOS
+        excludes:
+          - Tests
+          - Scores
+      - path: Resources/Samples
+        type: folder
+      - path: Apps/iOS/Scores
+        type: folder
+    dependencies:
+      - package: HarmonicaCore
+        product: HarmonicaCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.vladyslavshcherbakov.mobileharmonica
+        PRODUCT_NAME: MobileHarmonica
+        GENERATE_INFOPLIST_FILE: NO
+    info:
+      path: Apps/iOS/Info.plist
+      properties:
+        CADisableMinimumFrameDurationOnPhone: true
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+
+  MobileHarmonicaTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Apps/iOS/Tests
+      - path: Core/Tests/HarmonicaCoreTests
+    dependencies:
+      - target: MobileHarmonica
+      - package: HarmonicaCore
+        product: HarmonicaCoreTestSupport
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  MobileHarmonica:
+    build:
+      targets:
+        MobileHarmonica: all
+        MobileHarmonicaTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - MobileHarmonicaTests
+    archive:
+      config: Release

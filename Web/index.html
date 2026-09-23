@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#000000">
+<title>MobileHarmonica</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+</head>
+<body>
+<main id="app">
+    <header id="keyBar">
+        <button id="fullScreen" type="button">⤢</button>
+        <span id="keyLabel">C</span>
+        <input id="keySlider" type="range" min="0" max="11" step="1" value="5">
+        <select id="notesPerFinger"></select>
+        <select id="style"></select>
+        <select id="tunes"></select>
+        <button id="stopTune" type="button">stop</button>
+    </header>
+    <div id="instrument">
+        <section id="zone">
+            <span id="overbendLabel">overbend ↑</span>
+            <span id="bendLabel">bend ↓</span>
+            <span id="vibratoLabel">vibrato →</span>
+            <div id="zoneMarks"></div>
+        </section>
+        <section id="strip">
+            <div id="noteRow"></div>
+            <div id="plates"></div>
+            <div id="stripMarks"></div>
+        </section>
+    </div>
+</main>
+<div id="turnThePhone">Turn the phone</div>
+<div id="start">
+    <button id="startButton" type="button">tap to play</button>
+    <p id="howToFillTheScreen">This browser cannot fill the screen. Share → Add to Home Screen opens the instrument without it.</p>
+</div>
+<div id="soundUnavailable"></div>
+<div id="fillTheScreenHint">
+    <p id="fillTheScreenReason"></p>
+    <span id="fillTheScreenRefusal"></span>
+</div>
+<script type="module" src="dist/src/app/main.js"></script>
+</body>
+</html>
