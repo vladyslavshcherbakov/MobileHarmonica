@@ -1,8 +1,7 @@
 import Foundation
 import HarmonicaCore
 
-@MainActor
-final class SettingsRepository {
+struct SettingsRepository: @unchecked Sendable {
     private static let styleKey = "settings.playingStyle"
     private static let cuppingKey = "settings.isCuppingEnabled"
     private static let placementKey = "settings.squarePlacement"
@@ -13,7 +12,7 @@ final class SettingsRepository {
 
     // MARK: - Public
 
-    nonisolated init(defaults: UserDefaults, log: LogProtocol) {
+    init(defaults: UserDefaults, log: LogProtocol) {
         self.defaults = defaults
         self.log = log
     }

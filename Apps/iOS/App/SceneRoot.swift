@@ -13,7 +13,7 @@ struct SceneRoot: View {
         NavigationStack(path: $coordinator.path) {
             compositionRoot.harmonicaScreen(openSettings: coordinator.openSettings)
                 .toolbar(.hidden, for: .navigationBar)
-                .navigationDestination(for: AppRoute.self, destination: screen(for:))
+                .navigationDestination(for: AppRoute.self) { route in screen(for: route) }
         }
     }
 
