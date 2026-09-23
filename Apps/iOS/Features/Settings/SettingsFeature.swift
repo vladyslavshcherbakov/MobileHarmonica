@@ -62,7 +62,7 @@ struct SettingsFeature {
         guard updated != state.settings else { return .none }
 
         state.settings = updated
-        return .run { [settingsClient] send in
+        return .run { [settingsClient, updated] send in
             settingsClient.save(updated)
             await send(.delegate(.settingsChanged(updated)))
         }
