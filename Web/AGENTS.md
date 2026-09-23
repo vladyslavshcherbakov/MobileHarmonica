@@ -64,7 +64,7 @@ Web/
                         with touch/ and page/
     logging/            the timestamped log
     app/                composition root, entry point, Telegram adapter
-  tests/                one file per promise, support/ for the environment and doubles
+  tests/                the tests, support/ for the environment and doubles
   Instrument/           the Swift package that compiles Core/ to WebAssembly
   Scripts/              the steps build.sh runs
 ```
@@ -73,8 +73,18 @@ Web/
 
 ## Tests
 
-- Files end in `.unit.test.ts` or `.integration.test.ts`. Names follow `subject_whenCondition_outcome`.
+- A unit test file is named after the module it tests, an integration test file after the feature or the part of it that it covers. Files end in `.unit.test.ts` or `.integration.test.ts`. Names follow `subject_whenCondition_outcome`.
 - Integration tests run the page's own graph over the real WebAssembly module. Without `core/harmonica.wasm` they are skipped locally and fail in CI.
 - The page tests only what it adds to the core: presenter, touch mappers, sampler, recordings, the shim.
 - A test reads the audio code of both platforms and fails if a shared constant has drifted.
 - A release test turns on `gc` through `node:v8`, so it needs no flag.
+
+## Open questions
+
+- Five test files still carry sentence names, because renaming alone does not place them.
+  `whatAnUnavailableSoundSays`, `whatOneFingerTakes`, `whatTheNoteRowSays` and `whatTheSquareSays`
+  all test `HarmonicaPresenter`, and `whatTheFingersDraw` tests both touch mappers. Either the four
+  merge into `harmonicaPresenter.unit.test.ts` with one shared DTO builder and the fingers file
+  splits into `stripTouchMapper.unit.test.ts` and `squareTouchMapper.unit.test.ts`, or each keeps
+  its file under a type and aspect name such as `harmonicaPresenter.noteRow.unit.test.ts`. The
+  user decides.
