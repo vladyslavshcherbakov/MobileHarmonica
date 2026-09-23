@@ -129,7 +129,7 @@ others.
 
 ## Tunes
 
-The tune menu holds seven pieces, played through the instrument itself: the plates light, the
+The tune menu holds eight pieces, played through the instrument itself: the plates light, the
 note row names each note, and a bend is a fraction of that reed's own range, exactly as when a
 finger plays.
 
@@ -142,12 +142,20 @@ finger plays.
 | Nese Halia vodu | Ukrainian folk, in A, third position on a harmonica in G |
 | Oi pid vyshneiu | Ukrainian folk, in D, third position on a harmonica in C |
 | Na Ivana na Kupala | Ukrainian folk, in G, first position on a harmonica in G |
+| The Star-Spangled Banner | The American national anthem, in C, first position on a harmonica in C, with its dynamics and the two fermatas |
 
 The first four are settings written in the idiom, not transcriptions of any recording or
 published tab, and each puts one group of techniques on the instrument. The three Ukrainian songs
 are melodies to play along with: single notes, no bends or overbends, all inside holes 4 to 6, in
 keys and positions chosen so that a mouth can take every one of them. They are folk songs with no
 author, written as they are commonly sung.
+
+The Star-Spangled Banner is John Stafford Smith's melody note for note, with the rhythm of the
+common sung version: even eighths on "Oh!", "by the" and "at the", dotted quarters on "proud-",
+"ram-", "proof", "land" and "home". Its two fermatas, on "wave" and "free", hold for twice their
+written length. It needs two draw bends, hole 2 by a semitone for F♯ and hole 3 by a whole tone
+for A. The breath swells from the quiet opening to "free", the loudest note, and the long notes
+carry vibrato.
 
 **A tune names the key it sounds in and the position it is played in**, and the key slider moves
 to the harmonica it needs when it starts.

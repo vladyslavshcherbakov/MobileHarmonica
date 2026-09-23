@@ -39,7 +39,7 @@ it brings back the number of notes chosen before. A force click does not open Lo
 and Telegram do not grant in a way the page can use, so the hands never close on the page and the
 top bar has no control for them.
 
-**No written scores.** The page plays the seven built-in tunes, the same notes the phone plays.
+**No written scores.** The page plays the eight built-in tunes, the same notes the phone plays.
 
 ## The screen
 

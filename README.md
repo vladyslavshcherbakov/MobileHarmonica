@@ -60,8 +60,9 @@ Telegram's window.
   when a bend or an overbend did: `C♯5` over `(D5 bend)`.
 - **Recorded sound.** Every note is a recorded harmonica, read at the pitch asked for, with the
   attack, the crossfade and the ring down a reed has.
-- **Seven built-in tunes** played through the instrument itself, from a twelve-bar blues to three
-  Ukrainian folk melodies, with slides, shakes and scoops. On the phone a score written as text
+- **Eight built-in tunes** played through the instrument itself, from a twelve-bar blues to three
+  Ukrainian folk melodies and the American national anthem, with slides, shakes, scoops and
+  dynamics. On the phone a score written as text
   joins them.
 - **Low latency.** The phone asks for the shortest audio buffer the hardware allows and renders
   with no lock and no allocation on the audio thread. The page renders in an `AudioWorklet` that

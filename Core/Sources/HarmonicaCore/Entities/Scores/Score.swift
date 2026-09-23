@@ -1,7 +1,7 @@
 public struct Score: Equatable, Sendable {
     public static let tunes: [Score] = [
         .bluesStrain, .slowDrag, .hammerSong, .foxChase,
-        .neseHaliaVodu, .oiPidVyshneiu, .naIvanaNaKupala
+        .neseHaliaVodu, .oiPidVyshneiu, .naIvanaNaKupala, .starSpangledBanner
     ]
 
     public let name: String
