@@ -101,6 +101,8 @@ Apps/iOS/
   Audio/                ReedSampler and SampledAudioEngine
   Motion/               DeviceTilt
   Features/Harmonica/   screen, view model, presenter, view state, with Views/ and Touch/
+  Features/Settings/    the settings screen, view model, presenter, view state
+  Settings/             PlayerSettings and SettingsRepository over UserDefaults
   Navigation/           AppCoordinator and AppRoute
   Scores/               .score files read at launch, not committed
   Tests/                the app's tests and their support

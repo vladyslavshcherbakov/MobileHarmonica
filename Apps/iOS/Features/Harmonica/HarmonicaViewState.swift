@@ -8,11 +8,11 @@ enum HarmonicaViewState: Equatable {
     struct Playable: Equatable {
         let holes: [Hole]
         let key: Key
-        let style: Style
         let fingerMarks: FingerMarks
-        let cup: Cup
+        let cup: Cup?
         let demo: Demo
         let toneShaping: ToneShaping
+        let square: Square
     }
 
     // MARK: - Hole
@@ -38,28 +38,6 @@ enum HarmonicaViewState: Equatable {
         let label: String
         let position: Double
         let highestPosition: Double
-    }
-
-    // MARK: - Style
-
-    struct Style: Equatable {
-        let label: String
-        let choices: [StyleOption]
-    }
-
-    // MARK: - StyleOption
-
-    struct StyleOption: Equatable, Identifiable {
-        let id: StyleChoice
-        let name: String
-    }
-
-    // MARK: - StyleChoice
-
-    enum StyleChoice: Hashable {
-        case severalFingersSeveralNotes
-        case severalFingersOneNote
-        case oneFingerSeveralNotes
     }
 
     // MARK: - FingerMarks
@@ -99,5 +77,12 @@ enum HarmonicaViewState: Equatable {
         let vibratoLabel: String
         let isOverbendAvailable: Bool
         let isBendAvailable: Bool
+    }
+
+    // MARK: - Square
+
+    struct Square: Equatable {
+        let placement: SquarePlacement
+        let size: SquareSize
     }
 }

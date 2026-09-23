@@ -53,7 +53,9 @@ Telegram's window.
   left to right.
 - **Twelve keys.** A slider chooses which harmonica is in your hands, from G to F♯.
 - **Cupped hands.** Leaning the phone closes the hands around the harmonica and darkens the tone.
-  iPhone only.
+  iPhone only, and it can be turned off in the settings.
+- **Settings on the iPhone.** A second screen holds the playing style, cupped hands, and which side
+  of the holes the square stands on and how large it is. They are kept between launches.
 - **A note row that names what sounds.** Every sounding hole shows its note, and what shifted it
   when a bend or an overbend did: `C♯5` over `(D5 bend)`.
 - **Recorded sound.** Every note is a recorded harmonica, read at the pitch asked for, with the
@@ -125,6 +127,8 @@ Apps/iOS/
   Audio/                the sampler and the Remote I/O output
   Motion/               the phone's lean, through Core Motion
   Features/Harmonica/   the screen, its view model, presenter, view state, Views/ and Touch/
+  Features/Settings/    the settings screen, its view model, presenter and view state
+  Settings/             the player's settings and the repository that keeps them in UserDefaults
   Logging/              the timestamped log
   Navigation/           coordinator and routes
   Scores/               text scores read at launch, not committed

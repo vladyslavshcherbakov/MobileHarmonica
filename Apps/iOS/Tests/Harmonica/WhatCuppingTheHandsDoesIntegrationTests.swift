@@ -33,7 +33,7 @@ final class WhatCuppingTheHandsDoesIntegrationTests: XCTestCase {
 
         environment.phone.lean(to: 0.6)
 
-        let shown = await waitUntil { screen.playable?.cup.closed == 0.6 }
+        let shown = await waitUntil { screen.playable?.cup?.closed == 0.6 }
         XCTAssertTrue(shown)
     }
 

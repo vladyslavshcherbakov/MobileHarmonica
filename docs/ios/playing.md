@@ -1,7 +1,8 @@
 # Playing on the iPhone
 
 What the iPhone adds to [the product's rules](../playing.md): a finger's measured width, the lean
-that cups the hands, the screen's layout and refresh rate, and scores written as text.
+that cups the hands, the screen's layout and refresh rate, the settings screen, and scores written
+as text.
 
 ## A finger's width
 
@@ -19,6 +20,9 @@ the phone is held. Three degrees either side of level count as level, since a ha
 a phone exactly flat. Cupping is a gesture of the whole instrument and both hands are already on
 the glass, so it takes no space on the screen.
 
+**Cupping can be turned off** in the settings. Then the lean is not read at all, the hands open,
+and the top bar stops showing how far they are closed.
+
 ## The screen
 
 **Up to 120 Hz.** On a ProMotion iPhone the screen redraws, and hands over touches, up to 120
@@ -30,11 +34,27 @@ top belongs to the system's Notification Centre, so the bar leaves 20 points of 
 and its controls are 40 points tall, which puts their middles well below the edge.
 
 **The screen fills the glass.** Only the square extends under the rounded corner and the notch on
-the leading side. The strip stays clear of the notch and the home indicator, so the draw half of
-every hole is always reachable.
+its side of the screen. The strip stays clear of the notch and the home indicator, so the draw half
+of every hole is always reachable.
 
 **The square's size.** On a strip 844 by 340 points the square ranges from 84 to 340 points under
 the pinch, which moves a hole's width between 70 and 44 points.
+
+## Settings
+
+A gear at the right end of the top bar opens the settings screen. What is chosen there is kept
+between launches and applies when the harmonica screen is back.
+
+| Setting | Choices | Out of the box |
+|---|---|---|
+| Playing style | The three styles, named as full sentences | Many fingers, many notes |
+| Cup the hands by leaning the phone | On or off | On |
+| Square | Left or right of the holes. Hole 1 stays at the left end of the strip either way | Left |
+| Square size | A slider from 0, the smallest the pinch allows, to 1, the largest | 0.4 |
+
+**The size slider and the pinch set one value.** The slider's range runs evenly across the sides the
+square can take on this screen, so 1 is the square the pinch reaches at its largest. A pinch on
+the square moves the slider, and the slider sets what the next pinch starts from.
 
 ## Written scores
 

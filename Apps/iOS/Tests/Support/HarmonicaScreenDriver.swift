@@ -5,6 +5,7 @@ import CoreGraphics
 final class HarmonicaScreenDriver {
     private static let stripSize = CGSize(width: 1000, height: 100)
     private static let squareSize = CGSize(width: 100, height: 100)
+    private static let playingArea = CGSize(width: 1000, height: 100)
 
     let viewModel: HarmonicaViewModel
 
@@ -54,6 +55,14 @@ final class HarmonicaScreenDriver {
 
     func liftFromTheSquare() {
         viewModel.shapeTone(with: [], across: Self.squareSize)
+    }
+
+    func pinchTheSquare(by magnification: CGFloat) {
+        viewModel.resizeSquare(by: magnification, within: Self.playingArea)
+    }
+
+    func comeBackFromTheSettings() {
+        viewModel.applyTheSettings()
     }
 
     func moveTheKeySlider(to position: Double) {

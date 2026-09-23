@@ -20,7 +20,9 @@ on every platform. What one platform adds or does differently is in [docs/ios/](
 The strip of ten holes fills the right of the screen and the shaping square sits on its left, for
 a right-handed player: the right hand picks holes, the left thumb shapes. Hole 1 is at the left
 end of the strip, where it is on the instrument. A bar along the top holds the key slider, the
-playing style menu and the tune menu, and a row above the plates names what is sounding.
+playing style menu and the tune menu, and a row above the plates names what is sounding. On the
+iPhone the square can stand on either side of the strip, and the playing style is chosen on the
+settings screen instead of in the bar, as [docs/ios/playing.md](ios/playing.md#settings) says.
 
 ## Controls
 
@@ -33,8 +35,8 @@ playing style menu and the tune menu, and a row above the plates names what is s
 | Overbend | A finger above the middle of the square | Past half the travel, the reed pops to its overbend |
 | Vibrato | A finger's position across the square | None at the left to full depth at the right |
 | Key | Slider in the top bar | Chooses which harmonica is in your hands, G to F♯ |
-| Playing style | Menu in the top bar | How many fingers count, and how many holes each one covers |
-| Square size | Pinch on the square | Resizes the square between 0.45 and 2 times its natural side, trading width with the strip |
+| Playing style | Menu in the top bar, on the settings screen on the iPhone | How many fingers count, and how many holes each one covers |
+| Square size | Pinch on the square, or the size slider on the iPhone's settings screen | Resizes the square between 0.45 and 2 times its natural side, trading width with the strip |
 
 ## Holes and breath
 
@@ -106,8 +108,8 @@ bend label dims. The vibrato label never does, because vibrato works on every re
 
 **The square's size** is its natural side, the smaller of the screen's height and 22 per cent of
 its width, times whatever the pinch chose. Two fingers in the square are a pinch and stop
-shaping, while two fingers on the strip are always a chord. The size is not remembered between
-launches.
+shaping, while two fingers on the strip are always a chord. On the page the size is not remembered
+between launches. The iPhone keeps it with the other settings.
 
 ## What the screen shows
 

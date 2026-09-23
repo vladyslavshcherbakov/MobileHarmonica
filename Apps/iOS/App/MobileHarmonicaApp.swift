@@ -14,6 +14,7 @@ struct MobileHarmonicaApp: App {
         compositionRoot = CompositionRoot(
             audioEngine: SampledAudioEngine(log: log),
             tilt: DeviceTilt(),
+            defaults: .standard,
             log: log,
             locale: .current,
             writtenTunes: [BundledScoreRepository(tuning: RichterTuning(), log: log).first()].compactMap { $0 }

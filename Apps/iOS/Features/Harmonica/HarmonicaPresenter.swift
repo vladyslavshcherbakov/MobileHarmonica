@@ -28,16 +28,16 @@ struct HarmonicaPresenter {
         holeLabels = Hole.allCases.map { $0.number.formatted(.number.locale(locale)) }
     }
 
-    func present(_ harmonica: Harmonica, playingAScore: Bool) -> HarmonicaViewState {
+    func present(_ harmonica: Harmonica, settings: PlayerSettings, playingAScore: Bool) -> HarmonicaViewState {
         .ready(
             HarmonicaViewState.Playable(
                 holes: holes(of: harmonica),
                 key: keyState(harmonica.key),
-                style: styleState(harmonica.style),
                 fingerMarks: fingerMarksState(harmonica.style),
-                cup: Self.cupState(harmonica.cup),
+                cup: settings.isCuppingEnabled ? Self.cupState(harmonica.cup) : nil,
                 demo: demoState(playingAScore),
-                toneShaping: toneShaping(harmonica)
+                toneShaping: toneShaping(harmonica),
+                square: HarmonicaViewState.Square(placement: settings.squarePlacement, size: settings.squareSize)
             )
         )
     }
@@ -110,34 +110,6 @@ struct HarmonicaPresenter {
         case .blow: overblowLabel
         case .draw: overdrawLabel
         case nil: overbendAtRestLabel
-        }
-    }
-
-    private func styleState(_ style: PlayingStyle) -> HarmonicaViewState.Style {
-        HarmonicaViewState.Style(
-            label: Self.name(of: Self.choice(of: style)),
-            choices: PlayingStyle.allCases.map(Self.choiceState(of:))
-        )
-    }
-
-    private static func choiceState(of style: PlayingStyle) -> HarmonicaViewState.StyleOption {
-        let chosen = choice(of: style)
-        return HarmonicaViewState.StyleOption(id: chosen, name: name(of: chosen))
-    }
-
-    private static func choice(of style: PlayingStyle) -> HarmonicaViewState.StyleChoice {
-        switch style {
-        case .severalFingersSeveralNotes: .severalFingersSeveralNotes
-        case .severalFingersOneNote: .severalFingersOneNote
-        case .oneFingerSeveralNotes: .oneFingerSeveralNotes
-        }
-    }
-
-    private static func name(of choice: HarmonicaViewState.StyleChoice) -> String {
-        switch choice {
-        case .severalFingersSeveralNotes: "Many fingers, many notes"
-        case .severalFingersOneNote: "Many fingers, one note"
-        case .oneFingerSeveralNotes: "One finger, many notes"
         }
     }
 

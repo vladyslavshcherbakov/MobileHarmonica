@@ -2,37 +2,56 @@ import SwiftUI
 
 @MainActor
 struct HarmonicaScreen: View {
-    private static let zoneWidthFraction: CGFloat = 0.22
-    private static let smallestZoneScale: CGFloat = 0.45
-    private static let largestZoneScale: CGFloat = 2.0
-
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var viewModel: HarmonicaViewModel
-    @State private var zoneScale: CGFloat = 1
+
+    private let openSettings: @MainActor () -> Void
 
     // MARK: - Public
 
-    init(viewModel: @autoclosure @escaping @MainActor () -> HarmonicaViewModel) {
+    init(
+        viewModel: @autoclosure @escaping @MainActor () -> HarmonicaViewModel,
+        openSettings: @escaping @MainActor () -> Void
+    ) {
         _viewModel = StateObject(wrappedValue: MainActor.assumeIsolated { viewModel() })
+        self.openSettings = openSettings
     }
 
     var body: some View {
         content
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .ignoresSafeArea(edges: .leading)
+            .ignoresSafeArea(edges: edgeUnderTheSquare)
             .background(Color.black.ignoresSafeArea())
             .task(id: scenePhase) {
                 await prepareOrSilence(for: scenePhase)
             }
-            .task {
+            .task(id: isCupShown) {
                 await viewModel.followTheTilt()
             }
+            .onAppear { viewModel.applyTheSettings() }
     }
 
     // MARK: - Private
 
-    private static func zoneSide(in size: CGSize, scaledBy scale: CGFloat) -> CGFloat {
-        min(size.height, min(size.height, size.width * Self.zoneWidthFraction) * scale)
+    private static func edge(under placement: SquarePlacement) -> Edge.Set {
+        switch placement {
+        case .left: .leading
+        case .right: .trailing
+        }
+    }
+
+    private var playable: HarmonicaViewState.Playable? {
+        guard case .ready(let playable) = viewModel.state else { return nil }
+
+        return playable
+    }
+
+    private var isCupShown: Bool {
+        playable?.cup != nil
+    }
+
+    private var edgeUnderTheSquare: Edge.Set {
+        Self.edge(under: playable?.square.placement ?? PlayerSettings.atFirstLaunch.squarePlacement)
     }
 
     @ViewBuilder
@@ -51,30 +70,43 @@ struct HarmonicaScreen: View {
 
     private func playableHarmonica(_ playable: HarmonicaViewState.Playable) -> some View {
         VStack(spacing: 0) {
-            KeyBar(playable: playable, viewModel: viewModel)
+            KeyBar(
+                playable: playable,
+                clearOf: Self.edge(under: playable.square.placement),
+                openSettings: openSettings,
+                viewModel: viewModel
+            )
             GeometryReader { geometry in
                 HStack(spacing: HarmonicaStrip.holeSpacing) {
-                    ToneShapingZone(
-                        state: playable.toneShaping,
-                        pinched: resizeZone(by:),
-                        viewModel: viewModel
-                    )
-                    .frame(
-                        width: Self.zoneSide(in: geometry.size, scaledBy: zoneScale),
-                        height: Self.zoneSide(in: geometry.size, scaledBy: zoneScale)
-                    )
-                    HarmonicaStrip(
-                        holes: playable.holes,
-                        fingerMarks: playable.fingerMarks,
-                        viewModel: viewModel
-                    )
+                    switch playable.square.placement {
+                    case .left:
+                        square(playable, within: geometry.size)
+                        strip(playable)
+                    case .right:
+                        strip(playable)
+                        square(playable, within: geometry.size)
+                    }
                 }
             }
         }
     }
 
-    private func resizeZone(by magnification: CGFloat) {
-        zoneScale = min(Self.largestZoneScale, max(Self.smallestZoneScale, zoneScale * magnification))
+    private func square(_ playable: HarmonicaViewState.Playable, within area: CGSize) -> some View {
+        let side = SquareSizing(in: area).side(for: playable.square.size)
+        return ToneShapingZone(
+            state: playable.toneShaping,
+            pinched: { viewModel.resizeSquare(by: $0, within: area) },
+            viewModel: viewModel
+        )
+        .frame(width: side, height: side)
+    }
+
+    private func strip(_ playable: HarmonicaViewState.Playable) -> some View {
+        HarmonicaStrip(
+            holes: playable.holes,
+            fingerMarks: playable.fingerMarks,
+            viewModel: viewModel
+        )
     }
 
     private func prepareOrSilence(for phase: ScenePhase) async {
